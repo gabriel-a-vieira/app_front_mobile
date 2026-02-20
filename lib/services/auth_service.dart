@@ -28,8 +28,8 @@ class AuthService {
 
     final data = response.data;
 
-    if (data is Map && data['accessToken'] is String) {
-      return data['accessToken'] as String;
+    if (data is Map && data['token'] is String) {
+      return data['token'] as String;
     }
 
     throw Exception('Invalid login response');

@@ -48,6 +48,11 @@ class _LoginPageState extends State<LoginPage> {
       context.go('/'); // home
     } catch (e) {
       if (!mounted) return;
+
+      // Imprime a exceção no console para depuração
+      print("Erro durante o login: $e");
+
+      // Exibe uma mensagem de erro na interface do usuário
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Login failed. Check credentials.')),
       );
@@ -100,7 +105,9 @@ class _LoginPageState extends State<LoginPage> {
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       onPressed: () => setState(() => _obscure = !_obscure),
-                      icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                      icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off,
+                      ),
                     ),
                   ),
                   validator: (v) {
