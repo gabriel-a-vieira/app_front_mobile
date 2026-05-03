@@ -65,22 +65,17 @@ class HomePage extends StatelessWidget {
             onPressed: () {
               showDialog(
                 context: context,
+                barrierDismissible: true,
+                barrierColor: Colors.black.withOpacity(0.65),
                 builder: (context) {
-                  return AlertDialog(
-                    title: const Text('Entrar'),
-                    content: SizedBox(
-                      width: 400, // Definindo a largura fixa
-                      height: 350, // Definindo a altura fixa
-                      child: const LoginPage(), // Formulário de login
+                  return Dialog(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    insetPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 24,
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(); // Fecha o modal
-                        },
-                        child: const Text('Fechar'),
-                      ),
-                    ],
+                    child: const LoginPage(),
                   );
                 },
               );
