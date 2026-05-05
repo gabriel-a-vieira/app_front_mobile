@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../services/auth_service.dart';
 import '../storage/token_storage.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final VoidCallback? onLoginSuccess;
+  final VoidCallback? onRegisterTap;
+
+  const LoginPage({
+    super.key,
+    this.onLoginSuccess,
+    this.onRegisterTap,
+  });
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -57,15 +63,17 @@ class _LoginPageState extends State<LoginPage> {
       await _tokenStorage.saveAccessToken(token);
 
       if (!mounted) return;
-      context.go('/');
-    } catch (e) {
+
+      widget.onLoginSuccess?.call();
+    } catch (e, stackTrace) {
+      debugPrint('Erro durante o login: $e');
+      debugPrint('StackTrace: $stackTrace');
+
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Falha no login. Verifique suas credenciais.'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro durante o login: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -94,11 +102,7 @@ class _LoginPageState extends State<LoginPage> {
       fillColor: _inputFillColor,
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(vertical: 18),
-      prefixIcon: Icon(
-        prefixIcon,
-        color: _mutedText,
-        size: 20,
-      ),
+      prefixIcon: Icon(prefixIcon, color: _mutedText, size: 20),
       suffixIcon: suffixIcon,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -150,11 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                   key: _formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildHeader(),
-                      _buildBody(),
-                      _buildFooter(),
-                    ],
+                    children: [_buildHeader(), _buildBody(), _buildFooter()],
                   ),
                 ),
               ),
@@ -172,9 +172,7 @@ class _LoginPageState extends State<LoginPage> {
       decoration: const BoxDecoration(
         color: _headerColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-        border: Border(
-          bottom: BorderSide(color: _borderColor, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: _borderColor, width: 1)),
       ),
       child: Row(
         children: [
@@ -200,11 +198,7 @@ class _LoginPageState extends State<LoginPage> {
                 shape: BoxShape.circle,
                 border: Border.all(color: const Color(0xFF4A505C), width: 1),
               ),
-              child: const Icon(
-                Icons.close,
-                color: _whiteText,
-                size: 18,
-              ),
+              child: const Icon(Icons.close, color: _whiteText, size: 18),
             ),
           ),
         ],
@@ -272,9 +266,7 @@ class _LoginPageState extends State<LoginPage> {
 
           Row(
             children: const [
-              Expanded(
-                child: Divider(color: _borderColor, thickness: 1),
-              ),
+              Expanded(child: Divider(color: _borderColor, thickness: 1)),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
@@ -286,18 +278,13 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              Expanded(
-                child: Divider(color: _borderColor, thickness: 1),
-              ),
+              Expanded(child: Divider(color: _borderColor, thickness: 1)),
             ],
           ),
 
           const SizedBox(height: 18),
 
-          _FieldLabel(
-            title: 'Email ou telefone',
-            requiredField: true,
-          ),
+          _FieldLabel(title: 'Email', requiredField: true),
           const SizedBox(height: 8),
           TextFormField(
             controller: _emailCtrl,
@@ -326,10 +313,7 @@ class _LoginPageState extends State<LoginPage> {
 
           const SizedBox(height: 16),
 
-          _FieldLabel(
-            title: 'Senha',
-            requiredField: true,
-          ),
+          _FieldLabel(title: 'Senha', requiredField: true),
           const SizedBox(height: 8),
           TextFormField(
             controller: _passCtrl,
@@ -347,7 +331,9 @@ class _LoginPageState extends State<LoginPage> {
                 onPressed: () => setState(() => _obscure = !_obscure),
                 splashRadius: 18,
                 icon: Icon(
-                  _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  _obscure
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
                   color: _mutedText,
                   size: 22,
                 ),
@@ -422,9 +408,7 @@ class _LoginPageState extends State<LoginPage> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(22, 14, 22, 18),
       decoration: const BoxDecoration(
-        border: Border(
-          top: BorderSide(color: _borderColor, width: 1),
-        ),
+        border: Border(top: BorderSide(color: _borderColor, width: 1)),
       ),
       child: Column(
         children: [
@@ -443,7 +427,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               InkWell(
-                onTap: () {},
+                onTap: widget.onRegisterTap,
                 child: const Text(
                   'Cadastre-se',
                   style: TextStyle(
@@ -496,10 +480,7 @@ class _FieldLabel extends StatelessWidget {
   final String title;
   final bool requiredField;
 
-  const _FieldLabel({
-    required this.title,
-    this.requiredField = false,
-  });
+  const _FieldLabel({required this.title, this.requiredField = false});
 
   static const Color _whiteText = Color(0xFFF5F7FA);
   static const Color _dangerRed = Color(0xFFFF5A5F);
@@ -557,9 +538,7 @@ class _SocialButton extends StatelessWidget {
           backgroundColor: _socialButtonColor,
           foregroundColor: _whiteText,
           side: const BorderSide(color: _borderColor, width: 1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(horizontal: 12),
         ),
         child: Row(

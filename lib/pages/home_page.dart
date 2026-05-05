@@ -1,4 +1,5 @@
 import 'package:app_front_mobile/pages/login_page.dart';
+import 'package:app_front_mobile/pages/register_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme_notifier.dart'; // O ThemeNotifier para controlar o tema
@@ -6,6 +7,61 @@ import '../locale_provider.dart'; // O LocaleProvider para controlar o idioma
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  void _openLoginModal(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.65),
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
+          child: LoginPage(
+            onLoginSuccess: () {
+              Navigator.of(dialogContext).pop();
+            },
+            onRegisterTap: () {
+              Navigator.of(dialogContext).pop();
+              _openRegisterModal(context);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _openRegisterModal(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.65),
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
+          child: RegisterPage(
+            onLoginTap: () {
+              Navigator.of(dialogContext).pop();
+              _openLoginModal(context);
+            },
+            onRegisterSuccess: () {
+              Navigator.of(dialogContext).pop();
+              _openLoginModal(context);
+            },
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,22 +119,7 @@ class HomePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.account_circle),
             onPressed: () {
-              showDialog(
-                context: context,
-                barrierDismissible: true,
-                barrierColor: Colors.black.withOpacity(0.65),
-                builder: (context) {
-                  return Dialog(
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    insetPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 24,
-                    ),
-                    child: const LoginPage(),
-                  );
-                },
-              );
+              _openLoginModal(context);
             },
           ),
         ],
