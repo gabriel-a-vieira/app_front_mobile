@@ -2,6 +2,8 @@ import 'package:app_front_mobile/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../l10n/app_localizations.dart';
+
 class RegisterPage extends StatefulWidget {
   final VoidCallback? onLoginTap;
   final VoidCallback? onRegisterSuccess;
@@ -16,7 +18,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _scrollController = ScrollController();
@@ -56,7 +57,6 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _phoneCtrl.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
     _scrollController.dispose();
@@ -64,6 +64,8 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
+
     debugPrint('Botao Cadastrar clicado');
 
     final isValid = _formKey.currentState?.validate() ?? false;
@@ -91,7 +93,7 @@ class _RegisterPageState extends State<RegisterPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuario cadastrado com sucesso.')),
+        SnackBar(content: Text(l10n.registerSuccess)),
       );
 
       widget.onRegisterSuccess?.call();
@@ -101,9 +103,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erro durante o cadastro: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.registerError}: $e')),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -159,13 +161,16 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+
     final screenHeight = MediaQuery.of(context).size.height;
 
     return SafeArea(
       child: Center(
-        child: SizedBox(
-          width: 575,
-          height: screenHeight * 0.92,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 575,
+            maxHeight: screenHeight * 0.92,
+          ),
           child: Material(
             color: Colors.transparent,
             child: Container(
@@ -184,10 +189,11 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Form(
                 key: _formKey,
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildHeader(),
 
-                    Expanded(
+                    Flexible(
                       child: RawScrollbar(
                         controller: _scrollController,
                         thumbVisibility: _showScrollbar,
@@ -217,6 +223,8 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildHeader() {
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       height: 54,
       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -228,11 +236,11 @@ class _RegisterPageState extends State<RegisterPage> {
       child: Row(
         children: [
           const SizedBox(width: 44),
-          const Expanded(
+          Expanded(
             child: Center(
               child: Text(
-                'Cadastro',
-                style: TextStyle(
+                l10n.registerTitle,
+                style: const TextStyle(
                   color: _whiteText,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -261,12 +269,14 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildBody() {
+    final l10n = AppLocalizations.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Continuar com',
-          style: TextStyle(
+        Text(
+          l10n.continueWith,
+          style: const TextStyle(
             color: _whiteText,
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -317,66 +327,80 @@ class _RegisterPageState extends State<RegisterPage> {
         const SizedBox(height: 24),
 
         Row(
-          children: const [
-            Expanded(child: Divider(color: _borderColor, thickness: 1)),
+          children: [
+            const Expanded(child: Divider(color: _borderColor, thickness: 1)),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'ou',
-                style: TextStyle(
+                l10n.or,
+                style: const TextStyle(
                   color: _mutedText,
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                 ),
               ),
             ),
-            Expanded(child: Divider(color: _borderColor, thickness: 1)),
+            const Expanded(child: Divider(color: _borderColor, thickness: 1)),
           ],
         ),
 
         const SizedBox(height: 18),
 
-        const _FieldLabel(title: 'Nome completo', requiredField: true),
+        _FieldLabel(title: l10n.fullName, requiredField: true),
         const SizedBox(height: 8),
         TextFormField(
           controller: _nameCtrl,
           style: const TextStyle(color: _whiteText, fontSize: 15),
           decoration: _inputDecoration(
-            hintText: 'Informe Seu Nome E Sobrenome',
+            hintText: l10n.fullNameHint,
             prefixIcon: Icons.person_outline,
           ),
           validator: (v) {
             final value = (v ?? '').trim();
-            if (value.isEmpty) return 'Nome completo é obrigatório';
-            if (value.length < 3) return 'Informe um nome válido';
+
+            if (value.isEmpty) {
+              return l10n.requiredFullName;
+            }
+
+            if (value.length < 3) {
+              return l10n.invalidFullName;
+            }
+
             return null;
           },
         ),
 
         const SizedBox(height: 16),
 
-        const _FieldLabel(title: 'Email', requiredField: true),
+        _FieldLabel(title: l10n.email, requiredField: true),
         const SizedBox(height: 8),
         TextFormField(
           controller: _emailCtrl,
           keyboardType: TextInputType.emailAddress,
           style: const TextStyle(color: _whiteText, fontSize: 15),
           decoration: _inputDecoration(
-            hintText: 'Informe seu email',
+            hintText: l10n.emailHint,
             prefixIcon: Icons.mail_outline,
           ),
           validator: (v) {
             final value = (v ?? '').trim();
-            if (value.isEmpty) return 'Email é obrigatório';
-            if (!value.contains('@')) return 'Email inválido';
+
+            if (value.isEmpty) {
+              return l10n.requiredEmail;
+            }
+
+            if (!value.contains('@')) {
+              return l10n.invalidEmail;
+            }
+
             return null;
           },
         ),
 
         const SizedBox(height: 16),
 
-        const _FieldLabel(
-          title: 'Senha (mínimo 4 caracteres)',
+        _FieldLabel(
+          title: l10n.password,
           requiredField: true,
         ),
         const SizedBox(height: 8),
@@ -385,7 +409,7 @@ class _RegisterPageState extends State<RegisterPage> {
           obscureText: _obscure,
           style: const TextStyle(color: _whiteText, fontSize: 15),
           decoration: _inputDecoration(
-            hintText: 'Informe sua senha',
+            hintText: l10n.passwordHint,
             prefixIcon: Icons.lock_outline,
             suffixIcon: IconButton(
               onPressed: () => setState(() => _obscure = !_obscure),
@@ -401,9 +425,15 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           validator: (v) {
             final value = v ?? '';
-            if (value.isEmpty) return 'Senha é obrigatória';
-            if (value.length < 4)
-              return 'A senha precisa ter no mínimo 4 caracteres';
+
+            if (value.isEmpty) {
+              return l10n.requiredPassword;
+            }
+
+            if (value.length < 4) {
+              return l10n.minimumPassword;
+            }
+
             return null;
           },
         ),
@@ -435,7 +465,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       valueColor: AlwaysStoppedAnimation<Color>(_whiteText),
                     ),
                   )
-                : const Text('Cadastrar'),
+                : Text(l10n.registerButton),
           ),
         ),
       ],
@@ -443,6 +473,8 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildFooter() {
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(22, 14, 22, 14),
@@ -457,9 +489,9 @@ class _RegisterPageState extends State<RegisterPage> {
             spacing: 4,
             runSpacing: 4,
             children: [
-              const Text(
-                'Já tem uma conta?',
-                style: TextStyle(
+              Text(
+                l10n.alreadyHaveAccount,
+                style: const TextStyle(
                   color: _whiteText,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -467,9 +499,9 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               InkWell(
                 onTap: widget.onLoginTap,
-                child: const Text(
-                  'Acesse',
-                  style: TextStyle(
+                child: Text(
+                  l10n.goToLogin,
+                  style: const TextStyle(
                     color: _linkBlue,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -484,19 +516,19 @@ class _RegisterPageState extends State<RegisterPage> {
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 4,
             runSpacing: 4,
-            children: const [
+            children: [
               Text(
-                'Acessando você concorda com o',
+                l10n.termsPrefix,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: _mutedText,
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
                 ),
               ),
               Text(
-                'termo de uso',
-                style: TextStyle(
+                l10n.termsOfUse,
+                style: const TextStyle(
                   color: Color(0xFFBFC7D3),
                   fontSize: 13,
                   fontWeight: FontWeight.w500,

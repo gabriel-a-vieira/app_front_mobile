@@ -1,0 +1,41 @@
+{
+  "@@locale": "en",
+  "homeTitle": "Home",
+  "loggedSuccessfully": "Logged in successfully.",
+  "selectLanguage": "Select language",
+  "signIn": "Sign in",
+
+  "accessAccount": "Access account",
+  "continueWith": "Continue with",
+  "or": "or",
+  "email": "Email",
+  "emailOrPhone": "Email",
+  "emailHint": "Enter your email",
+  "emailOrPhoneHint": "Enter your email",
+  "password": "Password",
+  "passwordHint": "Enter your password",
+  "forgotPassword": "Forgot password",
+  "access": "Sign in",
+  "dontHaveAccount": "Don't have an account?",
+  "signUp": "Sign up",
+  "termsPrefix": "By accessing, you agree with the",
+  "termsOfUse": "terms of use",
+
+  "registerTitle": "Register",
+  "fullName": "Full name",
+  "fullNameHint": "Enter your full name",
+  "registerButton": "Register",
+  "alreadyHaveAccount": "Already have an account?",
+  "goToLogin": "Sign in",
+
+  "requiredEmail": "Email is required",
+  "invalidEmail": "Invalid email",
+  "requiredPassword": "Password is required",
+  "requiredFullName": "Full name is required",
+  "invalidFullName": "Enter a valid name",
+  "minimumPassword": "Password must have at least 4 characters",
+
+  "loginError": "Login error",
+  "registerError": "Register error",
+  "registerSuccess": "User registered successfully."
+}

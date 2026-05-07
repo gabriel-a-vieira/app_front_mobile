@@ -4,6 +4,7 @@ import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
 import '../locale_provider.dart';
 
@@ -26,7 +27,7 @@ const List<LanguageOption> languageOptions = [
     locale: Locale('pt', 'BR'),
     countryCode: 'BR',
     shortLabel: 'BR',
-    fullLabel: 'Português - Brasil',
+    fullLabel: 'Portugues - Brasil',
   ),
   LanguageOption(
     locale: Locale('en', 'US'),
@@ -95,6 +96,24 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildLanguageSelector(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final menuBackgroundColor = isDark
+        ? const Color(0xFF17191E)
+        : colorScheme.surface;
+
+    final menuBorderColor = isDark
+        ? const Color(0xFF2C313A)
+        : colorScheme.outline.withOpacity(0.35);
+
+    final textColor = colorScheme.onSurface;
+    final mutedColor = colorScheme.onSurface.withOpacity(0.65);
+    final selectedColor = colorScheme.primary;
+
     final localeProvider = Provider.of<LocaleProvider>(context);
     final currentLocale = localeProvider.locale;
 
@@ -106,14 +125,14 @@ class HomePage extends StatelessWidget {
     );
 
     return PopupMenuButton<LanguageOption>(
-      tooltip: 'Selecionar idioma',
-      color: const Color(0xFF17191E),
+      tooltip: l10n.selectLanguage,
+      color: menuBackgroundColor,
       elevation: 8,
       offset: const Offset(0, 42),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(
-          color: Color(0xFF2C313A),
+        side: BorderSide(
+          color: menuBorderColor,
           width: 1,
         ),
       ),
@@ -145,7 +164,7 @@ class HomePage extends StatelessWidget {
               decoration: BoxDecoration(
                 border: isSelected
                     ? Border.all(
-                        color: const Color(0xFF0089F7),
+                        color: selectedColor,
                         width: 1.5,
                       )
                     : null,
@@ -165,17 +184,17 @@ class HomePage extends StatelessWidget {
                   Expanded(
                     child: Text(
                       option.fullLabel,
-                      style: const TextStyle(
-                        color: Color(0xFFF5F7FA),
+                      style: TextStyle(
+                        color: textColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                   if (isSelected)
-                    const Icon(
+                    Icon(
                       Icons.check_circle_outline,
-                      color: Color(0xFF0089F7),
+                      color: selectedColor,
                       size: 18,
                     ),
                 ],
@@ -199,16 +218,17 @@ class HomePage extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               selectedLanguage.shortLabel,
-              style: const TextStyle(
-                color: Color(0xFFF5F7FA),
+              style: TextStyle(
+                color: theme.appBarTheme.foregroundColor ??
+                    colorScheme.onSurface,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(width: 2),
-            const Icon(
+            Icon(
               Icons.keyboard_arrow_down,
-              color: Color(0xFF9EA6B2),
+              color: mutedColor,
               size: 16,
             ),
           ],
@@ -218,6 +238,11 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildLoginButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return InkWell(
       onTap: () {
         _openLoginModal(context);
@@ -226,21 +251,22 @@ class HomePage extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(right: 12, left: 4),
         child: Row(
-          children: const [
+          children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor: Color(0xFF2A2F38),
+              backgroundColor: colorScheme.surfaceContainerHighest,
               child: Icon(
                 Icons.person_outline,
-                color: Color(0xFFF5F7FA),
+                color: colorScheme.onSurface,
                 size: 20,
               ),
             ),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
             Text(
-              'Entrar',
+              l10n.signIn,
               style: TextStyle(
-                color: Color(0xFFF5F7FA),
+                color: theme.appBarTheme.foregroundColor ??
+                    colorScheme.onSurface,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -253,12 +279,11 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF050609),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF050609),
-        elevation: 0,
-        title: const Text('Home'),
+        title: Text(l10n.homeTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.brightness_6),
@@ -270,14 +295,12 @@ class HomePage extends StatelessWidget {
               themeNotifier.toggleTheme();
             },
           ),
-
           _buildLanguageSelector(context),
-
           _buildLoginButton(context),
         ],
       ),
-      body: const Center(
-        child: Text('Logado com sucesso.'),
+      body: Center(
+        child: Text(l10n.loggedSuccessfully),
       ),
     );
   }

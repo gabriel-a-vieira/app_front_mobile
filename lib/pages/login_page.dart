@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 import '../storage/token_storage.dart';
 
@@ -49,6 +50,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
+
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
 
@@ -71,9 +74,11 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erro durante o login: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l10n.loginError}: $e'),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -154,7 +159,11 @@ class _LoginPageState extends State<LoginPage> {
                   key: _formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: [_buildHeader(), _buildBody(), _buildFooter()],
+                    children: [
+                      _buildHeader(),
+                      _buildBody(),
+                      _buildFooter(),
+                    ],
                   ),
                 ),
               ),
@@ -166,6 +175,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildHeader() {
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       height: 68,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -177,9 +188,9 @@ class _LoginPageState extends State<LoginPage> {
       child: Row(
         children: [
           const Spacer(),
-          const Text(
-            'Acessar conta',
-            style: TextStyle(
+          Text(
+            l10n.accessAccount,
+            style: const TextStyle(
               color: _whiteText,
               fontSize: 16,
               fontWeight: FontWeight.w700,
@@ -207,14 +218,16 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildBody() {
+    final l10n = AppLocalizations.of(context);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Continuar com',
-            style: TextStyle(
+          Text(
+            l10n.continueWith,
+            style: const TextStyle(
               color: _whiteText,
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -265,55 +278,58 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(height: 18),
 
           Row(
-            children: const [
-              Expanded(child: Divider(color: _borderColor, thickness: 1)),
+            children: [
+              const Expanded(child: Divider(color: _borderColor, thickness: 1)),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'ou',
-                  style: TextStyle(
+                  l10n.or,
+                  style: const TextStyle(
                     color: _mutedText,
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
               ),
-              Expanded(child: Divider(color: _borderColor, thickness: 1)),
+              const Expanded(child: Divider(color: _borderColor, thickness: 1)),
             ],
           ),
 
           const SizedBox(height: 18),
 
-          _FieldLabel(title: 'Email', requiredField: true),
+          _FieldLabel(title: l10n.email, requiredField: true),
           const SizedBox(height: 8),
           TextFormField(
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
-            autofillHints: const [
-              AutofillHints.email,
-              AutofillHints.telephoneNumber,
-            ],
+            autofillHints: const [AutofillHints.email],
             style: const TextStyle(
               color: _whiteText,
               fontSize: 15,
               fontWeight: FontWeight.w400,
             ),
             decoration: _inputDecoration(
-              hintText: 'Informe o email ou telefone',
+              hintText: l10n.emailHint,
               prefixIcon: Icons.person_outline,
             ),
             validator: (v) {
               final value = (v ?? '').trim();
+
               if (value.isEmpty) {
-                return 'Email ou telefone é obrigatório';
+                return l10n.requiredEmail;
               }
+
+              if (!value.contains('@')) {
+                return l10n.invalidEmail;
+              }
+
               return null;
             },
           ),
 
           const SizedBox(height: 16),
 
-          _FieldLabel(title: 'Senha', requiredField: true),
+          _FieldLabel(title: l10n.password, requiredField: true),
           const SizedBox(height: 8),
           TextFormField(
             controller: _passCtrl,
@@ -325,7 +341,7 @@ class _LoginPageState extends State<LoginPage> {
               fontWeight: FontWeight.w400,
             ),
             decoration: _inputDecoration(
-              hintText: 'Informe sua senha',
+              hintText: l10n.passwordHint,
               prefixIcon: Icons.lock_outline,
               suffixIcon: IconButton(
                 onPressed: () => setState(() => _obscure = !_obscure),
@@ -341,9 +357,11 @@ class _LoginPageState extends State<LoginPage> {
             ),
             validator: (v) {
               final value = v ?? '';
+
               if (value.isEmpty) {
-                return 'Senha é obrigatória';
+                return l10n.requiredPassword;
               }
+
               return null;
             },
           ),
@@ -354,9 +372,9 @@ class _LoginPageState extends State<LoginPage> {
             alignment: Alignment.centerRight,
             child: InkWell(
               onTap: () {},
-              child: const Text(
-                'Recuperar senha',
-                style: TextStyle(
+              child: Text(
+                l10n.forgotPassword,
+                style: const TextStyle(
                   color: Color(0xFFD0D6E1),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -395,7 +413,7 @@ class _LoginPageState extends State<LoginPage> {
                         valueColor: AlwaysStoppedAnimation<Color>(_whiteText),
                       ),
                     )
-                  : const Text('Acessar'),
+                  : Text(l10n.access),
             ),
           ),
         ],
@@ -404,6 +422,8 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildFooter() {
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(22, 14, 22, 18),
@@ -418,9 +438,9 @@ class _LoginPageState extends State<LoginPage> {
             spacing: 4,
             runSpacing: 4,
             children: [
-              const Text(
-                'Não possui uma conta?',
-                style: TextStyle(
+              Text(
+                l10n.dontHaveAccount,
+                style: const TextStyle(
                   color: _whiteText,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -428,9 +448,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
               InkWell(
                 onTap: widget.onRegisterTap,
-                child: const Text(
-                  'Cadastre-se',
-                  style: TextStyle(
+                child: Text(
+                  l10n.signUp,
+                  style: const TextStyle(
                     color: _linkBlue,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -446,10 +466,10 @@ class _LoginPageState extends State<LoginPage> {
             spacing: 4,
             runSpacing: 4,
             children: [
-              const Text(
-                'Acessando você concorda com o',
+              Text(
+                l10n.termsPrefix,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: _mutedText,
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
@@ -457,9 +477,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
               InkWell(
                 onTap: () {},
-                child: const Text(
-                  'termo de uso',
-                  style: TextStyle(
+                child: Text(
+                  l10n.termsOfUse,
+                  style: const TextStyle(
                     color: Color(0xFFBFC7D3),
                     fontSize: 13,
                     fontWeight: FontWeight.w500,

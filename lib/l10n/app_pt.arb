@@ -1,0 +1,41 @@
+{
+  "@@locale": "pt",
+  "homeTitle": "Home",
+  "loggedSuccessfully": "Logado com sucesso.",
+  "selectLanguage": "Selecionar idioma",
+  "signIn": "Entrar",
+
+  "accessAccount": "Acessar conta",
+  "continueWith": "Continuar com",
+  "or": "ou",
+  "email": "Email",
+  "emailOrPhone": "Email",
+  "emailHint": "Informe seu email",
+  "emailOrPhoneHint": "Informe o email",
+  "password": "Senha",
+  "passwordHint": "Informe sua senha",
+  "forgotPassword": "Recuperar senha",
+  "access": "Acessar",
+  "dontHaveAccount": "Não possui uma conta?",
+  "signUp": "Cadastre-se",
+  "termsPrefix": "Acessando você concorda com o",
+  "termsOfUse": "termo de uso",
+
+  "registerTitle": "Cadastro",
+  "fullName": "Nome completo",
+  "fullNameHint": "Informe seu nome e sobrenome",
+  "registerButton": "Cadastrar",
+  "alreadyHaveAccount": "Já tem uma conta?",
+  "goToLogin": "Acesse",
+
+  "requiredEmail": "Email é obrigatório",
+  "invalidEmail": "Email inválido",
+  "requiredPassword": "Senha é obrigatória",
+  "requiredFullName": "Nome completo é obrigatório",
+  "invalidFullName": "Informe um nome válido",
+  "minimumPassword": "A senha precisa ter no mínimo 4 caracteres",
+
+  "loginError": "Erro durante o login",
+  "registerError": "Erro durante o cadastro",
+  "registerSuccess": "Usuário cadastrado com sucesso."
+}

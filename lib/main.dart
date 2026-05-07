@@ -1,3 +1,4 @@
+import 'package:app_front_mobile/l10n/app_localizations.dart';
 import 'package:app_front_mobile/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -34,15 +35,13 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: const HomePage(), // Definir diretamente a HomePage como tela inicial
       locale: localeProvider.locale,  // Definir o idioma
-      supportedLocales: [
-        Locale('pt', 'BR'),  // Suporte para Português
-        Locale('en', 'US'),  // Suporte para Inglês
-      ],
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+      supportedLocales: AppLocalizations.supportedLocales,
       themeMode: themeNotifier.themeMode,  // Definir o modo de tema
       theme: ThemeData.light(),  // Tema claro
       darkTheme: ThemeData.dark(),  // Tema escuro
