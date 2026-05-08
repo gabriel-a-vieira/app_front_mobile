@@ -161,7 +161,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-
     final screenHeight = MediaQuery.of(context).size.height;
 
     return SafeArea(
@@ -192,7 +191,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildHeader(),
-
                     Flexible(
                       child: RawScrollbar(
                         controller: _scrollController,
@@ -210,7 +208,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
-
                     _buildFooter(),
                   ],
                 ),
@@ -283,7 +280,6 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ),
         const SizedBox(height: 12),
-
         Row(
           children: [
             Expanded(
@@ -323,9 +319,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ],
         ),
-
         const SizedBox(height: 24),
-
         Row(
           children: [
             const Expanded(child: Divider(color: _borderColor, thickness: 1)),
@@ -343,9 +337,7 @@ class _RegisterPageState extends State<RegisterPage> {
             const Expanded(child: Divider(color: _borderColor, thickness: 1)),
           ],
         ),
-
         const SizedBox(height: 18),
-
         _FieldLabel(title: l10n.fullName, requiredField: true),
         const SizedBox(height: 8),
         TextFormField(
@@ -369,9 +361,7 @@ class _RegisterPageState extends State<RegisterPage> {
             return null;
           },
         ),
-
         const SizedBox(height: 16),
-
         _FieldLabel(title: l10n.email, requiredField: true),
         const SizedBox(height: 8),
         TextFormField(
@@ -396,13 +386,8 @@ class _RegisterPageState extends State<RegisterPage> {
             return null;
           },
         ),
-
         const SizedBox(height: 16),
-
-        _FieldLabel(
-          title: l10n.password,
-          requiredField: true,
-        ),
+        _FieldLabel(title: l10n.password, requiredField: true),
         const SizedBox(height: 8),
         TextFormField(
           controller: _passCtrl,
@@ -437,9 +422,7 @@ class _RegisterPageState extends State<RegisterPage> {
             return null;
           },
         ),
-
         const SizedBox(height: 24),
-
         SizedBox(
           width: double.infinity,
           height: 42,

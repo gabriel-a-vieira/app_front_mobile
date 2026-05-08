@@ -37,8 +37,36 @@ const List<LanguageOption> languageOptions = [
   ),
 ];
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String? _loggedUserFirstName;
+
+  bool get _isLoggedIn {
+    return _loggedUserFirstName != null && _loggedUserFirstName!.isNotEmpty;
+  }
+
+  String _getLogoutLabel(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    final languageCode = localeProvider.locale.languageCode;
+
+    if (languageCode == 'en') {
+      return 'Logout';
+    }
+
+    return 'Sair';
+  }
+
+  void _logout() {
+    setState(() {
+      _loggedUserFirstName = null;
+    });
+  }
 
   void _openLoginModal(BuildContext context) {
     showDialog(
@@ -54,7 +82,11 @@ class HomePage extends StatelessWidget {
             vertical: 24,
           ),
           child: LoginPage(
-            onLoginSuccess: () {
+            onLoginSuccess: (result) {
+              setState(() {
+                _loggedUserFirstName = result.firstName;
+              });
+
               Navigator.of(dialogContext).pop();
             },
             onRegisterTap: () {
@@ -237,43 +269,73 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildLoginButton(BuildContext context) {
+  Widget _buildUserButton(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return InkWell(
-      onTap: () {
-        _openLoginModal(context);
-      },
-      borderRadius: BorderRadius.circular(999),
-      child: Padding(
-        padding: const EdgeInsets.only(right: 12, left: 4),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: colorScheme.surfaceContainerHighest,
-              child: Icon(
-                Icons.person_outline,
-                color: colorScheme.onSurface,
-                size: 20,
-              ),
+    final label = _isLoggedIn ? _loggedUserFirstName! : l10n.signIn;
+
+    final buttonContent = Padding(
+      padding: const EdgeInsets.only(right: 12, left: 4),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: colorScheme.surfaceContainerHighest,
+            child: Icon(
+              Icons.person_outline,
+              color: colorScheme.onSurface,
+              size: 20,
             ),
-            const SizedBox(width: 6),
-            Text(
-              l10n.signIn,
-              style: TextStyle(
-                color: theme.appBarTheme.foregroundColor ??
-                    colorScheme.onSurface,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: theme.appBarTheme.foregroundColor ?? colorScheme.onSurface,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+
+    if (!_isLoggedIn) {
+      return InkWell(
+        onTap: () {
+          _openLoginModal(context);
+        },
+        borderRadius: BorderRadius.circular(999),
+        child: buttonContent,
+      );
+    }
+
+    return PopupMenuButton<String>(
+      tooltip: label,
+      offset: const Offset(0, 42),
+      onSelected: (value) {
+        if (value == 'logout') {
+          _logout();
+        }
+      },
+      itemBuilder: (context) {
+        return [
+          PopupMenuItem<String>(
+            value: 'logout',
+            child: Row(
+              children: [
+                const Icon(Icons.logout, size: 18),
+                const SizedBox(width: 8),
+                Text(_getLogoutLabel(context)),
+              ],
+            ),
+          ),
+        ];
+      },
+      child: buttonContent,
     );
   }
 
@@ -296,7 +358,7 @@ class HomePage extends StatelessWidget {
             },
           ),
           _buildLanguageSelector(context),
-          _buildLoginButton(context),
+          _buildUserButton(context),
         ],
       ),
       body: Center(

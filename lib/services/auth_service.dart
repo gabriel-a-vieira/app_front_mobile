@@ -1,12 +1,34 @@
 import 'package:dio/dio.dart';
 
+class AuthLoginResult {
+  final String token;
+  final String name;
+  final String email;
+
+  AuthLoginResult({
+    required this.token,
+    required this.name,
+    required this.email,
+  });
+
+  String get firstName {
+    final trimmedName = name.trim();
+
+    if (trimmedName.isEmpty) {
+      return '';
+    }
+
+    return trimmedName.split(' ').first;
+  }
+}
+
 class AuthService {
   AuthService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
 
   final Dio _dio;
   final String baseUrl;
 
-  Future<String> login({
+  Future<AuthLoginResult> login({
     required String email,
     required String password,
   }) async {
@@ -14,14 +36,25 @@ class AuthService {
 
     final response = await _dio.post(
       url,
-      data: {'email': email, 'password': password},
-      options: Options(headers: {'Content-Type': 'application/json'}),
+      data: {
+        'email': email,
+        'password': password,
+      },
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ),
     );
 
     final data = response.data;
 
     if (data is Map && data['token'] is String) {
-      return data['token'] as String;
+      return AuthLoginResult(
+        token: data['token'] as String,
+        name: data['name'] is String ? data['name'] as String : '',
+        email: data['email'] is String ? data['email'] as String : email,
+      );
     }
 
     throw Exception('Invalid login response');
@@ -34,7 +67,16 @@ class AuthService {
   }) async {
     final response = await _dio.post(
       '$baseUrl/auth/register',
-      data: {'name': name, 'email': email, 'password': password},
+      data: {
+        'name': name,
+        'email': email,
+        'password': password,
+      },
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {

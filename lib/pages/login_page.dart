@@ -6,7 +6,7 @@ import '../services/auth_service.dart';
 import '../storage/token_storage.dart';
 
 class LoginPage extends StatefulWidget {
-  final VoidCallback? onLoginSuccess;
+  final void Function(AuthLoginResult result)? onLoginSuccess;
   final VoidCallback? onRegisterTap;
 
   const LoginPage({
@@ -58,16 +58,16 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _loading = true);
 
     try {
-      final token = await _authService.login(
+      final result = await _authService.login(
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text,
       );
 
-      await _tokenStorage.saveAccessToken(token);
+      await _tokenStorage.saveAccessToken(result.token);
 
       if (!mounted) return;
 
-      widget.onLoginSuccess?.call();
+      widget.onLoginSuccess?.call(result);
     } catch (e, stackTrace) {
       debugPrint('Erro durante o login: $e');
       debugPrint('StackTrace: $stackTrace');
@@ -234,7 +234,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           const SizedBox(height: 12),
-
           Row(
             children: [
               Expanded(
@@ -274,9 +273,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ],
           ),
-
           const SizedBox(height: 18),
-
           Row(
             children: [
               const Expanded(child: Divider(color: _borderColor, thickness: 1)),
@@ -294,9 +291,7 @@ class _LoginPageState extends State<LoginPage> {
               const Expanded(child: Divider(color: _borderColor, thickness: 1)),
             ],
           ),
-
           const SizedBox(height: 18),
-
           _FieldLabel(title: l10n.email, requiredField: true),
           const SizedBox(height: 8),
           TextFormField(
@@ -326,9 +321,7 @@ class _LoginPageState extends State<LoginPage> {
               return null;
             },
           ),
-
           const SizedBox(height: 16),
-
           _FieldLabel(title: l10n.password, requiredField: true),
           const SizedBox(height: 8),
           TextFormField(
@@ -365,9 +358,7 @@ class _LoginPageState extends State<LoginPage> {
               return null;
             },
           ),
-
           const SizedBox(height: 10),
-
           Align(
             alignment: Alignment.centerRight,
             child: InkWell(
@@ -384,9 +375,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-
           const SizedBox(height: 18),
-
           SizedBox(
             width: double.infinity,
             height: 50,
