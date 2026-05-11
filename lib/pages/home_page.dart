@@ -4,6 +4,7 @@ import 'package:app_front_mobile/services/company_service.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:app_front_mobile/pages/company_detail_page.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -46,7 +47,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final _companyService = CompanyService(baseUrl: 'http://localhost:8081/company');
+  final _companyService = CompanyService(
+    baseUrl: 'http://localhost:8081/company',
+  );
   final _searchController = TextEditingController();
 
   String? _loggedUserFirstName;
@@ -402,10 +405,7 @@ class _HomePageState extends State<HomePage> {
       offset: const Offset(0, 42),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: menuBorderColor,
-          width: 1,
-        ),
+        side: BorderSide(color: menuBorderColor, width: 1),
       ),
       onSelected: (LanguageOption option) {
         final localeProvider = Provider.of<LocaleProvider>(
@@ -419,25 +419,18 @@ class _HomePageState extends State<HomePage> {
         return languageOptions.map((option) {
           final isSelected =
               option.locale.languageCode ==
-                      selectedLanguage.locale.languageCode &&
-                  option.locale.countryCode ==
-                      selectedLanguage.locale.countryCode;
+                  selectedLanguage.locale.languageCode &&
+              option.locale.countryCode == selectedLanguage.locale.countryCode;
 
           return PopupMenuItem<LanguageOption>(
             value: option,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 6,
-              vertical: 4,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
             child: Container(
               height: 42,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
                 border: isSelected
-                    ? Border.all(
-                        color: selectedColor,
-                        width: 1.5,
-                      )
+                    ? Border.all(color: selectedColor, width: 1.5)
                     : null,
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -490,18 +483,14 @@ class _HomePageState extends State<HomePage> {
             Text(
               selectedLanguage.shortLabel,
               style: TextStyle(
-                color: theme.appBarTheme.foregroundColor ??
-                    colorScheme.onSurface,
+                color:
+                    theme.appBarTheme.foregroundColor ?? colorScheme.onSurface,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(width: 2),
-            Icon(
-              Icons.keyboard_arrow_down,
-              color: mutedColor,
-              size: 16,
-            ),
+            Icon(Icons.keyboard_arrow_down, color: mutedColor, size: 16),
           ],
         ),
       ),
@@ -585,10 +574,7 @@ class _HomePageState extends State<HomePage> {
     return TextField(
       controller: _searchController,
       onSubmitted: (_) => _reloadCompanies(),
-      style: TextStyle(
-        color: colorScheme.onSurface,
-        fontSize: 14,
-      ),
+      style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
       decoration: InputDecoration(
         hintText: _text(
           context,
@@ -613,21 +599,15 @@ class _HomePageState extends State<HomePage> {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: colorScheme.outline.withOpacity(0.25),
-          ),
+          borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.25)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: colorScheme.outline.withOpacity(0.25),
-          ),
+          borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.25)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: BorderSide(
-            color: colorScheme.primary,
-          ),
+          borderSide: BorderSide(color: colorScheme.primary),
         ),
       ),
     );
@@ -709,11 +689,7 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.symmetric(vertical: 64),
           child: Column(
             children: [
-              Icon(
-                Icons.location_on,
-                color: colorScheme.error,
-                size: 72,
-              ),
+              Icon(Icons.location_on, color: colorScheme.error, size: 72),
               const SizedBox(height: 16),
               Text(
                 _text(
@@ -752,8 +728,8 @@ class _HomePageState extends State<HomePage> {
         final cardWidth = maxWidth >= 1000
             ? (maxWidth - 32) / 3
             : maxWidth >= 700
-                ? (maxWidth - 16) / 2
-                : maxWidth;
+            ? (maxWidth - 16) / 2
+            : maxWidth;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -764,7 +740,16 @@ class _HomePageState extends State<HomePage> {
               children: _companies.map((company) {
                 return SizedBox(
                   width: cardWidth,
-                  child: _CompanyCard(company: company),
+                  child: _CompanyCard(
+                    company: company,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CompanyDetailPage(company: company),
+                        ),
+                      );
+                    },
+                  ),
                 );
               }).toList(),
             ),
@@ -883,9 +868,11 @@ class _HomePageState extends State<HomePage> {
 
 class _CompanyCard extends StatelessWidget {
   final CompanySummary company;
+  final VoidCallback onTap;
 
   const _CompanyCard({
     required this.company,
+    required this.onTap,
   });
 
   @override
@@ -897,67 +884,74 @@ class _CompanyCard extends StatelessWidget {
         ? company.tradeName
         : company.legalName;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF11141B)
-            : colorScheme.surfaceContainerHighest,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.25),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark
+                ? const Color(0xFF11141B)
+                : colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colorScheme.outline.withOpacity(0.25),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.storefront,
+                  color: colorScheme.primary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      company.typeLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withOpacity(0.65),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.chevron_right,
+                color: colorScheme.onSurface.withOpacity(0.55),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.storefront,
-              color: colorScheme.primary,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  company.typeLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.65),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Icon(
-            Icons.chevron_right,
-            color: colorScheme.onSurface.withOpacity(0.55),
-          ),
-        ],
       ),
     );
   }
