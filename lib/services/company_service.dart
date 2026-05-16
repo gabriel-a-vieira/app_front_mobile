@@ -1,10 +1,7 @@
 import 'package:dio/dio.dart';
 
 class CompanyService {
-  CompanyService({
-    Dio? dio,
-    required this.baseUrl,
-  }) : _dio = dio ?? Dio();
+  CompanyService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
 
   final Dio _dio;
   final String baseUrl;
@@ -21,8 +18,7 @@ class CompanyService {
         'page': page,
         'size': size,
         if (type != null && type.isNotEmpty) 'type': type,
-        if (search != null && search.trim().isNotEmpty)
-          'search': search.trim(),
+        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
       },
     );
 
@@ -33,6 +29,28 @@ class CompanyService {
     }
 
     return CompanyPage.fromJson(data);
+  }
+
+  Future<void> createCompany({
+    required String token,
+    required CreateCompanyRequest request,
+  }) async {
+    final response = await _dio.post(
+      '$baseUrl/companies',
+      data: request.toJson(),
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(
+        'Erro ao cadastrar empresa. Status: ${response.statusCode}',
+      );
+    }
   }
 
   Future<List<CompanyTypeOption>> findCompanyTypes() async {
@@ -70,9 +88,9 @@ class CompanyPage {
     return CompanyPage(
       content: contentData is List
           ? contentData
-              .whereType<Map>()
-              .map((item) => CompanySummary.fromJson(item))
-              .toList()
+                .whereType<Map>()
+                .map((item) => CompanySummary.fromJson(item))
+                .toList()
           : [],
       number: json['number'] is int ? json['number'] as int : 0,
       totalPages: json['totalPages'] is int ? json['totalPages'] as int : 0,
@@ -110,14 +128,73 @@ class CompanySummary {
   }
 }
 
+class CreateCompanyRequest {
+  final String legalName;
+  final String tradeName;
+  final String cnpj;
+  final String type;
+
+  final String imageUrl;
+
+  final String zipCode;
+  final String street;
+  final String number;
+  final String district;
+  final String city;
+  final String state;
+  final String complement;
+
+  final String instagramUrl;
+  final String facebookUrl;
+  final String websiteUrl;
+  final String tiktokUrl;
+
+  CreateCompanyRequest({
+    required this.legalName,
+    required this.tradeName,
+    required this.cnpj,
+    required this.type,
+    required this.imageUrl,
+    required this.zipCode,
+    required this.street,
+    required this.number,
+    required this.district,
+    required this.city,
+    required this.state,
+    required this.complement,
+    required this.instagramUrl,
+    required this.facebookUrl,
+    required this.websiteUrl,
+    required this.tiktokUrl,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'legalName': legalName,
+      'tradeName': tradeName,
+      'cnpj': cnpj,
+      'type': type,
+      'imageUrl': imageUrl,
+      'zipCode': zipCode,
+      'street': street,
+      'number': number,
+      'district': district,
+      'city': city,
+      'state': state,
+      'complement': complement,
+      'instagramUrl': instagramUrl,
+      'facebookUrl': facebookUrl,
+      'websiteUrl': websiteUrl,
+      'tiktokUrl': tiktokUrl,
+    };
+  }
+}
+
 class CompanyTypeOption {
   final String code;
   final String label;
 
-  CompanyTypeOption({
-    required this.code,
-    required this.label,
-  });
+  CompanyTypeOption({required this.code, required this.label});
 
   factory CompanyTypeOption.fromJson(Map json) {
     return CompanyTypeOption(

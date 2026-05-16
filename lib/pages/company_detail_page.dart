@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 class CompanyDetailPage extends StatelessWidget {
   final CompanySummary company;
 
-  const CompanyDetailPage({
-    super.key,
-    required this.company,
-  });
+  const CompanyDetailPage({super.key, required this.company});
 
   String get _displayName {
     if (company.tradeName.trim().isNotEmpty) {
@@ -24,26 +21,10 @@ class CompanyDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 16,
-        title: Row(
-          children: [
-            InkWell(
-              onTap: () => Navigator.of(context).pop(),
-              borderRadius: BorderRadius.circular(999),
-              child: const Padding(
-                padding: EdgeInsets.all(6),
-                child: Icon(Icons.arrow_back),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _displayName,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+        titleSpacing: 0,
+        title: Text(
+          _displayName,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
         ),
       ),
       body: SingleChildScrollView(
@@ -91,10 +72,7 @@ class CompanyDetailPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 28),
-                    Expanded(
-                      flex: 4,
-                      child: _buildSidebar(context),
-                    ),
+                    Expanded(flex: 4, child: _buildSidebar(context)),
                   ],
                 );
               },
@@ -117,15 +95,9 @@ class CompanyDetailPage extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: colorScheme.primary.withOpacity(0.12),
-            border: Border.all(
-              color: colorScheme.primary.withOpacity(0.35),
-            ),
+            border: Border.all(color: colorScheme.primary.withOpacity(0.35)),
           ),
-          child: Icon(
-            Icons.storefront,
-            color: colorScheme.primary,
-            size: 28,
-          ),
+          child: Icon(Icons.storefront, color: colorScheme.primary, size: 28),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -144,11 +116,7 @@ class CompanyDetailPage extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(
-                    Icons.star,
-                    color: Color(0xFFFFB800),
-                    size: 18,
-                  ),
+                  const Icon(Icons.star, color: Color(0xFFFFB800), size: 18),
                   const SizedBox(width: 6),
                   Text(
                     '5.0',
@@ -176,10 +144,7 @@ class CompanyDetailPage extends StatelessWidget {
                   : colorScheme.surfaceContainerHighest,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.favorite_border,
-              color: Color(0xFFE34B4B),
-            ),
+            child: const Icon(Icons.favorite_border, color: Color(0xFFE34B4B)),
           ),
         ),
         const SizedBox(width: 12),
@@ -232,7 +197,9 @@ class CompanyDetailPage extends StatelessWidget {
             Text(
               'Imagem do estabelecimento',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.72),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.72),
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -241,7 +208,9 @@ class CompanyDetailPage extends StatelessWidget {
             Text(
               _displayName,
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.52),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.52),
                 fontSize: 14,
               ),
             ),
@@ -279,7 +248,9 @@ class CompanyDetailPage extends StatelessWidget {
                   style: TextStyle(
                     color: selected
                         ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.78),
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.78),
                     fontSize: 14,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   ),
@@ -331,26 +302,14 @@ class CompanyDetailPage extends StatelessWidget {
             final itemWidth = width >= 760
                 ? (width - 36) / 4
                 : width >= 480
-                    ? (width - 12) / 2
-                    : width;
+                ? (width - 12) / 2
+                : width;
 
             final items = [
-              (
-                icon: Icons.wifi,
-                label: 'Wi-fi',
-              ),
-              (
-                icon: Icons.local_parking,
-                label: 'Estacionamento',
-              ),
-              (
-                icon: Icons.accessible,
-                label: 'Acessibilidade',
-              ),
-              (
-                icon: Icons.child_friendly,
-                label: 'Atende crianças',
-              ),
+              (icon: Icons.wifi, label: 'Wi-fi'),
+              (icon: Icons.local_parking, label: 'Estacionamento'),
+              (icon: Icons.accessible, label: 'Acessibilidade'),
+              (icon: Icons.child_friendly, label: 'Atende crianças'),
             ];
 
             return Wrap(
@@ -359,10 +318,7 @@ class CompanyDetailPage extends StatelessWidget {
               children: items.map((item) {
                 return SizedBox(
                   width: itemWidth,
-                  child: _AmenityCard(
-                    icon: item.icon,
-                    label: item.label,
-                  ),
+                  child: _AmenityCard(icon: item.icon, label: item.label),
                 );
               }).toList(),
             );
@@ -382,9 +338,7 @@ class CompanyDetailPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF171920) : colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.18),
-        ),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,7 +375,9 @@ class CompanyDetailPage extends StatelessWidget {
               Text(
                 'Avenida Firmino da Silva 484, 484 - 89209-224 Parque Guarani - Joinville/SC',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.76),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.76),
                   fontSize: 14,
                   height: 1.45,
                 ),
@@ -514,7 +470,9 @@ class CompanyDetailPage extends StatelessWidget {
                     Text(
                       hour.$2,
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.78),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.78),
                         fontSize: 14,
                       ),
                     ),
@@ -522,7 +480,9 @@ class CompanyDetailPage extends StatelessWidget {
                     Text(
                       hour.$3,
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.78),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.78),
                         fontSize: 14,
                       ),
                     ),
@@ -561,10 +521,7 @@ class CompanyDetailPage extends StatelessWidget {
           runSpacing: 10,
           children: payments.map((payment) {
             return Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? const Color(0xFF232732)
@@ -574,7 +531,9 @@ class CompanyDetailPage extends StatelessWidget {
               child: Text(
                 payment,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.8),
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -642,10 +601,7 @@ class _AmenityCard extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _AmenityCard({
-    required this.icon,
-    required this.label,
-  });
+  const _AmenityCard({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -657,17 +613,11 @@ class _AmenityCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF12151C) : colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.18),
-        ),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.18)),
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            size: 28,
-            color: colorScheme.onSurface.withOpacity(0.75),
-          ),
+          Icon(icon, size: 28, color: colorScheme.onSurface.withOpacity(0.75)),
           const SizedBox(height: 12),
           Text(
             label,

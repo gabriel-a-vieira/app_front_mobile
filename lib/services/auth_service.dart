@@ -4,11 +4,13 @@ class AuthLoginResult {
   final String token;
   final String name;
   final String email;
+  final String role;
 
   AuthLoginResult({
     required this.token,
     required this.name,
     required this.email,
+    required this.role,
   });
 
   String get firstName {
@@ -54,6 +56,7 @@ class AuthService {
         token: data['token'] as String,
         name: data['name'] is String ? data['name'] as String : '',
         email: data['email'] is String ? data['email'] as String : email,
+        role: data['role'] is String ? data['role'] as String : 'CLIENT',
       );
     }
 

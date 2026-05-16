@@ -5,6 +5,7 @@ import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_front_mobile/pages/company_detail_page.dart';
+import 'package:app_front_mobile/pages/company_create_page.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -54,6 +55,7 @@ class _HomePageState extends State<HomePage> {
 
   String? _loggedUserFirstName;
   String? _selectedCompanyType;
+  String? _loggedUserRole;
 
   List<CompanyTypeOption> _companyTypes = [];
   List<CompanySummary> _companies = [];
@@ -68,6 +70,18 @@ class _HomePageState extends State<HomePage> {
 
   bool get _isLoggedIn {
     return _loggedUserFirstName != null && _loggedUserFirstName!.isNotEmpty;
+  }
+
+  bool get _isMasterAdmin {
+    return _loggedUserRole == 'MASTER_ADMIN';
+  }
+
+  bool get _isCompanyAdmin {
+    return _loggedUserRole == 'COMPANY_ADMIN';
+  }
+
+  bool get _canSeeAdminMenu {
+    return _isMasterAdmin || _isCompanyAdmin;
   }
 
   @override
@@ -264,7 +278,14 @@ class _HomePageState extends State<HomePage> {
   void _logout() {
     setState(() {
       _loggedUserFirstName = null;
+      _loggedUserRole = null;
     });
+  }
+
+  void _openCompanyCreatePage() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const CompanyCreatePage()));
   }
 
   void _openLoginModal(BuildContext context) {
@@ -284,6 +305,7 @@ class _HomePageState extends State<HomePage> {
             onLoginSuccess: (result) {
               setState(() {
                 _loggedUserFirstName = result.firstName;
+                _loggedUserRole = result.role;
               });
 
               Navigator.of(dialogContext).pop();
@@ -323,6 +345,90 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildAdminMenu(BuildContext context) {
+    if (!_canSeeAdminMenu) {
+      return const SizedBox.shrink();
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return PopupMenuButton<String>(
+      tooltip: 'Admin',
+      offset: const Offset(0, 36),
+      onSelected: (value) {
+        if (value == 'company-create') {
+          _openCompanyCreatePage();
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Funcionalidade ainda nao implementada'),
+          ),
+        );
+      },
+      itemBuilder: (context) {
+        return [
+          if (_isMasterAdmin)
+            const PopupMenuItem<String>(
+              value: 'company-create',
+              child: Text('Cadastro de Empresa'),
+            ),
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: 'products',
+            child: Text('Cadastro de Produtos'),
+          ),
+          const PopupMenuItem<String>(
+            value: 'professionals',
+            child: Text('Profissionais'),
+          ),
+          const PopupMenuItem<String>(
+            value: 'clients',
+            child: Text('Clientes'),
+          ),
+          const PopupMenuItem<String>(
+            value: 'appointment',
+            child: Text('Appointment'),
+          ),
+          const PopupMenuItem<String>(
+            value: 'availability',
+            child: Text('Disponibilidade'),
+          ),
+          const PopupMenuItem<String>(
+            value: 'schedule',
+            child: Text('Agendamento'),
+          ),
+          const PopupMenuItem<String>(
+            value: 'services',
+            child: Text('Servicos'),
+          ),
+        ];
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Row(
+          children: [
+            Text(
+              'ADMIN',
+              style: TextStyle(
+                color: colorScheme.primary,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: 16,
+              color: colorScheme.primary,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -801,6 +907,7 @@ class _HomePageState extends State<HomePage> {
               label: _text(context, 'Meus Agendamentos', 'My Appointments'),
               selected: false,
             ),
+            if (_canSeeAdminMenu) _buildAdminMenu(context),
           ],
         ),
         actions: [
@@ -870,10 +977,7 @@ class _CompanyCard extends StatelessWidget {
   final CompanySummary company;
   final VoidCallback onTap;
 
-  const _CompanyCard({
-    required this.company,
-    required this.onTap,
-  });
+  const _CompanyCard({required this.company, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -896,9 +1000,7 @@ class _CompanyCard extends StatelessWidget {
                 ? const Color(0xFF11141B)
                 : colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: colorScheme.outline.withOpacity(0.25),
-            ),
+            border: Border.all(color: colorScheme.outline.withOpacity(0.25)),
           ),
           child: Row(
             children: [
