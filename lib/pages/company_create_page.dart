@@ -1,6 +1,9 @@
 import 'package:app_front_mobile/services/company_service.dart';
+import 'package:app_front_mobile/services/state_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CompanyCreatePage extends StatefulWidget {
   const CompanyCreatePage({super.key});
@@ -22,7 +25,6 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
   final _numberCtrl = TextEditingController();
   final _districtCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
-  final _stateCtrl = TextEditingController();
   final _complementCtrl = TextEditingController();
 
   final _instagramCtrl = TextEditingController();
@@ -30,19 +32,31 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
   final _websiteCtrl = TextEditingController();
   final _tiktokCtrl = TextEditingController();
 
-  final _companyService = CompanyService(baseUrl: 'http://localhost:8081');
+  final _companyService = CompanyService(
+    baseUrl: 'http://localhost:8081/company',
+  );
+
+  final _stateService = StateService(
+    baseUrl: 'http://localhost:8081/state',
+  );
+
   final _tokenStorage = TokenStorage();
 
   bool _loading = false;
   bool _loadingTypes = true;
+  bool _loadingStates = true;
 
   String? _selectedType;
+  StateOption? _selectedState;
+
   List<CompanyTypeOption> _types = [];
+  List<StateOption> _states = [];
 
   @override
   void initState() {
     super.initState();
     _loadTypes();
+    _loadStates();
   }
 
   @override
@@ -57,7 +71,6 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
     _numberCtrl.dispose();
     _districtCtrl.dispose();
     _cityCtrl.dispose();
-    _stateCtrl.dispose();
     _complementCtrl.dispose();
 
     _instagramCtrl.dispose();
@@ -91,6 +104,29 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
     }
   }
 
+  Future<void> _loadStates() async {
+    try {
+      final states = await _stateService.findStates();
+
+      if (!mounted) return;
+
+      setState(() {
+        _states = states;
+        _loadingStates = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingStates = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao buscar UFs: $e')),
+      );
+    }
+  }
+
   Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
 
@@ -105,18 +141,21 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
         throw Exception('Token nao encontrado');
       }
 
+      final cleanCnpj = onlyAlphanumeric(_cnpjCtrl.text);
+      final cleanPostalCode = onlyNumbers(_zipCodeCtrl.text);
+
       final request = CreateCompanyRequest(
         legalName: _legalNameCtrl.text.trim(),
         tradeName: _tradeNameCtrl.text.trim(),
-        cnpj: _cnpjCtrl.text.trim(),
+        cnpj: cleanCnpj,
         type: _selectedType ?? '',
         imageUrl: _imageUrlCtrl.text.trim(),
-        zipCode: _zipCodeCtrl.text.trim(),
+        zipCode: cleanPostalCode,
         street: _streetCtrl.text.trim(),
         number: _numberCtrl.text.trim(),
         district: _districtCtrl.text.trim(),
         city: _cityCtrl.text.trim(),
-        state: _stateCtrl.text.trim().toUpperCase(),
+        state: _selectedState?.uf ?? '',
         complement: _complementCtrl.text.trim(),
         instagramUrl: _instagramCtrl.text.trim(),
         facebookUrl: _facebookCtrl.text.trim(),
@@ -202,10 +241,13 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
     String? hint,
     bool requiredField = false,
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String value)? customValidator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       decoration: _inputDecoration(
         label: label,
         hint: hint,
@@ -215,6 +257,10 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
 
         if (requiredField && text.isEmpty) {
           return '$label e obrigatorio';
+        }
+
+        if (customValidator != null) {
+          return customValidator(text);
         }
 
         return null;
@@ -287,6 +333,60 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
     );
   }
 
+  Widget _buildCompanyTypeDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedType,
+      decoration: _inputDecoration(label: 'Tipo'),
+      items: _types.map((type) {
+        return DropdownMenuItem<String>(
+          value: type.code,
+          child: Text(type.label),
+        );
+      }).toList(),
+      onChanged: _loadingTypes
+          ? null
+          : (value) {
+              setState(() {
+                _selectedType = value;
+              });
+            },
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Tipo e obrigatorio';
+        }
+
+        return null;
+      },
+    );
+  }
+
+  Widget _buildStateDropdown() {
+    return DropdownButtonFormField<StateOption>(
+      value: _selectedState,
+      decoration: _inputDecoration(label: 'UF'),
+      items: _states.map((state) {
+        return DropdownMenuItem<StateOption>(
+          value: state,
+          child: Text(state.label),
+        );
+      }).toList(),
+      onChanged: _loadingStates
+          ? null
+          : (value) {
+              setState(() {
+                _selectedState = value;
+              });
+            },
+      validator: (value) {
+        if (value == null || value.uf.isEmpty) {
+          return 'UF e obrigatoria';
+        }
+
+        return null;
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -321,33 +421,22 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
                         _buildTextField(
                           controller: _cnpjCtrl,
                           label: 'CNPJ',
+                          hint: '00.000.000/0000-00',
                           requiredField: true,
-                          keyboardType: TextInputType.number,
-                        ),
-                        DropdownButtonFormField<String>(
-                          value: _selectedType,
-                          decoration: _inputDecoration(label: 'Tipo'),
-                          items: _types.map((type) {
-                            return DropdownMenuItem<String>(
-                              value: type.code,
-                              child: Text(type.label),
-                            );
-                          }).toList(),
-                          onChanged: _loadingTypes
-                              ? null
-                              : (value) {
-                                  setState(() {
-                                    _selectedType = value;
-                                  });
-                                },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Tipo e obrigatorio';
+                          inputFormatters: [
+                            CnpjAlphanumericInputFormatter(),
+                          ],
+                          customValidator: (value) {
+                            final cleanValue = onlyAlphanumeric(value);
+
+                            if (cleanValue.length != 14) {
+                              return 'CNPJ deve ter 14 caracteres';
                             }
 
                             return null;
                           },
                         ),
+                        _buildCompanyTypeDropdown(),
                       ]),
                     ],
                   ),
@@ -370,6 +459,20 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
                         _buildTextField(
                           controller: _zipCodeCtrl,
                           label: 'CEP',
+                          hint: '00000-000',
+                          inputFormatters: [
+                            CepInputFormatter(),
+                          ],
+                          customValidator: (value) {
+                            final cleanValue = onlyNumbers(value);
+
+                            if (cleanValue.isNotEmpty &&
+                                cleanValue.length != 8) {
+                              return 'CEP deve ter 8 digitos';
+                            }
+
+                            return null;
+                          },
                         ),
                         _buildTextField(
                           controller: _streetCtrl,
@@ -387,11 +490,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
                           controller: _cityCtrl,
                           label: 'Cidade',
                         ),
-                        _buildTextField(
-                          controller: _stateCtrl,
-                          label: 'UF',
-                          hint: 'SC',
-                        ),
+                        _buildStateDropdown(),
                       ]),
                       const SizedBox(height: 14),
                       _buildTextField(

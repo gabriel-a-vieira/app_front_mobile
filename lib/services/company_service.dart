@@ -36,7 +36,7 @@ class CompanyService {
     required CreateCompanyRequest request,
   }) async {
     final response = await _dio.post(
-      '$baseUrl/companies',
+      baseUrl,
       data: request.toJson(),
       options: Options(
         headers: {
