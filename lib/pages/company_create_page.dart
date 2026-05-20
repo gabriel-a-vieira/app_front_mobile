@@ -155,7 +155,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
         number: _numberCtrl.text.trim(),
         district: _districtCtrl.text.trim(),
         city: _cityCtrl.text.trim(),
-        state: _selectedState?.uf ?? '',
+        state: _selectedState?.abbreviation ?? '',
         complement: _complementCtrl.text.trim(),
         instagramUrl: _instagramCtrl.text.trim(),
         facebookUrl: _facebookCtrl.text.trim(),
@@ -378,7 +378,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
               });
             },
       validator: (value) {
-        if (value == null || value.uf.isEmpty) {
+        if (value == null || value.abbreviation.isEmpty) {
           return 'UF e obrigatoria';
         }
 

@@ -28,30 +28,31 @@ class StateService {
 class StateOption {
   final String id;
   final String name;
-  final String uf;
+  final String abbreviation;
 
   StateOption({
     required this.id,
     required this.name,
-    required this.uf,
+    required this.abbreviation,
   });
 
   factory StateOption.fromJson(Map json) {
     return StateOption(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      uf: json['uf']?.toString() ??
-          json['acronym']?.toString() ??
-          json['code']?.toString() ??
-          '',
+      abbreviation: json['abbreviation']?.toString() ?? '',
     );
   }
 
   String get label {
-    if (name.isEmpty) {
-      return uf;
+    if (abbreviation.isEmpty) {
+      return name;
     }
 
-    return '$uf - $name';
+    if (name.isEmpty) {
+      return abbreviation;
+    }
+
+    return '$abbreviation - $name';
   }
 }
