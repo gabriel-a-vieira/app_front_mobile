@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_front_mobile/pages/company_detail_page.dart';
 import 'package:app_front_mobile/pages/company_create_page.dart';
+import 'package:app_front_mobile/pages/professional_management_page.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -282,10 +283,22 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _openCompanyCreatePage() {
-    Navigator.of(
+  Future<void> _openCompanyCreatePage() async {
+    final created = await Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const CompanyCreatePage()));
+    ).push<bool>(MaterialPageRoute(builder: (_) => const CompanyCreatePage()));
+
+    if (!mounted) return;
+
+    if (created == true) {
+      await _reloadCompanies();
+    }
+  }
+
+  Future<void> _openProfessionalManagementPage() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ProfessionalManagementPage()),
+    );
   }
 
   void _openLoginModal(BuildContext context) {
@@ -361,6 +374,10 @@ class _HomePageState extends State<HomePage> {
       onSelected: (value) {
         if (value == 'company-create') {
           _openCompanyCreatePage();
+          return;
+        }
+        if (value == 'professionals') {
+          _openProfessionalManagementPage();
           return;
         }
 
