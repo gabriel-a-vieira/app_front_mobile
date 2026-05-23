@@ -3,14 +3,12 @@ import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:app_front_mobile/services/state_service.dart';
 
 class ProfessionalFormPage extends StatefulWidget {
   final String? professionalId;
 
-  const ProfessionalFormPage({
-    super.key,
-    this.professionalId,
-  });
+  const ProfessionalFormPage({super.key, this.professionalId});
 
   bool get isEditing {
     return professionalId != null && professionalId!.isNotEmpty;
@@ -27,6 +25,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     baseUrl: 'http://localhost:8081/professional',
   );
 
+  final _stateService = StateService(baseUrl: 'http://localhost:8081/state');
   final _tokenStorage = TokenStorage();
 
   final _nameCtrl = TextEditingController();
@@ -39,33 +38,26 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
   final _numberCtrl = TextEditingController();
   final _neighborhoodCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
-  final _stateCtrl = TextEditingController();
   final _complementCtrl = TextEditingController();
 
   bool _loading = false;
   bool _loadingData = false;
+  bool _loadingStates = true;
+
+  StateOption? _selectedState;
+  List<StateOption> _states = [];
 
   String _selectedGender = 'MASCULINO';
   String _selectedStatus = 'ACTIVE';
 
-  final List<String> _genderOptions = [
-    'MASCULINO',
-    'FEMININO',
-    'OUTRO',
-  ];
+  final List<String> _genderOptions = ['MASCULINO', 'FEMININO', 'OUTRO'];
 
-  final List<String> _statusOptions = [
-    'ACTIVE',
-    'INACTIVE',
-  ];
+  final List<String> _statusOptions = ['ACTIVE', 'INACTIVE'];
 
   @override
   void initState() {
     super.initState();
-
-    if (widget.isEditing) {
-      _loadProfessional();
-    }
+    _loadInitialData();
   }
 
   @override
@@ -80,10 +72,53 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     _numberCtrl.dispose();
     _neighborhoodCtrl.dispose();
     _cityCtrl.dispose();
-    _stateCtrl.dispose();
     _complementCtrl.dispose();
 
     super.dispose();
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() {
+      _loadingStates = true;
+      _loadingData = widget.isEditing;
+    });
+
+    try {
+      final states = await _stateService.findStates();
+
+      ProfessionalSummary? professional;
+
+      if (widget.isEditing) {
+        final token = await _getToken();
+
+        professional = await _professionalService.findById(
+          token: token,
+          id: widget.professionalId!,
+        );
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _states = states;
+        _loadingStates = false;
+
+        if (professional != null) {
+          _fillForm(professional);
+        }
+
+        _loadingData = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingStates = false;
+        _loadingData = false;
+      });
+
+      _showMessage('Erro ao carregar dados: $e');
+    }
   }
 
   Future<String> _getToken() async {
@@ -96,51 +131,38 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     return token;
   }
 
-  Future<void> _loadProfessional() async {
-    setState(() {
-      _loadingData = true;
-    });
+  void _fillForm(ProfessionalSummary professional) {
+    _nameCtrl.text = professional.name;
+    _cpfCtrl.text = _formatCpf(professional.cpfCnpj);
+    _phoneCtrl.text = _formatPhone(professional.phone);
+    _birthDateCtrl.text = _formatDateFromApi(professional.birthDate);
 
-    try {
-      final token = await _getToken();
+    _postalCodeCtrl.text = _formatCep(professional.postalCode);
+    _streetCtrl.text = professional.street;
+    _numberCtrl.text = professional.number;
+    _neighborhoodCtrl.text = professional.neighborhood;
+    _cityCtrl.text = professional.city;
+    _complementCtrl.text = professional.complement;
 
-      final professional = await _professionalService.findById(
-        token: token,
-        id: widget.professionalId!,
+    _selectedGender = professional.gender.isNotEmpty
+        ? professional.gender
+        : _selectedGender;
+
+    _selectedStatus = professional.status.isNotEmpty
+        ? professional.status
+        : _selectedStatus;
+
+    final professionalState = professional.state.trim().toUpperCase();
+
+    if (professionalState.isNotEmpty) {
+      _selectedState = _states.firstWhere(
+        (state) => state.abbreviation.toUpperCase() == professionalState,
+        orElse: () => StateOption(
+          id: '',
+          name: professionalState,
+          abbreviation: professionalState,
+        ),
       );
-
-      if (!mounted) return;
-
-      _nameCtrl.text = professional.name;
-      _cpfCtrl.text = _formatCpf(professional.cpfCnpj);
-      _phoneCtrl.text = _formatPhone(professional.phone);
-      _birthDateCtrl.text = _formatDateFromApi(professional.birthDate);
-
-      _postalCodeCtrl.text = _formatCep(professional.postalCode);
-      _streetCtrl.text = professional.street;
-      _numberCtrl.text = professional.number;
-      _neighborhoodCtrl.text = professional.neighborhood;
-      _cityCtrl.text = professional.city;
-      _stateCtrl.text = professional.state;
-      _complementCtrl.text = professional.complement;
-
-      setState(() {
-        _selectedGender = professional.gender.isNotEmpty
-            ? professional.gender
-            : _selectedGender;
-        _selectedStatus = professional.status.isNotEmpty
-            ? professional.status
-            : _selectedStatus;
-        _loadingData = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _loadingData = false;
-      });
-
-      _showMessage('Erro ao buscar profissional: $e');
     }
   }
 
@@ -169,7 +191,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
         complement: _complementCtrl.text.trim(),
         neighborhood: _neighborhoodCtrl.text.trim(),
         city: _cityCtrl.text.trim(),
-        state: _stateCtrl.text.trim().toUpperCase(),
+        state: _selectedState?.abbreviation ?? '',
       );
 
       if (widget.isEditing) {
@@ -292,9 +314,9 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   InputDecoration _inputDecoration({
@@ -310,38 +332,54 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
       hintText: hint,
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor:
-          isDark ? const Color(0xFF1C212B) : colorScheme.surfaceContainerHighest,
-      labelStyle: TextStyle(
-        color: colorScheme.onSurface.withOpacity(0.8),
-      ),
-      hintStyle: TextStyle(
-        color: colorScheme.onSurface.withOpacity(0.45),
-      ),
+      fillColor: isDark
+          ? const Color(0xFF1C212B)
+          : colorScheme.surfaceContainerHighest,
+      labelStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.8)),
+      hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.45)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.outline.withOpacity(0.25),
-        ),
+        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.25)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.primary,
-        ),
+        borderSide: BorderSide(color: colorScheme.primary),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.error,
-        ),
+        borderSide: BorderSide(color: colorScheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.error,
-        ),
+        borderSide: BorderSide(color: colorScheme.error),
       ),
+    );
+  }
+
+  Widget _buildStateDropdown() {
+    return DropdownButtonFormField<StateOption>(
+      value: _selectedState,
+      decoration: _inputDecoration(label: 'UF'),
+      items: _states.map((state) {
+        return DropdownMenuItem<StateOption>(
+          value: state,
+          child: Text(state.label),
+        );
+      }).toList(),
+      onChanged: _loadingStates
+          ? null
+          : (value) {
+              setState(() {
+                _selectedState = value;
+              });
+            },
+      validator: (value) {
+        if (value == null || value.abbreviation.isEmpty) {
+          return 'UF e obrigatoria';
+        }
+
+        return null;
+      },
     );
   }
 
@@ -443,16 +481,11 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.22),
-        ),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle(title),
-          ...children,
-        ],
+        children: [_buildSectionTitle(title), ...children],
       ),
     );
   }
@@ -461,17 +494,15 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 760;
-        final width =
-            isWide ? (constraints.maxWidth - 14) / 2 : constraints.maxWidth;
+        final width = isWide
+            ? (constraints.maxWidth - 14) / 2
+            : constraints.maxWidth;
 
         return Wrap(
           spacing: 14,
           runSpacing: 14,
           children: fields.map((field) {
-            return SizedBox(
-              width: width,
-              child: field,
-            );
+            return SizedBox(width: width, child: field);
           }).toList(),
         );
       },
@@ -508,9 +539,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
                   label: 'CPF',
                   hint: '000.000.000-00',
                   requiredField: true,
-                  inputFormatters: [
-                    _CpfInputFormatter(),
-                  ],
+                  inputFormatters: [_CpfInputFormatter()],
                   customValidator: (value) {
                     final digits = onlyNumbers(value);
 
@@ -527,9 +556,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
                   hint: '(00) 00000-0000',
                   requiredField: true,
                   keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    _PhoneInputFormatter(),
-                  ],
+                  inputFormatters: [_PhoneInputFormatter()],
                   customValidator: (value) {
                     final digits = onlyNumbers(value);
 
@@ -584,9 +611,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
                   controller: _postalCodeCtrl,
                   label: 'CEP',
                   hint: '00000-000',
-                  inputFormatters: [
-                    CepInputFormatter(),
-                  ],
+                  inputFormatters: [CepInputFormatter()],
                   customValidator: (value) {
                     final digits = onlyNumbers(value);
 
@@ -597,33 +622,15 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
                     return null;
                   },
                 ),
-                _buildTextField(
-                  controller: _streetCtrl,
-                  label: 'Rua',
-                ),
-                _buildTextField(
-                  controller: _numberCtrl,
-                  label: 'Numero',
-                ),
-                _buildTextField(
-                  controller: _neighborhoodCtrl,
-                  label: 'Bairro',
-                ),
+                _buildTextField(controller: _streetCtrl, label: 'Rua'),
+                _buildTextField(controller: _numberCtrl, label: 'Numero'),
+                _buildTextField(controller: _neighborhoodCtrl, label: 'Bairro'),
                 _buildTextField(
                   controller: _cityCtrl,
                   label: 'Cidade',
                   requiredField: true,
                 ),
-                _buildTextField(
-                  controller: _stateCtrl,
-                  label: 'UF',
-                  hint: 'SC',
-                  requiredField: true,
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(2),
-                    _UpperCaseInputFormatter(),
-                  ],
-                ),
+                _buildStateDropdown(),
               ]),
               const SizedBox(height: 14),
               _buildTextField(
@@ -658,9 +665,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
                       widget.isEditing
                           ? 'Salvar alteracoes'
                           : 'Cadastrar profissional',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
             ),
           ),
@@ -671,13 +676,12 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title =
-        widget.isEditing ? 'Editar profissional' : 'Cadastrar profissional';
+    final title = widget.isEditing
+        ? 'Editar profissional'
+        : 'Cadastrar profissional';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(
