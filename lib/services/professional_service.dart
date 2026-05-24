@@ -157,6 +157,7 @@ class ProfessionalSummary {
   final String neighborhood;
   final String city;
   final String state;
+  final String cityId;
 
   ProfessionalSummary({
     required this.id,
@@ -174,6 +175,7 @@ class ProfessionalSummary {
     required this.neighborhood,
     required this.city,
     required this.state,
+    required this.cityId,
   });
 
   factory ProfessionalSummary.fromJson(Map json) {
@@ -193,6 +195,7 @@ class ProfessionalSummary {
       neighborhood: json['neighborhood']?.toString() ?? '',
       city: json['city']?.toString() ?? '',
       state: json['state']?.toString() ?? '',
+      cityId: json['cityId']?.toString() ?? '',
     );
   }
 }
@@ -212,6 +215,7 @@ class ProfessionalRequest {
   final String neighborhood;
   final String city;
   final String state;
+  final String cityId;
 
   ProfessionalRequest({
     required this.name,
@@ -227,6 +231,7 @@ class ProfessionalRequest {
     required this.neighborhood,
     required this.city,
     required this.state,
+    required this.cityId,
   });
 
   Map<String, dynamic> toJson() {
@@ -245,6 +250,7 @@ class ProfessionalRequest {
         'neighborhood': neighborhood,
         'city': city,
         'state': state,
+        'cityId': cityId,
       },
     };
   }

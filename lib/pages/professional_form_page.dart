@@ -1,9 +1,10 @@
+import 'package:app_front_mobile/services/city_service.dart';
 import 'package:app_front_mobile/services/professional_service.dart';
+import 'package:app_front_mobile/services/state_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:app_front_mobile/services/state_service.dart';
 
 class ProfessionalFormPage extends StatefulWidget {
   final String? professionalId;
@@ -26,6 +27,9 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
   );
 
   final _stateService = StateService(baseUrl: 'http://localhost:8081/state');
+
+  final _cityService = CityService(baseUrl: 'http://localhost:8081/city/state');
+
   final _tokenStorage = TokenStorage();
 
   final _nameCtrl = TextEditingController();
@@ -37,15 +41,18 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
   final _streetCtrl = TextEditingController();
   final _numberCtrl = TextEditingController();
   final _neighborhoodCtrl = TextEditingController();
-  final _cityCtrl = TextEditingController();
   final _complementCtrl = TextEditingController();
 
   bool _loading = false;
   bool _loadingData = false;
   bool _loadingStates = true;
+  bool _loadingCities = false;
 
   StateOption? _selectedState;
+  CityOption? _selectedCity;
+
   List<StateOption> _states = [];
+  List<CityOption> _cities = [];
 
   String _selectedGender = 'MASCULINO';
   String _selectedStatus = 'ACTIVE';
@@ -71,7 +78,6 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     _streetCtrl.dispose();
     _numberCtrl.dispose();
     _neighborhoodCtrl.dispose();
-    _cityCtrl.dispose();
     _complementCtrl.dispose();
 
     super.dispose();
@@ -107,6 +113,21 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
           _fillForm(professional);
         }
 
+        if (!widget.isEditing) {
+          _loadingData = false;
+        }
+      });
+
+      if (professional != null && _selectedState != null) {
+        await _loadCitiesByState(
+          _selectedState!.abbreviation,
+          selectedCityId: professional.cityId,
+        );
+      }
+
+      if (!mounted) return;
+
+      setState(() {
         _loadingData = false;
       });
     } catch (e) {
@@ -141,7 +162,6 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     _streetCtrl.text = professional.street;
     _numberCtrl.text = professional.number;
     _neighborhoodCtrl.text = professional.neighborhood;
-    _cityCtrl.text = professional.city;
     _complementCtrl.text = professional.complement;
 
     _selectedGender = professional.gender.isNotEmpty
@@ -155,14 +175,62 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     final professionalState = professional.state.trim().toUpperCase();
 
     if (professionalState.isNotEmpty) {
-      _selectedState = _states.firstWhere(
-        (state) => state.abbreviation.toUpperCase() == professionalState,
-        orElse: () => StateOption(
-          id: '',
-          name: professionalState,
-          abbreviation: professionalState,
-        ),
-      );
+      _selectedState = _findStateByAbbreviation(professionalState);
+    }
+  }
+
+  StateOption? _findStateByAbbreviation(String abbreviation) {
+    for (final state in _states) {
+      if (state.abbreviation.toUpperCase() == abbreviation.toUpperCase()) {
+        return state;
+      }
+    }
+
+    return null;
+  }
+
+  CityOption? _findCityById(List<CityOption> cities, String cityId) {
+    for (final city in cities) {
+      if (city.id == cityId) {
+        return city;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _loadCitiesByState(
+    String stateAbbreviation, {
+    String? selectedCityId,
+  }) async {
+    if (stateAbbreviation.isEmpty) return;
+
+    setState(() {
+      _loadingCities = true;
+      _cities = [];
+      _selectedCity = null;
+    });
+
+    try {
+      final cities = await _cityService.findByState(state: stateAbbreviation);
+
+      if (!mounted) return;
+
+      setState(() {
+        _cities = cities;
+        _selectedCity = selectedCityId != null && selectedCityId.isNotEmpty
+            ? _findCityById(cities, selectedCityId)
+            : null;
+        _loadingCities = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingCities = false;
+      });
+
+      _showMessage('Erro ao carregar cidades: $e');
     }
   }
 
@@ -190,7 +258,8 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
         postalCode: onlyNumbers(_postalCodeCtrl.text),
         complement: _complementCtrl.text.trim(),
         neighborhood: _neighborhoodCtrl.text.trim(),
-        city: _cityCtrl.text.trim(),
+        cityId: _selectedCity?.id ?? '',
+        city: _selectedCity?.name ?? '',
         state: _selectedState?.abbreviation ?? '',
       );
 
@@ -359,7 +428,10 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
   Widget _buildStateDropdown() {
     return DropdownButtonFormField<StateOption>(
       value: _selectedState,
-      decoration: _inputDecoration(label: 'UF'),
+      decoration: _inputDecoration(
+        label: 'UF',
+        hint: _loadingStates ? 'Carregando UFs...' : 'Selecione a UF',
+      ),
       items: _states.map((state) {
         return DropdownMenuItem<StateOption>(
           value: state,
@@ -368,14 +440,54 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
       }).toList(),
       onChanged: _loadingStates
           ? null
-          : (value) {
+          : (value) async {
+              if (value == null) return;
+
               setState(() {
                 _selectedState = value;
+                _selectedCity = null;
+                _cities = [];
               });
+
+              await _loadCitiesByState(value.abbreviation);
             },
       validator: (value) {
         if (value == null || value.abbreviation.isEmpty) {
           return 'UF e obrigatoria';
+        }
+
+        return null;
+      },
+    );
+  }
+
+  Widget _buildCityDropdown() {
+    return DropdownButtonFormField<CityOption>(
+      value: _selectedCity,
+      decoration: _inputDecoration(
+        label: 'Cidade',
+        hint: _selectedState == null
+            ? 'Selecione uma UF primeiro'
+            : _loadingCities
+            ? 'Carregando cidades...'
+            : 'Selecione a cidade',
+      ),
+      items: _cities.map((city) {
+        return DropdownMenuItem<CityOption>(
+          value: city,
+          child: Text(city.name),
+        );
+      }).toList(),
+      onChanged: _selectedState == null || _loadingCities
+          ? null
+          : (value) {
+              setState(() {
+                _selectedCity = value;
+              });
+            },
+      validator: (value) {
+        if (value == null || value.id.isEmpty) {
+          return 'Cidade e obrigatoria';
         }
 
         return null;
@@ -625,12 +737,8 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
                 _buildTextField(controller: _streetCtrl, label: 'Rua'),
                 _buildTextField(controller: _numberCtrl, label: 'Numero'),
                 _buildTextField(controller: _neighborhoodCtrl, label: 'Bairro'),
-                _buildTextField(
-                  controller: _cityCtrl,
-                  label: 'Cidade',
-                  requiredField: true,
-                ),
                 _buildStateDropdown(),
+                _buildCityDropdown(),
               ]),
               const SizedBox(height: 14),
               _buildTextField(
@@ -764,20 +872,5 @@ class _PhoneInputFormatter extends TextInputFormatter {
     }
 
     return '(${value.substring(0, 2)}) ${value.substring(2, 7)}-${value.substring(7)}';
-  }
-}
-
-class _UpperCaseInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final upperText = newValue.text.toUpperCase();
-
-    return TextEditingValue(
-      text: upperText,
-      selection: TextSelection.collapsed(offset: upperText.length),
-    );
   }
 }
