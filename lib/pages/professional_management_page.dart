@@ -1,7 +1,9 @@
 import 'package:app_front_mobile/pages/professional_form_page.dart';
 import 'package:app_front_mobile/services/professional_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ProfessionalManagementPage extends StatefulWidget {
   const ProfessionalManagementPage({super.key});
@@ -23,6 +25,8 @@ class _ProfessionalManagementPageState
   final Set<String> _selectedIds = {};
 
   List<ProfessionalSummary> _professionals = [];
+
+  ProfessionalSearchFilters _filters = const ProfessionalSearchFilters();
 
   bool _loading = true;
   bool _loadingMore = false;
@@ -66,11 +70,13 @@ class _ProfessionalManagementPageState
     try {
       final token = await _getToken();
 
-      final result = await _professionalService.findProfessionals(
+      final result = await _professionalService.findAll(
         token: token,
         page: 0,
         size: _size,
-        search: _searchController.text,
+        filters: _filters.copyWith(
+          search: _searchController.text.trim(),
+        ),
       );
 
       if (!mounted) return;
@@ -101,11 +107,13 @@ class _ProfessionalManagementPageState
     try {
       final token = await _getToken();
 
-      final result = await _professionalService.findProfessionals(
+      final result = await _professionalService.findAll(
         token: token,
         page: _page + 1,
         size: _size,
-        search: _searchController.text,
+        filters: _filters.copyWith(
+          search: _searchController.text.trim(),
+        ),
       );
 
       if (!mounted) return;
@@ -228,9 +236,161 @@ class _ProfessionalManagementPageState
     }
   }
 
+  Future<void> _openAdvancedSearchModal() async {
+    final nameCtrl = TextEditingController(text: _filters.name);
+    final cpfCtrl = TextEditingController(text: _filters.cpfCnpj);
+    final phoneCtrl = TextEditingController(text: _filters.phone);
+    final cityCtrl = TextEditingController(text: _filters.city);
+    final stateCtrl = TextEditingController(text: _filters.state);
+
+    String selectedStatus = _filters.status;
+
+    final result = await showDialog<ProfessionalSearchFilters>(
+      context: context,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              backgroundColor: isDark ? const Color(0xFF171A22) : null,
+              title: const Text('Pesquisa avancada'),
+              content: SizedBox(
+                width: 520,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nameCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Nome',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: cpfCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'CPF',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: phoneCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Telefone',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: cityCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Cidade',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: stateCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'UF',
+                          hintText: 'SC',
+                        ),
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(2),
+                          _UpperCaseInputFormatter(),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: selectedStatus,
+                        decoration: const InputDecoration(
+                          labelText: 'Status',
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'ALL',
+                            child: Text('Todos'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'ACTIVE',
+                            child: Text('Ativos'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'INACTIVE',
+                            child: Text('Inativos'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+
+                          setModalState(() {
+                            selectedStatus = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                      const ProfessionalSearchFilters(),
+                    );
+                  },
+                  child: const Text('Limpar'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(
+                      ProfessionalSearchFilters(
+                        search: _searchController.text.trim(),
+                        name: nameCtrl.text.trim(),
+                        cpfCnpj: onlyNumbers(cpfCtrl.text),
+                        phone: onlyNumbers(phoneCtrl.text),
+                        city: cityCtrl.text.trim(),
+                        state: stateCtrl.text.trim().toUpperCase(),
+                        status: selectedStatus,
+                      ),
+                    );
+                  },
+                  child: const Text('Aplicar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    nameCtrl.dispose();
+    cpfCtrl.dispose();
+    phoneCtrl.dispose();
+    cityCtrl.dispose();
+    stateCtrl.dispose();
+
+    if (result == null) return;
+
+    setState(() {
+      _filters = result;
+      _page = 0;
+    });
+
+    await _loadProfessionals();
+  }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+      ),
     );
   }
 
@@ -283,7 +443,10 @@ class _ProfessionalManagementPageState
       height: 42,
       child: FilledButton.icon(
         onPressed: onPressed,
-        icon: Icon(icon, size: 18),
+        icon: Icon(
+          icon,
+          size: 18,
+        ),
         label: Text(
           label,
           style: const TextStyle(
@@ -296,7 +459,45 @@ class _ProfessionalManagementPageState
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterButton() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final hasFilters = _filters.hasAdvancedFilters;
+
+    return SizedBox(
+      height: 42,
+      child: OutlinedButton.icon(
+        onPressed: _openAdvancedSearchModal,
+        icon: Icon(
+          hasFilters ? Icons.filter_alt : Icons.tune,
+          size: 18,
+        ),
+        label: Text(
+          hasFilters ? 'Filtros aplicados' : 'Filtros',
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: hasFilters ? colorScheme.primary : null,
+          side: BorderSide(
+            color: hasFilters
+                ? colorScheme.primary
+                : colorScheme.outline.withOpacity(0.4),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+          ),
         ),
       ),
     );
@@ -352,6 +553,7 @@ class _ProfessionalManagementPageState
               danger: true,
               onPressed: _deleteSelectedProfessionals,
             ),
+            _buildFilterButton(),
           ],
         ),
       ],
@@ -363,7 +565,7 @@ class _ProfessionalManagementPageState
       controller: _searchController,
       onSubmitted: (_) => _loadProfessionals(),
       decoration: _inputDecoration(
-        hint: 'Buscar profissional por nome',
+        hint: 'Buscar por nome, CPF, telefone, cidade ou UF',
       ),
     );
   }
@@ -411,43 +613,9 @@ class _ProfessionalManagementPageState
       );
     }
 
-    if (_professionals.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 64),
-          child: Column(
-            children: [
-              Icon(
-                Icons.badge_outlined,
-                color: colorScheme.onSurface.withOpacity(0.45),
-                size: 52,
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Nenhum profissional encontrado',
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Cadastre um novo profissional para iniciar',
-                style: TextStyle(
-                  color: colorScheme.onSurface.withOpacity(0.6),
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Column(
       children: [
-        _buildTable(),
+        _buildProfessionalsGrid(),
         if (!_last) ...[
           const SizedBox(height: 20),
           Center(
@@ -457,7 +625,9 @@ class _ProfessionalManagementPageState
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
                     )
                   : const Text('Carregar mais'),
             ),
@@ -467,7 +637,7 @@ class _ProfessionalManagementPageState
     );
   }
 
-  Widget _buildTable() {
+  Widget _buildProfessionalsGrid() {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -482,32 +652,110 @@ class _ProfessionalManagementPageState
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            showCheckboxColumn: true,
-            headingRowColor: WidgetStatePropertyAll(
-              isDark
-                  ? const Color(0xFF171A22)
-                  : colorScheme.surfaceContainerHighest,
-            ),
-            dataRowMinHeight: 56,
-            dataRowMaxHeight: 64,
-            columns: const [
-              DataColumn(label: Text('Nome')),
-              DataColumn(label: Text('CPF')),
-              DataColumn(label: Text('Telefone')),
-              DataColumn(label: Text('Genero')),
-              DataColumn(label: Text('Cidade')),
-              DataColumn(label: Text('UF')),
-              DataColumn(label: Text('Status')),
-            ],
-            rows: _professionals.map((professional) {
-              final selected = _selectedIds.contains(professional.id);
+        child: Column(
+          children: [
+            _buildGridHeader(),
+            if (_professionals.isEmpty)
+              _buildEmptyGridState()
+            else
+              ..._professionals.map(_buildGridRow),
+          ],
+        ),
+      ),
+    );
+  }
 
-              return DataRow(
-                selected: selected,
-                onSelectChanged: (value) {
+  Widget _buildGridHeader() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final allSelected =
+        _professionals.isNotEmpty && _selectedIds.length == _professionals.length;
+
+    final partiallySelected =
+        _selectedIds.isNotEmpty && _selectedIds.length < _professionals.length;
+
+    return Container(
+      height: 54,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF171A22)
+            : colorScheme.surfaceContainerHighest,
+        border: Border(
+          bottom: BorderSide(
+            color: colorScheme.outline.withOpacity(0.18),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 42,
+            child: Checkbox(
+              tristate: true,
+              value: partiallySelected ? null : allSelected,
+              onChanged: _professionals.isEmpty
+                  ? null
+                  : (value) {
+                      setState(() {
+                        if (value == true) {
+                          _selectedIds
+                            ..clear()
+                            ..addAll(
+                              _professionals.map((item) => item.id),
+                            );
+                        } else {
+                          _selectedIds.clear();
+                        }
+                      });
+                    },
+            ),
+          ),
+          _buildHeaderCell('Nome', flex: 3),
+          _buildHeaderCell('CPF', flex: 2),
+          _buildHeaderCell('Telefone', flex: 2),
+          _buildHeaderCell('Genero', flex: 2),
+          _buildHeaderCell('Cidade', flex: 2),
+          _buildHeaderCell('UF', flex: 1),
+          _buildHeaderCell('Status', flex: 2),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGridRow(ProfessionalSummary professional) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final selected = _selectedIds.contains(professional.id);
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          if (selected) {
+            _selectedIds.remove(professional.id);
+          } else {
+            _selectedIds.add(professional.id);
+          }
+        });
+      },
+      child: Container(
+        height: 58,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: selected ? colorScheme.primary.withOpacity(0.08) : null,
+          border: Border(
+            bottom: BorderSide(
+              color: colorScheme.outline.withOpacity(0.12),
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 42,
+              child: Checkbox(
+                value: selected,
+                onChanged: (value) {
                   setState(() {
                     if (value == true) {
                       _selectedIds.add(professional.id);
@@ -516,21 +764,113 @@ class _ProfessionalManagementPageState
                     }
                   });
                 },
-                cells: [
-                  DataCell(Text(professional.name)),
-                  DataCell(Text(professional.cpfCnpj)),
-                  DataCell(Text(professional.phone)),
-                  DataCell(Text(professional.gender)),
-                  DataCell(Text(professional.city)),
-                  DataCell(Text(professional.state)),
-                  DataCell(_StatusBadge(status: professional.status)),
-                ],
-              );
-            }).toList(),
-          ),
+              ),
+            ),
+            _buildBodyCell(professional.name, flex: 3),
+            _buildBodyCell(professional.cpfCnpj, flex: 2),
+            _buildBodyCell(professional.phone, flex: 2),
+            _buildBodyCell(_formatOptionLabel(professional.gender), flex: 2),
+            _buildBodyCell(professional.city, flex: 2),
+            _buildBodyCell(professional.state, flex: 1),
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _StatusBadge(
+                  status: professional.status,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _buildHeaderCell(
+    String text, {
+    required int flex,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Expanded(
+      flex: flex,
+      child: Text(
+        text,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: colorScheme.onSurface.withOpacity(0.8),
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBodyCell(
+    String value, {
+    required int flex,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Expanded(
+      flex: flex,
+      child: Text(
+        value.isEmpty ? '-' : value,
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+        style: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyGridState() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 64),
+      child: Column(
+        children: [
+          Icon(
+            Icons.badge_outlined,
+            color: colorScheme.onSurface.withOpacity(0.45),
+            size: 52,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Nenhum profissional encontrado',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Cadastre um novo profissional ou ajuste os filtros',
+            style: TextStyle(
+              color: colorScheme.onSurface.withOpacity(0.6),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatOptionLabel(String value) {
+    return switch (value.toUpperCase()) {
+      'ACTIVE' => 'Ativo',
+      'INACTIVE' => 'Inativo',
+      'MASCULINO' => 'Masculino',
+      'FEMININO' => 'Feminino',
+      'OUTRO' => 'Outro',
+      _ => value,
+    };
   }
 
   @override
@@ -543,7 +883,9 @@ class _ProfessionalManagementPageState
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1180),
+            constraints: const BoxConstraints(
+              maxWidth: 1180,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -556,6 +898,23 @@ class _ProfessionalManagementPageState
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _UpperCaseInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final upperText = newValue.text.toUpperCase();
+
+    return TextEditingValue(
+      text: upperText,
+      selection: TextSelection.collapsed(
+        offset: upperText.length,
       ),
     );
   }

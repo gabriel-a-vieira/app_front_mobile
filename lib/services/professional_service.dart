@@ -1,33 +1,31 @@
 import 'package:dio/dio.dart';
 
 class ProfessionalService {
-  ProfessionalService({
-    Dio? dio,
-    required this.baseUrl,
-  }) : _dio = dio ?? Dio();
+  ProfessionalService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
 
   final Dio _dio;
   final String baseUrl;
 
-  Future<ProfessionalPage> findProfessionals({
+  Future<ProfessionalPage> findAll({
     required String token,
-    int page = 0,
-    int size = 10,
-    String? search,
+    required int page,
+    required int size,
+    ProfessionalSearchFilters filters = const ProfessionalSearchFilters(),
   }) async {
     final response = await _dio.get(
       baseUrl,
       queryParameters: {
         'page': page,
         'size': size,
-        if (search != null && search.trim().isNotEmpty)
-          'search': search.trim(),
+        if (filters.search.isNotEmpty) 'search': filters.search,
+        if (filters.name.isNotEmpty) 'name': filters.name,
+        if (filters.cpfCnpj.isNotEmpty) 'cpfCnpj': filters.cpfCnpj,
+        if (filters.phone.isNotEmpty) 'phone': filters.phone,
+        if (filters.city.isNotEmpty) 'city': filters.city,
+        if (filters.state.isNotEmpty) 'state': filters.state,
+        if (filters.status.isNotEmpty) 'status': filters.status,
       },
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
     return ProfessionalPage.fromJson(response.data);
@@ -39,11 +37,7 @@ class ProfessionalService {
   }) async {
     final response = await _dio.get(
       '$baseUrl/$id',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
     return ProfessionalSummary.fromJson(response.data);
@@ -111,6 +105,55 @@ class ProfessionalService {
   }
 }
 
+class ProfessionalSearchFilters {
+  final String search;
+  final String name;
+  final String cpfCnpj;
+  final String phone;
+  final String city;
+  final String state;
+  final String status;
+
+  const ProfessionalSearchFilters({
+    this.search = '',
+    this.name = '',
+    this.cpfCnpj = '',
+    this.phone = '',
+    this.city = '',
+    this.state = '',
+    this.status = 'ALL',
+  });
+
+  bool get hasAdvancedFilters {
+    return name.isNotEmpty ||
+        cpfCnpj.isNotEmpty ||
+        phone.isNotEmpty ||
+        city.isNotEmpty ||
+        state.isNotEmpty ||
+        status != 'ALL';
+  }
+
+  ProfessionalSearchFilters copyWith({
+    String? search,
+    String? name,
+    String? cpfCnpj,
+    String? phone,
+    String? city,
+    String? state,
+    String? status,
+  }) {
+    return ProfessionalSearchFilters(
+      search: search ?? this.search,
+      name: name ?? this.name,
+      cpfCnpj: cpfCnpj ?? this.cpfCnpj,
+      phone: phone ?? this.phone,
+      city: city ?? this.city,
+      state: state ?? this.state,
+      status: status ?? this.status,
+    );
+  }
+}
+
 class ProfessionalPage {
   final List<ProfessionalSummary> content;
   final int number;
@@ -130,9 +173,9 @@ class ProfessionalPage {
     return ProfessionalPage(
       content: contentData is List
           ? contentData
-              .whereType<Map>()
-              .map((item) => ProfessionalSummary.fromJson(item))
-              .toList()
+                .whereType<Map>()
+                .map((item) => ProfessionalSummary.fromJson(item))
+                .toList()
           : [],
       number: json['number'] is int ? json['number'] as int : 0,
       totalPages: json['totalPages'] is int ? json['totalPages'] as int : 0,
