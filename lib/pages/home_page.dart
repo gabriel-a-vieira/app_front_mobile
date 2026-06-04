@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:app_front_mobile/pages/company_detail_page.dart';
 import 'package:app_front_mobile/pages/company_create_page.dart';
 import 'package:app_front_mobile/pages/professional_management_page.dart';
+import 'package:app_front_mobile/pages/user_form_page.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -301,6 +302,22 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _openUserCreatePage() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => UserFormPage(currentUserRole: _loggedUserRole ?? ''),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (created == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Usuario cadastrado com sucesso')),
+      );
+    }
+  }
+
   void _openLoginModal(BuildContext context) {
     showDialog(
       context: context,
@@ -376,6 +393,12 @@ class _HomePageState extends State<HomePage> {
           _openCompanyCreatePage();
           return;
         }
+
+        if (value == 'users') {
+          _openUserCreatePage();
+          return;
+        }
+
         if (value == 'professionals') {
           _openProfessionalManagementPage();
           return;
@@ -395,6 +418,7 @@ class _HomePageState extends State<HomePage> {
               child: Text('Cadastro de Empresa'),
             ),
           const PopupMenuDivider(),
+          const PopupMenuItem<String>(value: 'users', child: Text('Usuarios')),
           const PopupMenuItem<String>(
             value: 'products',
             child: Text('Cadastro de Produtos'),
