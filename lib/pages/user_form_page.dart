@@ -25,7 +25,7 @@ class _UserFormPageState extends State<UserFormPage> {
   final _tokenStorage = TokenStorage();
 
   final _userAdminService = UserAdminService(
-    baseUrl: 'http://localhost:8081/user',
+    baseUrl: 'http://localhost:8081/auth/register',
   );
 
   final _companyService = CompanyService(
