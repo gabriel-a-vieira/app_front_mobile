@@ -1,10 +1,7 @@
 import 'package:dio/dio.dart';
 
 class ClientService {
-  ClientService({
-    Dio? dio,
-    required this.baseUrl,
-  }) : _dio = dio ?? Dio();
+  ClientService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
 
   final Dio _dio;
   final String baseUrl;
@@ -29,12 +26,9 @@ class ClientService {
         if (filters.status.isNotEmpty) 'status': filters.status,
         if (filters.preferredPaymentMethod.isNotEmpty)
           'preferredPaymentMethod': filters.preferredPaymentMethod,
+        if (filters.companyId.isNotEmpty) 'companyId': filters.companyId,
       },
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
     return ClientPage.fromJson(response.data);
@@ -46,11 +40,7 @@ class ClientService {
   }) async {
     final response = await _dio.get(
       '$baseUrl/$id',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
     return ClientSummary.fromJson(response.data);
@@ -63,11 +53,7 @@ class ClientService {
     await _dio.post(
       baseUrl,
       data: request.toJson(),
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
   }
 
@@ -79,11 +65,7 @@ class ClientService {
     await _dio.put(
       '$baseUrl/$id',
       data: request.toJson(),
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
   }
 
@@ -94,24 +76,14 @@ class ClientService {
     await _dio.delete(
       baseUrl,
       data: ids,
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
   }
 
-  Future<List<String>> findPaymentMethods({
-    required String token,
-  }) async {
+  Future<List<String>> findPaymentMethods({required String token}) async {
     final response = await _dio.get(
       '$baseUrl/payment-methods',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
     final data = response.data;
@@ -133,6 +105,7 @@ class ClientSearchFilters {
   final String state;
   final String status;
   final String preferredPaymentMethod;
+  final String companyId;
 
   const ClientSearchFilters({
     this.search = '',
@@ -143,6 +116,7 @@ class ClientSearchFilters {
     this.state = '',
     this.status = 'ACTIVE',
     this.preferredPaymentMethod = '',
+    this.companyId = '',
   });
 
   bool get hasAdvancedFilters {
@@ -152,7 +126,8 @@ class ClientSearchFilters {
         city.isNotEmpty ||
         state.isNotEmpty ||
         status != 'ACTIVE' ||
-        preferredPaymentMethod.isNotEmpty;
+        preferredPaymentMethod.isNotEmpty ||
+        companyId.isNotEmpty;
   }
 
   ClientSearchFilters copyWith({
@@ -164,6 +139,7 @@ class ClientSearchFilters {
     String? state,
     String? status,
     String? preferredPaymentMethod,
+    String? companyId,
   }) {
     return ClientSearchFilters(
       search: search ?? this.search,
@@ -175,6 +151,7 @@ class ClientSearchFilters {
       status: status ?? this.status,
       preferredPaymentMethod:
           preferredPaymentMethod ?? this.preferredPaymentMethod,
+      companyId: companyId ?? this.companyId,
     );
   }
 }
@@ -184,11 +161,7 @@ class ClientPage {
   final int number;
   final bool last;
 
-  ClientPage({
-    required this.content,
-    required this.number,
-    required this.last,
-  });
+  ClientPage({required this.content, required this.number, required this.last});
 
   factory ClientPage.fromJson(Map<String, dynamic> json) {
     final rawContent = json['content'];
@@ -196,9 +169,9 @@ class ClientPage {
     return ClientPage(
       content: rawContent is List
           ? rawContent
-              .whereType<Map>()
-              .map((item) => ClientSummary.fromJson(item))
-              .toList()
+                .whereType<Map>()
+                .map((item) => ClientSummary.fromJson(item))
+                .toList()
           : [],
       number: json['number'] is int ? json['number'] : 0,
       last: json['last'] == true,
@@ -258,8 +231,7 @@ class ClientSummary {
       phone: json['phone']?.toString() ?? '',
       birthDate: json['birthDate']?.toString() ?? '',
       gender: json['gender']?.toString() ?? '',
-      preferredPaymentMethod:
-          json['preferredPaymentMethod']?.toString() ?? '',
+      preferredPaymentMethod: json['preferredPaymentMethod']?.toString() ?? '',
       additionalNotes: json['additionalNotes']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       companyId: json['companyId']?.toString() ?? '',
@@ -292,6 +264,7 @@ class ClientRequest {
   final String postalCode;
   final String complement;
   final String neighborhood;
+  final String companyId;
 
   ClientRequest({
     required this.name,
@@ -310,6 +283,7 @@ class ClientRequest {
     required this.postalCode,
     required this.complement,
     required this.neighborhood,
+    required this.companyId,
   });
 
   Map<String, dynamic> toJson() {
@@ -323,6 +297,7 @@ class ClientRequest {
         'preferredPaymentMethod': preferredPaymentMethod,
       'additionalNotes': additionalNotes,
       'status': status,
+      if (companyId.isNotEmpty) 'companyId': companyId,
       'address': {
         'street': street,
         'number': number,
