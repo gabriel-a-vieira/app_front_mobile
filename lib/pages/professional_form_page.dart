@@ -28,7 +28,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
 
   final _stateService = StateService(baseUrl: 'http://localhost:8081/state');
 
-  final _cityService = CityService(baseUrl: 'http://localhost:8081/city/state');
+  final _cityService = CityService(baseUrl: 'http://localhost:8081/city');
 
   final _tokenStorage = TokenStorage();
 

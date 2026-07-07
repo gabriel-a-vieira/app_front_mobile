@@ -1,19 +1,16 @@
 import 'package:app_front_mobile/pages/client_form_page.dart';
 import 'package:app_front_mobile/services/client_service.dart';
-import 'package:app_front_mobile/services/company_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
-import 'package:app_front_mobile/widgets/company_zoom_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:app_front_mobile/services/company_lookup_service.dart';
+import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 
 class ClientManagementPage extends StatefulWidget {
   final String currentUserRole;
 
-  const ClientManagementPage({
-    super.key,
-    required this.currentUserRole,
-  });
+  const ClientManagementPage({super.key, required this.currentUserRole});
 
   bool get isMasterAdmin {
     return currentUserRole.toUpperCase() == 'MASTER_ADMIN';
@@ -24,12 +21,10 @@ class ClientManagementPage extends StatefulWidget {
 }
 
 class _ClientManagementPageState extends State<ClientManagementPage> {
-  final _clientService = ClientService(
-    baseUrl: 'http://localhost:8081/client',
-  );
+  final _clientService = ClientService(baseUrl: 'http://localhost:8081/client');
 
-  final _companyService = CompanyService(
-    baseUrl: 'http://localhost:8081/company',
+  final _companyLookupService = CompanyLookupService(
+    baseUrl: 'http://localhost:8081/company/companies/home-page',
   );
 
   final _tokenStorage = TokenStorage();
@@ -41,7 +36,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
   List<String> _paymentMethods = [];
 
   ClientSearchFilters _filters = const ClientSearchFilters();
-  CompanySummary? _filterCompany;
+  CompanyLookupOption? _filterCompany;
 
   bool _loading = true;
   bool _loadingMore = false;
@@ -90,9 +85,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
         token: token,
         page: 0,
         size: _size,
-        filters: _filters.copyWith(
-          search: _searchController.text.trim(),
-        ),
+        filters: _filters.copyWith(search: _searchController.text.trim()),
       );
 
       if (!mounted) return;
@@ -130,9 +123,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
         token: token,
         page: 0,
         size: _size,
-        filters: _filters.copyWith(
-          search: _searchController.text.trim(),
-        ),
+        filters: _filters.copyWith(search: _searchController.text.trim()),
       );
 
       if (!mounted) return;
@@ -167,9 +158,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
         token: token,
         page: _page + 1,
         size: _size,
-        filters: _filters.copyWith(
-          search: _searchController.text.trim(),
-        ),
+        filters: _filters.copyWith(search: _searchController.text.trim()),
       );
 
       if (!mounted) return;
@@ -193,9 +182,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
   Future<void> _openCreatePage() async {
     final created = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => ClientFormPage(
-          currentUserRole: widget.currentUserRole,
-        ),
+        builder: (_) => ClientFormPage(currentUserRole: widget.currentUserRole),
       ),
     );
 
@@ -302,12 +289,12 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
     final cityController = TextEditingController(text: _filters.city);
     final stateController = TextEditingController(text: _filters.state);
     final companyController = TextEditingController(
-      text: _filterCompany != null ? _companyDisplayName(_filterCompany!) : '',
+      text: _filterCompany?.displayName ?? '',
     );
 
     String selectedStatus = _filters.status;
     String selectedPaymentMethod = _filters.preferredPaymentMethod;
-    CompanySummary? selectedCompany = _filterCompany;
+    CompanyLookupOption? selectedCompany = _filterCompany;
 
     final result = await showDialog<_ClientFilterResult>(
       context: context,
@@ -346,17 +333,21 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
                                   ),
                                 IconButton(
                                   onPressed: () async {
-                                    final company = await CompanyZoomModal.show(
-                                      context: context,
-                                      companyService: _companyService,
-                                    );
+                                    final token = await _getToken();
+
+                                    final company =
+                                        await CompanyLookupModal.show(
+                                          context: context,
+                                          token: token,
+                                          service: _companyLookupService,
+                                        );
 
                                     if (company == null) return;
 
                                     setModalState(() {
                                       selectedCompany = company;
                                       companyController.text =
-                                          _companyDisplayName(company);
+                                          company.displayName;
                                     });
                                   },
                                   icon: const Icon(Icons.search),
@@ -369,9 +360,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
                       ],
                       TextField(
                         controller: nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nome',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Nome'),
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -396,9 +385,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
                       const SizedBox(height: 12),
                       TextField(
                         controller: cityController,
-                        decoration: const InputDecoration(
-                          labelText: 'Cidade',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Cidade'),
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -415,14 +402,9 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: selectedStatus,
-                        decoration: const InputDecoration(
-                          labelText: 'Status',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Status'),
                         items: const [
-                          DropdownMenuItem(
-                            value: 'ALL',
-                            child: Text('Todos'),
-                          ),
+                          DropdownMenuItem(value: 'ALL', child: Text('Todos')),
                           DropdownMenuItem(
                             value: 'ACTIVE',
                             child: Text('Ativos'),
@@ -472,9 +454,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop(
-                      const _ClientFilterResult(
-                        filters: ClientSearchFilters(),
-                      ),
+                      const _ClientFilterResult(filters: ClientSearchFilters()),
                     );
                   },
                   child: const Text('Limpar'),
@@ -498,7 +478,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
                           state: stateController.text.trim().toUpperCase(),
                           status: selectedStatus,
                           preferredPaymentMethod: selectedPaymentMethod,
-                          companyId: selectedCompany?.id ?? '',
+                          companyId: selectedCompany?.id.toString() ?? '',
                         ),
                         company: selectedCompany,
                       ),
@@ -531,18 +511,6 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
     await _loadClients();
   }
 
-  String _companyDisplayName(CompanySummary company) {
-    if (company.tradeName.isNotEmpty) {
-      return company.tradeName;
-    }
-
-    if (company.legalName.isNotEmpty) {
-      return company.legalName;
-    }
-
-    return 'Empresa sem nome';
-  }
-
   String _formatOption(String value) {
     return switch (value.toUpperCase()) {
       'ACTIVE' => 'Ativo',
@@ -559,24 +527,21 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  InputDecoration _inputDecoration({
-    required String hint,
-  }) {
+  InputDecoration _inputDecoration({required String hint}) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return InputDecoration(
       hintText: hint,
       filled: true,
-      fillColor:
-          isDark ? const Color(0xFF1C212B) : colorScheme.surfaceContainerHighest,
+      fillColor: isDark
+          ? const Color(0xFF1C212B)
+          : colorScheme.surfaceContainerHighest,
       prefixIcon: Icon(
         Icons.search,
         color: colorScheme.onSurface.withOpacity(0.65),
@@ -587,15 +552,11 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.outline.withOpacity(0.25),
-        ),
+        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.25)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.primary,
-        ),
+        borderSide: BorderSide(color: colorScheme.primary),
       ),
     );
   }
@@ -612,25 +573,13 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       height: 42,
       child: FilledButton.icon(
         onPressed: onPressed,
-        icon: Icon(
-          icon,
-          size: 18,
-        ),
-        label: Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        icon: Icon(icon, size: 18),
+        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
         style: FilledButton.styleFrom(
           backgroundColor: danger ? colorScheme.error : colorScheme.primary,
           foregroundColor: danger ? colorScheme.onError : colorScheme.onPrimary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
       ),
     );
@@ -644,15 +593,10 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       height: 42,
       child: OutlinedButton.icon(
         onPressed: _openAdvancedSearchModal,
-        icon: Icon(
-          hasFilters ? Icons.filter_alt : Icons.tune,
-          size: 18,
-        ),
+        icon: Icon(hasFilters ? Icons.filter_alt : Icons.tune, size: 18),
         label: Text(
           hasFilters ? 'Filtros aplicados' : 'Filtros',
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: hasFilters ? colorScheme.primary : null,
@@ -661,12 +605,8 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
                 ? colorScheme.primary
                 : colorScheme.outline.withOpacity(0.4),
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
       ),
     );
@@ -757,11 +697,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
           padding: const EdgeInsets.symmetric(vertical: 64),
           child: Column(
             children: [
-              Icon(
-                Icons.error_outline,
-                color: colorScheme.error,
-                size: 42,
-              ),
+              Icon(Icons.error_outline, color: colorScheme.error, size: 42),
               const SizedBox(height: 12),
               Text(
                 'Erro ao buscar clientes',
@@ -794,9 +730,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Text('Carregar mais'),
             ),
@@ -815,9 +749,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.22),
-        ),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -838,7 +770,8 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final allSelected = _clients.isNotEmpty && _selectedIds.length == _clients.length;
+    final allSelected =
+        _clients.isNotEmpty && _selectedIds.length == _clients.length;
     final partiallySelected =
         _selectedIds.isNotEmpty && _selectedIds.length < _clients.length;
 
@@ -850,9 +783,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
             ? const Color(0xFF171A22)
             : colorScheme.surfaceContainerHighest,
         border: Border(
-          bottom: BorderSide(
-            color: colorScheme.outline.withOpacity(0.18),
-          ),
+          bottom: BorderSide(color: colorScheme.outline.withOpacity(0.18)),
         ),
       ),
       child: Row(
@@ -904,14 +835,12 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
         });
       },
       child: Container(
-        minHeight: 58,
+        height: 58,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: selected ? colorScheme.primary.withOpacity(0.08) : null,
           border: Border(
-            bottom: BorderSide(
-              color: colorScheme.outline.withOpacity(0.12),
-            ),
+            bottom: BorderSide(color: colorScheme.outline.withOpacity(0.12)),
           ),
         ),
         child: Row(
@@ -946,9 +875,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
               flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: _StatusBadge(
-                  status: client.status,
-                ),
+                child: _StatusBadge(status: client.status),
               ),
             ),
           ],
@@ -957,10 +884,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
     );
   }
 
-  Widget _buildHeaderCell(
-    String text, {
-    required int flex,
-  }) {
+  Widget _buildHeaderCell(String text, {required int flex}) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Expanded(
@@ -977,10 +901,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
     );
   }
 
-  Widget _buildBodyCell(
-    String value, {
-    required int flex,
-  }) {
+  Widget _buildBodyCell(String value, {required int flex}) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Expanded(
@@ -1035,16 +956,12 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Administracao de clientes'),
-      ),
+      appBar: AppBar(title: const Text('Administracao de clientes')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 1180,
-            ),
+            constraints: const BoxConstraints(maxWidth: 1180),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1064,12 +981,9 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
 
 class _ClientFilterResult {
   final ClientSearchFilters filters;
-  final CompanySummary? company;
+  final CompanyLookupOption? company;
 
-  const _ClientFilterResult({
-    required this.filters,
-    this.company,
-  });
+  const _ClientFilterResult({required this.filters, this.company});
 }
 
 class _UpperCaseInputFormatter extends TextInputFormatter {
@@ -1082,9 +996,7 @@ class _UpperCaseInputFormatter extends TextInputFormatter {
 
     return TextEditingValue(
       text: upperText,
-      selection: TextSelection.collapsed(
-        offset: upperText.length,
-      ),
+      selection: TextSelection.collapsed(offset: upperText.length),
     );
   }
 }
@@ -1092,9 +1004,7 @@ class _UpperCaseInputFormatter extends TextInputFormatter {
 class _StatusBadge extends StatelessWidget {
   final String status;
 
-  const _StatusBadge({
-    required this.status,
-  });
+  const _StatusBadge({required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -1102,10 +1012,7 @@ class _StatusBadge extends StatelessWidget {
     final active = normalized == 'ACTIVE';
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: active
             ? const Color(0xFF1E8F59).withOpacity(0.16)

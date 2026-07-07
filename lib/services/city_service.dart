@@ -1,22 +1,15 @@
 import 'package:dio/dio.dart';
 
 class CityService {
-  CityService({
-    Dio? dio,
-    required this.baseUrl,
-  }) : _dio = dio ?? Dio();
+  CityService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
 
   final Dio _dio;
   final String baseUrl;
 
-  Future<List<CityOption>> findByState({
-    required String state,
-  }) async {
+  Future<List<CityOption>> findByState({required String state}) async {
     final response = await _dio.get(
-      baseUrl,
-      queryParameters: {
-        'state': state,
-      },
+      '$baseUrl/state',
+      queryParameters: {'state': state},
     );
 
     final data = response.data;

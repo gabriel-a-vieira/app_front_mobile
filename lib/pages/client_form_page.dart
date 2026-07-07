@@ -1,12 +1,12 @@
 import 'package:app_front_mobile/services/city_service.dart';
 import 'package:app_front_mobile/services/client_service.dart';
-import 'package:app_front_mobile/services/company_service.dart';
 import 'package:app_front_mobile/services/state_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
-import 'package:app_front_mobile/widgets/company_zoom_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:app_front_mobile/services/company_lookup_service.dart';
+import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 
 class ClientFormPage extends StatefulWidget {
   final String? clientId;
@@ -35,20 +35,14 @@ class _ClientFormPageState extends State<ClientFormPage> {
 
   final _tokenStorage = TokenStorage();
 
-  final _clientService = ClientService(
-    baseUrl: 'http://localhost:8081/client',
-  );
+  final _clientService = ClientService(baseUrl: 'http://localhost:8081/client');
 
-  final _stateService = StateService(
-    baseUrl: 'http://localhost:8081/state',
-  );
+  final _stateService = StateService(baseUrl: 'http://localhost:8081/state');
 
-  final _cityService = CityService(
-    baseUrl: 'http://localhost:8081/city',
-  );
+  final _cityService = CityService(baseUrl: 'http://localhost:8081/city');
 
-  final _companyService = CompanyService(
-    baseUrl: 'http://localhost:8081/company',
+  final _companyLookupService = CompanyLookupService(
+    baseUrl: 'http://localhost:8081/company/companies/home-page',
   );
 
   final _nameController = TextEditingController();
@@ -78,7 +72,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
 
   StateOption? _selectedState;
   CityOption? _selectedCity;
-  CompanySummary? _selectedCompany;
+  CompanyLookupOption? _selectedCompany;
 
   @override
   void initState() {
@@ -160,11 +154,11 @@ class _ClientFormPageState extends State<ClientFormPage> {
     );
 
     _nameController.text = client.name;
-    _cpfCnpjController.text = client.cpfCnpj;
-    _phoneController.text = client.phone;
+    _cpfCnpjController.text = _formatCpf(client.cpfCnpj);
+    _phoneController.text = _formatPhone(client.phone);
+    _postalCodeController.text = _formatCep(client.postalCode);
     _streetController.text = client.street;
     _numberController.text = client.number;
-    _postalCodeController.text = client.postalCode;
     _complementController.text = client.complement;
     _neighborhoodController.text = client.neighborhood;
     _additionalNotesController.text = client.additionalNotes;
@@ -221,9 +215,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
     String state, {
     String? selectedCityId,
   }) async {
-    final cities = await _cityService.findByState(
-      state: state,
-    );
+    final cities = await _cityService.findByState(state: state);
 
     if (!mounted) return;
 
@@ -240,16 +232,19 @@ class _ClientFormPageState extends State<ClientFormPage> {
       return;
     }
 
-    final company = await CompanyZoomModal.show(
+    final token = await _tokenStorage.getAccessToken();
+
+    final company = await CompanyLookupModal.show(
       context: context,
-      companyService: _companyService,
+      token: token,
+      service: _companyLookupService,
     );
 
     if (company == null) return;
 
     setState(() {
       _selectedCompany = company;
-      _companyController.text = _companyDisplayName(company);
+      _companyController.text = company.displayName;
     });
   }
 
@@ -305,8 +300,8 @@ class _ClientFormPageState extends State<ClientFormPage> {
         additionalNotes: _additionalNotesController.text.trim(),
         status: _selectedStatus,
         companyId: widget.isMasterAdmin && !widget.isEdit
-            ? _selectedCompany?.id
-            : null,
+            ? _selectedCompany?.id ?? ''
+            : '',
         cityId: _selectedCity?.id ?? '',
         city: _selectedCity?.name ?? '',
         state: _selectedState?.abbreviation ?? '',
@@ -324,10 +319,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
           request: request,
         );
       } else {
-        await _clientService.createClient(
-          token: token,
-          request: request,
-        );
+        await _clientService.createClient(token: token, request: request);
       }
 
       if (!mounted) return;
@@ -346,16 +338,38 @@ class _ClientFormPageState extends State<ClientFormPage> {
     }
   }
 
-  String _companyDisplayName(CompanySummary company) {
-    if (company.tradeName.isNotEmpty) {
-      return company.tradeName;
+  String _formatCpf(String value) {
+    final digits = onlyNumbers(value);
+
+    if (digits.length != 11) {
+      return value;
     }
 
-    if (company.legalName.isNotEmpty) {
-      return company.legalName;
+    return '${digits.substring(0, 3)}.${digits.substring(3, 6)}.${digits.substring(6, 9)}-${digits.substring(9, 11)}';
+  }
+
+  String _formatPhone(String value) {
+    final digits = onlyNumbers(value);
+
+    if (digits.length == 11) {
+      return '(${digits.substring(0, 2)}) ${digits.substring(2, 7)}-${digits.substring(7)}';
     }
 
-    return 'Empresa sem nome';
+    if (digits.length == 10) {
+      return '(${digits.substring(0, 2)}) ${digits.substring(2, 6)}-${digits.substring(6)}';
+    }
+
+    return value;
+  }
+
+  String _formatCep(String value) {
+    final digits = onlyNumbers(value);
+
+    if (digits.length != 8) {
+      return value;
+    }
+
+    return '${digits.substring(0, 5)}-${digits.substring(5)}';
   }
 
   String _formatDate(DateTime date) {
@@ -390,11 +404,9 @@ class _ClientFormPageState extends State<ClientFormPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   InputDecoration _inputDecoration({
@@ -410,31 +422,24 @@ class _ClientFormPageState extends State<ClientFormPage> {
       hintText: hint,
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor:
-          isDark ? const Color(0xFF1C212B) : colorScheme.surfaceContainerHighest,
+      fillColor: isDark
+          ? const Color(0xFF1C212B)
+          : colorScheme.surfaceContainerHighest,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.outline.withOpacity(0.25),
-        ),
+        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.25)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.primary,
-        ),
+        borderSide: BorderSide(color: colorScheme.primary),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.error,
-        ),
+        borderSide: BorderSide(color: colorScheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.error,
-        ),
+        borderSide: BorderSide(color: colorScheme.error),
       ),
     );
   }
@@ -448,6 +453,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
     int maxLines = 1,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
+    String? Function(String value)? customValidator,
     Widget? suffixIcon,
     VoidCallback? onTap,
   }) {
@@ -470,6 +476,10 @@ class _ClientFormPageState extends State<ClientFormPage> {
           return '$label e obrigatorio';
         }
 
+        if (customValidator != null) {
+          return customValidator(text);
+        }
+
         return null;
       },
     );
@@ -478,9 +488,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
   Widget _buildStateDropdown() {
     return DropdownButtonFormField<StateOption>(
       value: _selectedState,
-      decoration: _inputDecoration(
-        label: 'UF',
-      ),
+      decoration: _inputDecoration(label: 'UF'),
       items: _states.map((state) {
         return DropdownMenuItem<StateOption>(
           value: state,
@@ -511,9 +519,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
   Widget _buildCityDropdown() {
     return DropdownButtonFormField<CityOption>(
       value: _selectedCity,
-      decoration: _inputDecoration(
-        label: 'Cidade',
-      ),
+      decoration: _inputDecoration(label: 'Cidade'),
       items: _cities.map((city) {
         return DropdownMenuItem<CityOption>(
           value: city,
@@ -538,22 +544,11 @@ class _ClientFormPageState extends State<ClientFormPage> {
   Widget _buildGenderDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedGender,
-      decoration: _inputDecoration(
-        label: 'Genero',
-      ),
+      decoration: _inputDecoration(label: 'Genero'),
       items: const [
-        DropdownMenuItem(
-          value: 'MASCULINO',
-          child: Text('Masculino'),
-        ),
-        DropdownMenuItem(
-          value: 'FEMININO',
-          child: Text('Feminino'),
-        ),
-        DropdownMenuItem(
-          value: 'OUTRO',
-          child: Text('Outro'),
-        ),
+        DropdownMenuItem(value: 'MASCULINO', child: Text('Masculino')),
+        DropdownMenuItem(value: 'FEMININO', child: Text('Feminino')),
+        DropdownMenuItem(value: 'OUTRO', child: Text('Outro')),
       ],
       onChanged: (value) {
         if (value == null) return;
@@ -568,18 +563,10 @@ class _ClientFormPageState extends State<ClientFormPage> {
   Widget _buildStatusDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedStatus,
-      decoration: _inputDecoration(
-        label: 'Status',
-      ),
+      decoration: _inputDecoration(label: 'Status'),
       items: const [
-        DropdownMenuItem(
-          value: 'ACTIVE',
-          child: Text('Ativo'),
-        ),
-        DropdownMenuItem(
-          value: 'INACTIVE',
-          child: Text('Inativo'),
-        ),
+        DropdownMenuItem(value: 'ACTIVE', child: Text('Ativo')),
+        DropdownMenuItem(value: 'INACTIVE', child: Text('Inativo')),
       ],
       onChanged: (value) {
         if (value == null) return;
@@ -594,14 +581,9 @@ class _ClientFormPageState extends State<ClientFormPage> {
   Widget _buildPaymentDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedPaymentMethod,
-      decoration: _inputDecoration(
-        label: 'Forma de pagamento preferida',
-      ),
+      decoration: _inputDecoration(label: 'Forma de pagamento preferida'),
       items: [
-        const DropdownMenuItem(
-          value: '',
-          child: Text('Nao informado'),
-        ),
+        const DropdownMenuItem(value: '', child: Text('Nao informado')),
         ..._paymentMethods.map((method) {
           return DropdownMenuItem(
             value: method,
@@ -648,27 +630,23 @@ class _ClientFormPageState extends State<ClientFormPage> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.22),
-        ),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),
       child: Form(
         key: _formKey,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 760;
-            final width =
-                isWide ? (constraints.maxWidth - 14) / 2 : constraints.maxWidth;
+            final width = isWide
+                ? (constraints.maxWidth - 14) / 2
+                : constraints.maxWidth;
 
             return Wrap(
               spacing: 14,
               runSpacing: 14,
               children: [
                 if (widget.isMasterAdmin)
-                  SizedBox(
-                    width: width,
-                    child: _buildCompanyField(),
-                  ),
+                  SizedBox(width: width, child: _buildCompanyField()),
                 SizedBox(
                   width: width,
                   child: _buildTextField(
@@ -681,12 +659,20 @@ class _ClientFormPageState extends State<ClientFormPage> {
                   width: width,
                   child: _buildTextField(
                     controller: _cpfCnpjController,
-                    label: 'CPF/CNPJ',
+                    label: 'CPF',
+                    hint: '000.000.000-00',
                     requiredField: true,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [_CpfInputFormatter()],
+                    customValidator: (value) {
+                      final digits = onlyNumbers(value);
+
+                      if (digits.length != 11) {
+                        return 'CPF deve ter 11 digitos';
+                      }
+
+                      return null;
+                    },
                   ),
                 ),
                 SizedBox(
@@ -694,10 +680,19 @@ class _ClientFormPageState extends State<ClientFormPage> {
                   child: _buildTextField(
                     controller: _phoneController,
                     label: 'Telefone',
+                    hint: '(00) 00000-0000',
+                    requiredField: true,
                     keyboardType: TextInputType.phone,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [_PhoneInputFormatter()],
+                    customValidator: (value) {
+                      final digits = onlyNumbers(value);
+
+                      if (digits.length < 10 || digits.length > 11) {
+                        return 'Telefone invalido';
+                      }
+
+                      return null;
+                    },
                   ),
                 ),
                 SizedBox(
@@ -714,27 +709,26 @@ class _ClientFormPageState extends State<ClientFormPage> {
                     ),
                   ),
                 ),
-                SizedBox(
-                  width: width,
-                  child: _buildGenderDropdown(),
-                ),
-                SizedBox(
-                  width: width,
-                  child: _buildPaymentDropdown(),
-                ),
-                SizedBox(
-                  width: width,
-                  child: _buildStatusDropdown(),
-                ),
+                SizedBox(width: width, child: _buildGenderDropdown()),
+                SizedBox(width: width, child: _buildPaymentDropdown()),
+                SizedBox(width: width, child: _buildStatusDropdown()),
                 SizedBox(
                   width: width,
                   child: _buildTextField(
                     controller: _postalCodeController,
                     label: 'CEP',
+                    hint: '00000-000',
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [CepInputFormatter()],
+                    customValidator: (value) {
+                      final digits = onlyNumbers(value);
+
+                      if (digits.isNotEmpty && digits.length != 8) {
+                        return 'CEP deve ter 8 digitos';
+                      }
+
+                      return null;
+                    },
                   ),
                 ),
                 SizedBox(
@@ -765,14 +759,8 @@ class _ClientFormPageState extends State<ClientFormPage> {
                     label: 'Complemento',
                   ),
                 ),
-                SizedBox(
-                  width: width,
-                  child: _buildStateDropdown(),
-                ),
-                SizedBox(
-                  width: width,
-                  child: _buildCityDropdown(),
-                ),
+                SizedBox(width: width, child: _buildStateDropdown()),
+                SizedBox(width: width, child: _buildCityDropdown()),
                 SizedBox(
                   width: constraints.maxWidth,
                   child: _buildTextField(
@@ -848,9 +836,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
                   )
                 : Text(
                     widget.isEdit ? 'Salvar alteracoes' : 'Cadastrar cliente',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
           ),
         ),
@@ -868,13 +854,83 @@ class _ClientFormPageState extends State<ClientFormPage> {
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 980,
-            ),
+            constraints: const BoxConstraints(maxWidth: 980),
             child: _buildBody(),
           ),
         ),
       ),
     );
+  }
+}
+
+class _CpfInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = onlyNumbers(newValue.text);
+    final limited = digits.length > 11 ? digits.substring(0, 11) : digits;
+
+    final formatted = _format(limited);
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _format(String value) {
+    final buffer = StringBuffer();
+
+    for (int i = 0; i < value.length; i++) {
+      if (i == 3 || i == 6) {
+        buffer.write('.');
+      }
+
+      if (i == 9) {
+        buffer.write('-');
+      }
+
+      buffer.write(value[i]);
+    }
+
+    return buffer.toString();
+  }
+}
+
+class _PhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = onlyNumbers(newValue.text);
+    final limited = digits.length > 11 ? digits.substring(0, 11) : digits;
+
+    final formatted = _format(limited);
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _format(String value) {
+    if (value.isEmpty) return value;
+
+    if (value.length <= 2) {
+      return '($value';
+    }
+
+    if (value.length <= 6) {
+      return '(${value.substring(0, 2)}) ${value.substring(2)}';
+    }
+
+    if (value.length <= 10) {
+      return '(${value.substring(0, 2)}) ${value.substring(2, 6)}-${value.substring(6)}';
+    }
+
+    return '(${value.substring(0, 2)}) ${value.substring(2, 7)}-${value.substring(7)}';
   }
 }

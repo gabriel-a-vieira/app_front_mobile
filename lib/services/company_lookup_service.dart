@@ -1,16 +1,13 @@
 import 'package:dio/dio.dart';
 
 class CompanyLookupService {
-  CompanyLookupService({
-    Dio? dio,
-    required this.baseUrl,
-  }) : _dio = dio ?? Dio();
+  CompanyLookupService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
 
   final Dio _dio;
   final String baseUrl;
 
   Future<CompanyLookupPage> findCompanies({
-    required String token,
+    String? token,
     required int page,
     required int size,
     String search = '',
@@ -24,7 +21,8 @@ class CompanyLookupService {
       },
       options: Options(
         headers: {
-          'Authorization': 'Bearer $token',
+          if (token != null && token.isNotEmpty)
+            'Authorization': 'Bearer $token',
         },
       ),
     );
@@ -54,9 +52,9 @@ class CompanyLookupPage {
     return CompanyLookupPage(
       content: rawContent is List
           ? rawContent
-              .whereType<Map>()
-              .map((item) => CompanyLookupOption.fromJson(item))
-              .toList()
+                .whereType<Map>()
+                .map((item) => CompanyLookupOption.fromJson(item))
+                .toList()
           : [],
       number: json['number'] is int ? json['number'] : 0,
       totalPages: json['totalPages'] is int ? json['totalPages'] : 1,

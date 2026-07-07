@@ -2,27 +2,20 @@ import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:flutter/material.dart';
 
 class CompanyLookupModal extends StatefulWidget {
-  final String token;
+  final String? token;
   final CompanyLookupService service;
 
-  const CompanyLookupModal({
-    super.key,
-    required this.token,
-    required this.service,
-  });
+  const CompanyLookupModal({super.key, this.token, required this.service});
 
   static Future<CompanyLookupOption?> show({
     required BuildContext context,
-    required String token,
+    String? token,
     required CompanyLookupService service,
   }) {
     return showDialog<CompanyLookupOption>(
       context: context,
       builder: (_) {
-        return CompanyLookupModal(
-          token: token,
-          service: service,
-        );
+        return CompanyLookupModal(token: token, service: service);
       },
     );
   }
@@ -57,9 +50,7 @@ class _CompanyLookupModalState extends State<CompanyLookupModal> {
     super.dispose();
   }
 
-  Future<void> _loadCompanies({
-    required int page,
-  }) async {
+  Future<void> _loadCompanies({required int page}) async {
     setState(() {
       _loading = true;
       _error = null;
@@ -93,17 +84,16 @@ class _CompanyLookupModalState extends State<CompanyLookupModal> {
     }
   }
 
-  InputDecoration _inputDecoration({
-    required String hint,
-  }) {
+  InputDecoration _inputDecoration({required String hint}) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return InputDecoration(
       hintText: hint,
       filled: true,
-      fillColor:
-          isDark ? const Color(0xFF1C212B) : colorScheme.surfaceContainerHighest,
+      fillColor: isDark
+          ? const Color(0xFF1C212B)
+          : colorScheme.surfaceContainerHighest,
       prefixIcon: Icon(
         Icons.search,
         color: colorScheme.onSurface.withOpacity(0.65),
@@ -114,15 +104,11 @@ class _CompanyLookupModalState extends State<CompanyLookupModal> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.outline.withOpacity(0.25),
-        ),
+        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.25)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.primary,
-        ),
+        borderSide: BorderSide(color: colorScheme.primary),
       ),
     );
   }
@@ -134,9 +120,7 @@ class _CompanyLookupModalState extends State<CompanyLookupModal> {
     if (_loading) {
       return const SizedBox(
         height: 260,
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -158,9 +142,7 @@ class _CompanyLookupModalState extends State<CompanyLookupModal> {
     if (_companies.isEmpty) {
       return const SizedBox(
         height: 260,
-        child: Center(
-          child: Text('Nenhuma empresa encontrada'),
-        ),
+        child: Center(child: Text('Nenhuma empresa encontrada')),
       );
     }
 
@@ -168,9 +150,7 @@ class _CompanyLookupModalState extends State<CompanyLookupModal> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.22),
-        ),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),
       child: Column(
         children: [
@@ -233,9 +213,7 @@ class _CompanyLookupModalState extends State<CompanyLookupModal> {
                       child: Text(
                         company.displayName,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                     Expanded(
