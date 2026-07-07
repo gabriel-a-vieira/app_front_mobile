@@ -73,11 +73,20 @@ class ClientService {
     required String token,
     required List<String> ids,
   }) async {
-    await _dio.delete(
+    final response = await _dio.delete(
       baseUrl,
       data: ids,
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ),
     );
+
+    if (response.statusCode != 204 && response.statusCode != 200) {
+      throw Exception('Erro ao excluir clientes');
+    }
   }
 
   Future<List<String>> findPaymentMethods({required String token}) async {
