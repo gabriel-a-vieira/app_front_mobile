@@ -36,9 +36,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
     baseUrl: 'http://localhost:8081/company',
   );
 
-  final _stateService = StateService(
-    baseUrl: 'http://localhost:8081/state',
-  );
+  final _stateService = StateService(baseUrl: 'http://localhost:8081/state');
 
   final _tokenStorage = TokenStorage();
 
@@ -121,9 +119,9 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
         _loadingStates = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao buscar UFs: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro ao buscar UFs: $e')));
     }
   }
 
@@ -163,10 +161,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
         tiktokUrl: _tiktokCtrl.text.trim(),
       );
 
-      await _companyService.createCompany(
-        token: token,
-        request: request,
-      );
+      await _companyService.createCompany(token: token, request: request);
 
       if (!mounted) return;
 
@@ -178,9 +173,9 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao cadastrar empresa: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro ao cadastrar empresa: $e')));
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -188,10 +183,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
     }
   }
 
-  InputDecoration _inputDecoration({
-    required String label,
-    String? hint,
-  }) {
+  InputDecoration _inputDecoration({required String label, String? hint}) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -202,35 +194,23 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
       fillColor: isDark
           ? const Color(0xFF1C212B)
           : colorScheme.surfaceContainerHighest,
-      labelStyle: TextStyle(
-        color: colorScheme.onSurface.withOpacity(0.8),
-      ),
-      hintStyle: TextStyle(
-        color: colorScheme.onSurface.withOpacity(0.45),
-      ),
+      labelStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.8)),
+      hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.45)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.outline.withOpacity(0.25),
-        ),
+        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.25)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.primary,
-        ),
+        borderSide: BorderSide(color: colorScheme.primary),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.error,
-        ),
+        borderSide: BorderSide(color: colorScheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(
-          color: colorScheme.error,
-        ),
+        borderSide: BorderSide(color: colorScheme.error),
       ),
     );
   }
@@ -248,10 +228,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
       controller: controller,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      decoration: _inputDecoration(
-        label: label,
-        hint: hint,
-      ),
+      decoration: _inputDecoration(label: label, hint: hint),
       validator: (value) {
         final text = (value ?? '').trim();
 
@@ -297,16 +274,11 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.22),
-        ),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle(title),
-          ...children,
-        ],
+        children: [_buildSectionTitle(title), ...children],
       ),
     );
   }
@@ -323,10 +295,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
           spacing: 14,
           runSpacing: 14,
           children: fields.map((field) {
-            return SizedBox(
-              width: width,
-              child: field,
-            );
+            return SizedBox(width: width, child: field);
           }).toList(),
         );
       },
@@ -392,9 +361,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cadastro de Empresa'),
-      ),
+      appBar: AppBar(title: const Text('Cadastro de Empresa')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(
@@ -423,9 +390,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
                           label: 'CNPJ',
                           hint: '00.000.000/0000-00',
                           requiredField: true,
-                          inputFormatters: [
-                            CnpjAlphanumericInputFormatter(),
-                          ],
+                          inputFormatters: [CnpjAlphanumericInputFormatter()],
                           customValidator: (value) {
                             final cleanValue = onlyAlphanumeric(value);
 
@@ -460,9 +425,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
                           controller: _zipCodeCtrl,
                           label: 'CEP',
                           hint: '00000-000',
-                          inputFormatters: [
-                            CepInputFormatter(),
-                          ],
+                          inputFormatters: [CepInputFormatter()],
                           customValidator: (value) {
                             final cleanValue = onlyNumbers(value);
 
@@ -474,10 +437,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
                             return null;
                           },
                         ),
-                        _buildTextField(
-                          controller: _streetCtrl,
-                          label: 'Rua',
-                        ),
+                        _buildTextField(controller: _streetCtrl, label: 'Rua'),
                         _buildTextField(
                           controller: _numberCtrl,
                           label: 'Numero',
@@ -486,10 +446,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
                           controller: _districtCtrl,
                           label: 'Bairro',
                         ),
-                        _buildTextField(
-                          controller: _cityCtrl,
-                          label: 'Cidade',
-                        ),
+                        _buildTextField(controller: _cityCtrl, label: 'Cidade'),
                         _buildStateDropdown(),
                       ]),
                       const SizedBox(height: 14),
@@ -547,9 +504,7 @@ class _CompanyCreatePageState extends State<CompanyCreatePage> {
                             )
                           : const Text(
                               'Cadastrar empresa',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.w700),
                             ),
                     ),
                   ),

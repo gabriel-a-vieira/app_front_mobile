@@ -4,16 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'theme_notifier.dart';  // O ThemeNotifier para controlar o tema
-import 'locale_provider.dart';  // O LocaleProvider para controlar o idioma
-import 'app_router.dart';  // Importando o arquivo que define o buildRouter
+import 'theme_notifier.dart'; // O ThemeNotifier para controlar o tema
+import 'locale_provider.dart'; // O LocaleProvider para controlar o idioma
+import 'app_router.dart'; // Importando o arquivo que define o buildRouter
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeNotifier()),  // Provider para o tema
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),  // Provider para o idioma
+        ChangeNotifierProvider(
+          create: (_) => ThemeNotifier(),
+        ), // Provider para o tema
+        ChangeNotifierProvider(
+          create: (_) => LocaleProvider(),
+        ), // Provider para o idioma
       ],
       child: const MyApp(),
     ),
@@ -33,18 +37,19 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Agenda App',
       debugShowCheckedModeBanner: false,
-      home: const HomePage(), // Definir diretamente a HomePage como tela inicial
-      locale: localeProvider.locale,  // Definir o idioma
+      home:
+          const HomePage(), // Definir diretamente a HomePage como tela inicial
+      locale: localeProvider.locale, // Definir o idioma
       localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       supportedLocales: AppLocalizations.supportedLocales,
-      themeMode: themeNotifier.themeMode,  // Definir o modo de tema
-      theme: ThemeData.light(),  // Tema claro
-      darkTheme: ThemeData.dark(),  // Tema escuro
+      themeMode: themeNotifier.themeMode, // Definir o modo de tema
+      theme: ThemeData.light(), // Tema claro
+      darkTheme: ThemeData.dark(), // Tema escuro
     );
   }
 }

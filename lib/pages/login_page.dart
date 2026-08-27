@@ -9,11 +9,7 @@ class LoginPage extends StatefulWidget {
   final void Function(AuthLoginResult result)? onLoginSuccess;
   final VoidCallback? onRegisterTap;
 
-  const LoginPage({
-    super.key,
-    this.onLoginSuccess,
-    this.onRegisterTap,
-  });
+  const LoginPage({super.key, this.onLoginSuccess, this.onRegisterTap});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -74,11 +70,9 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${l10n.loginError}: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${l10n.loginError}: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -159,11 +153,7 @@ class _LoginPageState extends State<LoginPage> {
                   key: _formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildHeader(),
-                      _buildBody(),
-                      _buildFooter(),
-                    ],
+                    children: [_buildHeader(), _buildBody(), _buildFooter()],
                   ),
                 ),
               ),

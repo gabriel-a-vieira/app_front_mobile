@@ -1,10 +1,7 @@
 import 'package:dio/dio.dart';
 
 class UserAdminService {
-  UserAdminService({
-    Dio? dio,
-    required this.baseUrl,
-  }) : _dio = dio ?? Dio();
+  UserAdminService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
 
   final Dio _dio;
   final String baseUrl;
@@ -16,11 +13,7 @@ class UserAdminService {
     await _dio.post(
       baseUrl,
       data: request.toJson(),
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
   }
 }

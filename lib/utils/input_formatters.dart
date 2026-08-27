@@ -14,8 +14,9 @@ class CnpjAlphanumericInputFormatter extends TextInputFormatter {
         .where((character) => _allowedCharacters.hasMatch(character))
         .join();
 
-    final limitedValue =
-        cleanValue.length > 14 ? cleanValue.substring(0, 14) : cleanValue;
+    final limitedValue = cleanValue.length > 14
+        ? cleanValue.substring(0, 14)
+        : cleanValue;
 
     final formattedValue = _formatCnpj(limitedValue);
 
@@ -56,8 +57,9 @@ class CepInputFormatter extends TextInputFormatter {
   ) {
     final cleanValue = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
 
-    final limitedValue =
-        cleanValue.length > 8 ? cleanValue.substring(0, 8) : cleanValue;
+    final limitedValue = cleanValue.length > 8
+        ? cleanValue.substring(0, 8)
+        : cleanValue;
 
     final formattedValue = _formatCep(limitedValue);
 

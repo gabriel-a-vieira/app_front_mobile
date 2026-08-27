@@ -1,10 +1,7 @@
 import 'package:dio/dio.dart';
 
 class StateService {
-  StateService({
-    Dio? dio,
-    required this.baseUrl,
-  }) : _dio = dio ?? Dio();
+  StateService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
 
   final Dio _dio;
   final String baseUrl;

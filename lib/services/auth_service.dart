@@ -38,15 +38,8 @@ class AuthService {
 
     final response = await _dio.post(
       url,
-      data: {
-        'email': email,
-        'password': password,
-      },
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      ),
+      data: {'email': email, 'password': password},
+      options: Options(headers: {'Content-Type': 'application/json'}),
     );
 
     final data = response.data;
@@ -70,16 +63,8 @@ class AuthService {
   }) async {
     final response = await _dio.post(
       '$baseUrl/auth/register',
-      data: {
-        'name': name,
-        'email': email,
-        'password': password,
-      },
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      ),
+      data: {'name': name, 'email': email, 'password': password},
+      options: Options(headers: {'Content-Type': 'application/json'}),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
