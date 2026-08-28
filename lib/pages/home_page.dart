@@ -10,6 +10,7 @@ import 'package:app_front_mobile/pages/professional_management_page.dart';
 import 'package:app_front_mobile/pages/user_form_page.dart';
 import 'package:app_front_mobile/pages/client_management_page.dart';
 import 'package:app_front_mobile/pages/service_offering_management_page.dart';
+import 'package:app_front_mobile/pages/availability_management_page.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -339,6 +340,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _openAvailabilityManagementPage() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            AvailabilityManagementPage(currentUserRole: _loggedUserRole ?? ''),
+      ),
+    );
+  }
+
   void _openLoginModal(BuildContext context) {
     showDialog(
       context: context,
@@ -432,6 +442,11 @@ class _HomePageState extends State<HomePage> {
 
         if (value == 'services') {
           _openServiceOfferingManagementPage();
+          return;
+        }
+
+        if (value == 'availability') {
+          _openAvailabilityManagementPage();
           return;
         }
 

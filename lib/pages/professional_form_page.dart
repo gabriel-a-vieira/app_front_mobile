@@ -2,6 +2,7 @@ import 'package:app_front_mobile/services/city_service.dart';
 import 'package:app_front_mobile/services/professional_service.dart';
 import 'package:app_front_mobile/services/state_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -138,7 +139,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
         _loadingData = false;
       });
 
-      _showMessage('Erro ao carregar dados: $e');
+      AppMessage.error(context, 'Erro ao carregar dados: $e');
     }
   }
 
@@ -230,7 +231,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
         _loadingCities = false;
       });
 
-      _showMessage('Erro ao carregar cidades: $e');
+      AppMessage.error(context, 'Erro ao carregar cidades: $e');
     }
   }
 
@@ -278,7 +279,8 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
 
       if (!mounted) return;
 
-      _showMessage(
+      AppMessage.success(
+        context,
         widget.isEditing
             ? 'Profissional atualizado com sucesso'
             : 'Profissional cadastrado com sucesso',
@@ -288,7 +290,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     } catch (e) {
       if (!mounted) return;
 
-      _showMessage('Erro ao salvar profissional: $e');
+      AppMessage.error(context, 'Erro ao salvar profissional: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -380,12 +382,6 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     }
 
     return '${digits.substring(0, 5)}-${digits.substring(5)}';
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   InputDecoration _inputDecoration({

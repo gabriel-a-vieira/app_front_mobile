@@ -1,6 +1,7 @@
 import 'package:app_front_mobile/pages/professional_form_page.dart';
 import 'package:app_front_mobile/services/professional_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -144,12 +145,12 @@ class _ProfessionalManagementPageState
 
   Future<void> _openEditPage() async {
     if (_selectedIds.isEmpty) {
-      _showMessage('Selecione um profissional para editar');
+      AppMessage.info(context, 'Selecione um profissional para editar');
       return;
     }
 
     if (_selectedIds.length > 1) {
-      _showMessage('Selecione apenas um profissional para editar');
+      AppMessage.info(context, 'Selecione apenas um profissional para editar');
       return;
     }
 
@@ -170,7 +171,7 @@ class _ProfessionalManagementPageState
 
   Future<void> _deleteSelectedProfessionals() async {
     if (_selectedIds.isEmpty) {
-      _showMessage('Selecione um ou mais profissionais para excluir');
+      AppMessage.info(context, 'Selecione um ou mais profissionais para excluir');
       return;
     }
 
@@ -219,12 +220,12 @@ class _ProfessionalManagementPageState
 
       if (!mounted) return;
 
-      _showMessage('Profissional excluido com sucesso');
+      AppMessage.success(context, 'Profissional excluido com sucesso');
       await _loadProfessionals();
     } catch (e) {
       if (!mounted) return;
 
-      _showMessage('Erro ao excluir profissional: $e');
+      AppMessage.error(context, 'Erro ao excluir profissional: $e');
     }
   }
 
@@ -365,12 +366,6 @@ class _ProfessionalManagementPageState
     });
 
     await _loadProfessionals();
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   InputDecoration _inputDecoration({required String hint}) {

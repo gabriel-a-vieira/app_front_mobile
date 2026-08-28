@@ -1,6 +1,7 @@
 import 'package:app_front_mobile/pages/client_form_page.dart';
 import 'package:app_front_mobile/services/client_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -195,12 +196,12 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
 
   Future<void> _openEditPage() async {
     if (_selectedIds.isEmpty) {
-      _showMessage('Selecione um cliente para editar');
+      AppMessage.info(context, 'Selecione um cliente para editar');
       return;
     }
 
     if (_selectedIds.length > 1) {
-      _showMessage('Selecione apenas um cliente para editar');
+      AppMessage.info(context, 'Selecione apenas um cliente para editar');
       return;
     }
 
@@ -224,7 +225,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
 
   Future<void> _deleteSelectedClients() async {
     if (_selectedIds.isEmpty) {
-      _showMessage('Selecione um ou mais clientes para excluir');
+      AppMessage.info(context, 'Selecione um ou mais clientes para excluir');
       return;
     }
 
@@ -273,12 +274,12 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
 
       if (!mounted) return;
 
-      _showMessage('Cliente excluido com sucesso');
+      AppMessage.success(context, 'Cliente excluido com sucesso');
       await _loadClients();
     } catch (e) {
       if (!mounted) return;
 
-      _showMessage('Erro ao excluir cliente: $e');
+      AppMessage.error(context, 'Erro ao excluir cliente: $e');
     }
   }
 
@@ -524,12 +525,6 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       'OUTRO' => 'Outro',
       _ => value.replaceAll('_', ' '),
     };
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   InputDecoration _inputDecoration({required String hint}) {

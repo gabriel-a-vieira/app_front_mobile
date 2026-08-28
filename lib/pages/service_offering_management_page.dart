@@ -2,6 +2,7 @@ import 'package:app_front_mobile/pages/service_offering_form_page.dart';
 import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/services/service_offering_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -189,13 +190,13 @@ class _ServiceOfferingManagementPageState
 
   Future<void> _openEditPage() async {
     if (_selectedIds.isEmpty) {
-      _showMessage('Selecione um servico para editar');
+      AppMessage.info(context, 'Selecione um servico para editar');
 
       return;
     }
 
     if (_selectedIds.length > 1) {
-      _showMessage('Selecione apenas um servico para editar');
+      AppMessage.info(context, 'Selecione apenas um servico para editar');
 
       return;
     }
@@ -221,7 +222,7 @@ class _ServiceOfferingManagementPageState
 
   Future<void> _deleteSelected() async {
     if (_selectedIds.isEmpty) {
-      _showMessage('Selecione um ou mais servicos');
+      AppMessage.info(context, 'Selecione um ou mais servicos');
 
       return;
     }
@@ -282,7 +283,8 @@ class _ServiceOfferingManagementPageState
 
       if (!mounted) return;
 
-      _showMessage(
+      AppMessage.success(
+        context,
         _selectedIds.length == 1
             ? 'Servico excluido com sucesso'
             : 'Servicos excluidos com sucesso',
@@ -292,7 +294,7 @@ class _ServiceOfferingManagementPageState
     } catch (e) {
       if (!mounted) return;
 
-      _showMessage('Erro ao excluir servico: $e');
+      AppMessage.error(context, 'Erro ao excluir servico: $e');
     }
   }
 
@@ -614,12 +616,6 @@ class _ServiceOfferingManagementPageState
     }
 
     return '${hours}h ${remainder}min';
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Widget _buildActionButton({

@@ -1,6 +1,7 @@
 import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/services/service_offering_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -127,7 +128,7 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
         _loadingData = false;
       });
 
-      _showMessage('Erro ao carregar servico: $e');
+      AppMessage.error(context, 'Erro ao carregar servico: $e');
     }
   }
 
@@ -164,7 +165,7 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
     }
 
     if (widget.isMasterAdmin && !widget.isEditing && _selectedCompany == null) {
-      _showMessage('Selecione uma empresa');
+      AppMessage.info(context, 'Selecione uma empresa');
 
       return;
     }
@@ -174,13 +175,13 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
     final price = double.tryParse(_priceCtrl.text.trim().replaceAll(',', '.'));
 
     if (duration == null || duration <= 0) {
-      _showMessage('Duracao invalida');
+      AppMessage.error(context, 'Duracao invalida');
 
       return;
     }
 
     if (price == null || price < 0) {
-      _showMessage('Preco invalido');
+      AppMessage.error(context, 'Preco invalido');
 
       return;
     }
@@ -223,7 +224,8 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
 
       if (!mounted) return;
 
-      _showMessage(
+      AppMessage.success(
+        context,
         widget.isEditing
             ? 'Servico atualizado com sucesso'
             : 'Servico cadastrado com sucesso',
@@ -233,7 +235,7 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
     } catch (e) {
       if (!mounted) return;
 
-      _showMessage('Erro ao salvar servico: $e');
+      AppMessage.error(context, 'Erro ao salvar servico: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -241,12 +243,6 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
         });
       }
     }
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   InputDecoration _inputDecoration({

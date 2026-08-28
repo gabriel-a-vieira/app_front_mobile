@@ -2,6 +2,7 @@ import 'package:app_front_mobile/services/city_service.dart';
 import 'package:app_front_mobile/services/client_service.dart';
 import 'package:app_front_mobile/services/state_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -143,7 +144,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
         _loading = false;
       });
 
-      _showMessage('Erro ao carregar dados: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao carregar dados: $e');
     }
   }
 
@@ -272,12 +273,12 @@ class _ClientFormPageState extends State<ClientFormPage> {
     if (!valid) return;
 
     if (_selectedCity == null) {
-      _showMessage('Selecione a cidade');
+      AppMessage.info(context, 'Selecione a cidade');
       return;
     }
 
     if (widget.isMasterAdmin && !widget.isEdit && _selectedCompany == null) {
-      _showMessage('Selecione a empresa');
+      AppMessage.info(context, 'Selecione a empresa');
       return;
     }
 
@@ -328,7 +329,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
     } catch (e) {
       if (!mounted) return;
 
-      _showMessage('Erro ao salvar cliente: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao salvar cliente.');
     } finally {
       if (mounted) {
         setState(() {
@@ -401,12 +402,6 @@ class _ClientFormPageState extends State<ClientFormPage> {
       'DEBIT_CARD' => 'Cartao de debito',
       _ => value.replaceAll('_', ' '),
     };
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   InputDecoration _inputDecoration({
