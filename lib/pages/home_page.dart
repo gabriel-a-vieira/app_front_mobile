@@ -1,3 +1,4 @@
+import 'package:app_front_mobile/pages/appointment_management_page.dart';
 import 'package:app_front_mobile/pages/login_page.dart';
 import 'package:app_front_mobile/pages/register_page.dart';
 import 'package:app_front_mobile/services/company_service.dart';
@@ -349,6 +350,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _openAppointmentManagementPage() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            AppointmentManagementPage(currentUserRole: _loggedUserRole ?? ''),
+      ),
+    );
+  }
+
   void _openLoginModal(BuildContext context) {
     showDialog(
       context: context,
@@ -450,6 +460,11 @@ class _HomePageState extends State<HomePage> {
           return;
         }
 
+        if (value == 'appointment') {
+          _openAppointmentManagementPage();
+          return;
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Funcionalidade ainda nao implementada'),
@@ -479,15 +494,11 @@ class _HomePageState extends State<HomePage> {
           ),
           const PopupMenuItem<String>(
             value: 'appointment',
-            child: Text('Appointment'),
+            child: Text('Agendamentos'),
           ),
           const PopupMenuItem<String>(
             value: 'availability',
             child: Text('Disponibilidade'),
-          ),
-          const PopupMenuItem<String>(
-            value: 'schedule',
-            child: Text('Agendamento'),
           ),
           const PopupMenuItem<String>(
             value: 'services',
