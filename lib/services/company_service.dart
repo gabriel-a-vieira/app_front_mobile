@@ -71,6 +71,7 @@ class CompanyService {
 
 class CompanyPage {
   final List<CompanySummary> content;
+
   final int number;
   final int totalPages;
   final bool last;
@@ -92,19 +93,26 @@ class CompanyPage {
                 .map((item) => CompanySummary.fromJson(item))
                 .toList()
           : [],
-      number: json['number'] is int ? json['number'] as int : 0,
-      totalPages: json['totalPages'] is int ? json['totalPages'] as int : 0,
+      number: _toInt(json['number']),
+      totalPages: _toInt(json['totalPages']),
       last: json['last'] is bool ? json['last'] as bool : true,
     );
   }
 }
 
 class CompanySummary {
-  final int id;
+  //
+  // IMPORTANTE:
+  // o backend usa UUID/String.
+  //
+  final String id;
+
   final String legalName;
   final String tradeName;
+
   final String type;
   final String typeLabel;
+
   final String status;
 
   CompanySummary({
@@ -118,7 +126,7 @@ class CompanySummary {
 
   factory CompanySummary.fromJson(Map json) {
     return CompanySummary(
-      id: json['id'] is int ? json['id'] as int : 0,
+      id: json['id']?.toString() ?? '',
       legalName: json['legalName']?.toString() ?? '',
       tradeName: json['tradeName']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
@@ -202,4 +210,16 @@ class CompanyTypeOption {
       label: json['label']?.toString() ?? '',
     );
   }
+}
+
+int _toInt(dynamic value) {
+  if (value is int) {
+    return value;
+  }
+
+  if (value is num) {
+    return value.toInt();
+  }
+
+  return int.tryParse(value?.toString() ?? '') ?? 0;
 }

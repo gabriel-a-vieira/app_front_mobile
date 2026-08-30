@@ -1,24 +1,179 @@
 import 'package:app_front_mobile/services/company_service.dart';
+import 'package:app_front_mobile/services/public_company_service.dart';
+import 'package:app_front_mobile/services/company_review_service.dart';
+import 'package:app_front_mobile/utils/auth_gate.dart';
+import 'package:app_front_mobile/utils/app_message.dart';
+import 'package:app_front_mobile/widgets/company_services_tab.dart';
+import 'package:app_front_mobile/widgets/company_professionals_tab.dart';
+import 'package:app_front_mobile/widgets/company_reviews_tab.dart';
 import 'package:flutter/material.dart';
 
-class CompanyDetailPage extends StatelessWidget {
+class CompanyDetailPage extends StatefulWidget {
   final CompanySummary company;
 
   const CompanyDetailPage({super.key, required this.company});
 
+  @override
+  State<CompanyDetailPage> createState() => _CompanyDetailPageState();
+}
+
+class _CompanyDetailPageState extends State<CompanyDetailPage> {
+  final _companyReviewService = CompanyReviewService(
+    baseUrl: 'http://localhost:8081',
+  );
+
+  String _selectedTab = 'services';
+
+  CompanyReviewSummary _reviewSummary = const CompanyReviewSummary(
+    average: 0,
+    total: 0,
+  );
+
+  bool _loadingReviewSummary = true;
+
   String get _displayName {
-    if (company.tradeName.trim().isNotEmpty) {
-      return company.tradeName.trim();
+    if (widget.company.tradeName.trim().isNotEmpty) {
+      return widget.company.tradeName.trim();
     }
 
-    return company.legalName.trim();
+    return widget.company.legalName.trim();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadReviewSummary();
+  }
+
+  Future<void> _loadReviewSummary() async {
+    try {
+      final summary = await _companyReviewService.findSummary(
+        companyId: widget.company.id.toString(),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _reviewSummary = summary;
+        _loadingReviewSummary = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingReviewSummary = false;
+      });
+    }
+  }
+
+  Future<void> _openMainSchedule() async {
+    final logged = await AuthGate.requireLogin(
+      context,
+      reason: 'Você precisa estar logado para realizar um agendamento.',
+    );
+
+    if (!logged || !mounted) {
+      return;
+    }
+
+    /*
+     * O fluxo de agendamento do cliente final será conectado aqui.
+     *
+     * IMPORTANTE:
+     * não estou abrindo o AppointmentFormPage administrativo,
+     * pois aquele formulário permite selecionar Client e é voltado
+     * para administração.
+     *
+     * Aqui já sabemos a empresa:
+     *
+     * widget.company.id
+     *
+     * Por enquanto direcionamos o cliente para selecionar
+     * um serviço dentro da própria página.
+     */
+
+    setState(() {
+      _selectedTab = 'services';
+    });
+
+    AppMessage.info(
+      context,
+      'Selecione um serviço para continuar o agendamento.',
+    );
+  }
+
+  Future<void> _scheduleService(PublicCompanyServiceOption service) async {
+    final logged = await AuthGate.requireLogin(
+      context,
+      reason: 'Você precisa estar logado para agendar este serviço.',
+    );
+
+    if (!logged || !mounted) {
+      return;
+    }
+
+    /*
+     * Próxima integração do fluxo do cliente:
+     *
+     * companyId: widget.company.id
+     * serviceId: service.id
+     *
+     * Não usamos o AppointmentFormPage administrativo aqui.
+     */
+
+    AppMessage.info(
+      context,
+      'Serviço "${service.name}" selecionado. Agora escolha o profissional e o horário.',
+    );
+
+    setState(() {
+      _selectedTab = 'professionals';
+    });
+  }
+
+  Future<void> _openProfessionalSchedule(
+    PublicCompanyProfessional professional,
+  ) async {
+    final logged = await AuthGate.requireLogin(
+      context,
+      reason:
+          'Você precisa estar logado para visualizar os horários disponíveis deste profissional.',
+    );
+
+    if (!logged || !mounted) {
+      return;
+    }
+
+    /*
+     * Próxima integração:
+     *
+     * companyId: widget.company.id
+     * professionalId: professional.id
+     *
+     * Para mostrar slots REAIS de agendamento ainda precisamos
+     * saber quais serviços foram selecionados, pois a duração
+     * influencia diretamente os horários retornados pelo backend.
+     */
+
+    AppMessage.info(
+      context,
+      'Profissional "${professional.name}" selecionado. Escolha um serviço para consultar os horários disponíveis.',
+    );
+
+    setState(() {
+      _selectedTab = 'services';
+    });
+  }
+
+  void _selectTab(String key) {
+    setState(() {
+      _selectedTab = key;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
@@ -45,7 +200,9 @@ class CompanyDetailPage extends StatelessWidget {
                       _buildMainImage(context),
                       const SizedBox(height: 16),
                       _buildTabs(context),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 24),
+                      _buildSelectedTabContent(),
+                      const SizedBox(height: 32),
                       _buildComodidadesSection(context),
                       const SizedBox(height: 28),
                       _buildSidebar(context),
@@ -66,7 +223,9 @@ class CompanyDetailPage extends StatelessWidget {
                           _buildMainImage(context),
                           const SizedBox(height: 16),
                           _buildTabs(context),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 24),
+                          _buildSelectedTabContent(),
+                          const SizedBox(height: 32),
                           _buildComodidadesSection(context),
                         ],
                       ),
@@ -100,6 +259,7 @@ class CompanyDetailPage extends StatelessWidget {
           child: Icon(Icons.storefront, color: colorScheme.primary, size: 28),
         ),
         const SizedBox(width: 14),
+
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,25 +273,16 @@ class CompanyDetailPage extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
+
               const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Icon(Icons.star, color: Color(0xFFFFB800), size: 18),
-                  const SizedBox(width: 6),
-                  Text(
-                    '5.0',
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withOpacity(0.75),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
+
+              _buildRatingHeader(context),
             ],
           ),
         ),
+
         const SizedBox(width: 16),
+
         InkWell(
           onTap: () {},
           borderRadius: BorderRadius.circular(999),
@@ -147,11 +298,13 @@ class CompanyDetailPage extends StatelessWidget {
             child: const Icon(Icons.favorite_border, color: Color(0xFFE34B4B)),
           ),
         ),
+
         const SizedBox(width: 12),
+
         SizedBox(
           height: 42,
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: _openMainSchedule,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFF9F38),
               foregroundColor: Colors.black87,
@@ -168,6 +321,75 @@ class CompanyDetailPage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRatingHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (_loadingReviewSummary) {
+      return SizedBox(
+        width: 70,
+        height: 18,
+        child: LinearProgressIndicator(
+          minHeight: 2,
+          backgroundColor: Colors.transparent,
+          color: colorScheme.primary,
+        ),
+      );
+    }
+
+    if (_reviewSummary.total == 0) {
+      return Row(
+        children: [
+          Icon(
+            Icons.star_border,
+            color: colorScheme.onSurface.withOpacity(0.55),
+            size: 18,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Sem avaliações',
+            style: TextStyle(
+              color: colorScheme.onSurface.withOpacity(0.65),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return InkWell(
+      onTap: () {
+        _selectTab('reviews');
+      },
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.star, color: Color(0xFFFFB800), size: 18),
+            const SizedBox(width: 6),
+            Text(
+              _reviewSummary.average.toStringAsFixed(1),
+              style: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.78),
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '(${_reviewSummary.total})',
+              style: TextStyle(
+                color: colorScheme.onSurface.withOpacity(0.52),
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -221,14 +443,16 @@ class CompanyDetailPage extends StatelessWidget {
   }
 
   Widget _buildTabs(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     final tabs = [
-      'Serviços',
-      'Profissionais',
-      'Fidelidade',
-      'Produtos',
-      'Pacotes',
-      'Assinaturas',
-      'Avaliações',
+      (key: 'services', label: 'Serviços', enabled: true),
+      (key: 'professionals', label: 'Profissionais', enabled: true),
+      (key: 'loyalty', label: 'Fidelidade', enabled: false),
+      (key: 'products', label: 'Produtos', enabled: false),
+      (key: 'packages', label: 'Pacotes', enabled: false),
+      (key: 'subscriptions', label: 'Assinaturas', enabled: false),
+      (key: 'reviews', label: 'Avaliações', enabled: true),
     ];
 
     return Column(
@@ -238,41 +462,79 @@ class CompanyDetailPage extends StatelessWidget {
           spacing: 24,
           runSpacing: 12,
           children: tabs.map((tab) {
-            final selected = tab == 'Serviços';
+            final selected = _selectedTab == tab.key;
 
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  tab,
-                  style: TextStyle(
-                    color: selected
-                        ? Theme.of(context).colorScheme.onSurface
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.78),
-                    fontSize: 14,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+            final enabled = tab.enabled;
+
+            return InkWell(
+              onTap: enabled
+                  ? () {
+                      _selectTab(tab.key);
+                    }
+                  : null,
+              borderRadius: BorderRadius.circular(6),
+              child: Opacity(
+                opacity: enabled ? 1 : 0.45,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        tab.label,
+                        style: TextStyle(
+                          color: selected
+                              ? colorScheme.onSurface
+                              : colorScheme.onSurface.withOpacity(0.78),
+                          fontSize: 14,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 48,
+                        height: 2,
+                        color: selected
+                            ? colorScheme.primary
+                            : Colors.transparent,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                if (selected)
-                  Container(
-                    width: 48,
-                    height: 2,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-              ],
+              ),
             );
           }).toList(),
         ),
         const SizedBox(height: 14),
-        Divider(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.22),
-          height: 1,
-        ),
+        Divider(color: colorScheme.outline.withOpacity(0.22), height: 1),
       ],
     );
+  }
+
+  Widget _buildSelectedTabContent() {
+    final companyId = widget.company.id.toString();
+
+    switch (_selectedTab) {
+      case 'services':
+        return CompanyServicesTab(
+          companyId: companyId,
+          onSchedule: _scheduleService,
+        );
+
+      case 'professionals':
+        return CompanyProfessionalsTab(
+          companyId: companyId,
+          onViewSchedule: _openProfessionalSchedule,
+        );
+
+      case 'reviews':
+        return CompanyReviewsTab(companyId: companyId);
+
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   Widget _buildComodidadesSection(BuildContext context) {
@@ -299,6 +561,7 @@ class CompanyDetailPage extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
+
             final itemWidth = width >= 760
                 ? (width - 36) / 4
                 : width >= 480
@@ -330,6 +593,7 @@ class CompanyDetailPage extends StatelessWidget {
 
   Widget _buildSidebar(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -372,6 +636,14 @@ class CompanyDetailPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
+
+              /*
+               * Atualmente o endereço continua fixo,
+               * exatamente como no seu arquivo original.
+               *
+               * Em uma próxima etapa podemos puxar
+               * diretamente do CompanySummary / Address.
+               */
               Text(
                 'Avenida Firmino da Silva 484, 484 - 89209-224 Parque Guarani - Joinville/SC',
                 style: TextStyle(
@@ -402,6 +674,16 @@ class CompanyDetailPage extends StatelessWidget {
   }
 
   Widget _buildOpeningHoursSection(BuildContext context) {
+    /*
+     * Esse horário continua exatamente como no seu
+     * arquivo atual.
+     *
+     * Não estou vinculando ao Availability porque
+     * Availability representa PROFISSIONAIS,
+     * e não necessariamente o horário de funcionamento
+     * geral da empresa.
+     */
+
     final hours = [
       ('Segunda-Feira', '09:00 - 12:00', '13:00 - 18:00', true),
       ('Terça-Feira', '09:00 - 12:00', '14:00 - 20:30', false),
@@ -423,6 +705,7 @@ class CompanyDetailPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
+
         ...hours.map((hour) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
@@ -606,6 +889,7 @@ class _AmenityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
