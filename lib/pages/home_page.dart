@@ -12,6 +12,7 @@ import 'package:app_front_mobile/pages/user_form_page.dart';
 import 'package:app_front_mobile/pages/client_management_page.dart';
 import 'package:app_front_mobile/pages/service_offering_management_page.dart';
 import 'package:app_front_mobile/pages/availability_management_page.dart';
+import 'package:app_front_mobile/storage/token_storage.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -58,6 +59,7 @@ class _HomePageState extends State<HomePage> {
     baseUrl: 'http://localhost:8081/company',
   );
   final _searchController = TextEditingController();
+  final _tokenStorage = TokenStorage();
 
   String? _loggedUserFirstName;
   String? _selectedCompanyType;
@@ -281,7 +283,11 @@ class _HomePageState extends State<HomePage> {
     return _text(context, 'Sair', 'Logout');
   }
 
-  void _logout() {
+  Future<void> _logout() async {
+    await _tokenStorage.clearAccessToken();
+
+    if (!mounted) return;
+
     setState(() {
       _loggedUserFirstName = null;
       _loggedUserRole = null;
