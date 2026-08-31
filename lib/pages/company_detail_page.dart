@@ -7,6 +7,7 @@ import 'package:app_front_mobile/widgets/company_services_tab.dart';
 import 'package:app_front_mobile/widgets/company_professionals_tab.dart';
 import 'package:app_front_mobile/widgets/company_reviews_tab.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/widgets/service_booking_modal.dart';
 
 class CompanyDetailPage extends StatefulWidget {
   final CompanySummary company;
@@ -113,23 +114,16 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
       return;
     }
 
-    /*
-     * Próxima integração do fluxo do cliente:
-     *
-     * companyId: widget.company.id
-     * serviceId: service.id
-     *
-     * Não usamos o AppointmentFormPage administrativo aqui.
-     */
-
-    AppMessage.info(
-      context,
-      'Serviço "${service.name}" selecionado. Agora escolha o profissional e o horário.',
+    final scheduled = await ServiceBookingModal.show(
+      context: context,
+      companyId: widget.company.id,
+      companyName: _displayName,
+      service: service,
     );
 
-    setState(() {
-      _selectedTab = 'professionals';
-    });
+    if (scheduled == true && mounted) {
+      AppMessage.success(context, 'Seu horário foi agendado.');
+    }
   }
 
   Future<void> _openProfessionalSchedule(
@@ -198,13 +192,13 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
                       _buildHeader(context),
                       const SizedBox(height: 20),
                       _buildMainImage(context),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 28),
+                      _buildComodidadesSection(context),
+                      const SizedBox(height: 32),
                       _buildTabs(context),
                       const SizedBox(height: 24),
                       _buildSelectedTabContent(),
                       const SizedBox(height: 32),
-                      _buildComodidadesSection(context),
-                      const SizedBox(height: 28),
                       _buildSidebar(context),
                     ],
                   );
@@ -221,12 +215,12 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
                           _buildHeader(context),
                           const SizedBox(height: 18),
                           _buildMainImage(context),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 28),
+                          _buildComodidadesSection(context),
+                          const SizedBox(height: 32),
                           _buildTabs(context),
                           const SizedBox(height: 24),
                           _buildSelectedTabContent(),
-                          const SizedBox(height: 32),
-                          _buildComodidadesSection(context),
                         ],
                       ),
                     ),

@@ -13,6 +13,8 @@ import 'package:app_front_mobile/pages/client_management_page.dart';
 import 'package:app_front_mobile/pages/service_offering_management_page.dart';
 import 'package:app_front_mobile/pages/availability_management_page.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/pages/my_appointments_page.dart';
+import 'package:app_front_mobile/utils/auth_gate.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -365,6 +367,25 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _openMyAppointmentsPage() async {
+    final logged = await AuthGate.requireLogin(
+      context,
+      reason: _text(
+        context,
+        'Voce precisa estar logado para visualizar seus agendamentos.',
+        'You need to be logged in to view your appointments.',
+      ),
+    );
+
+    if (!logged || !mounted) {
+      return;
+    }
+
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const MyAppointmentsPage()));
+  }
+
   void _openLoginModal(BuildContext context) {
     showDialog(
       context: context,
@@ -563,17 +584,22 @@ class _HomePageState extends State<HomePage> {
     BuildContext context, {
     required String label,
     required bool selected,
+    VoidCallback? onTap,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: selected ? colorScheme.primary : colorScheme.onSurface,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? colorScheme.primary : colorScheme.onSurface,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );
@@ -1010,6 +1036,7 @@ class _HomePageState extends State<HomePage> {
               context,
               label: _text(context, 'Meus Agendamentos', 'My Appointments'),
               selected: false,
+              onTap: _openMyAppointmentsPage,
             ),
             if (_canSeeAdminMenu) _buildAdminMenu(context),
           ],

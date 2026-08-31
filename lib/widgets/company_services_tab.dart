@@ -59,8 +59,6 @@ class _CompanyServicesTabState extends State<CompanyServicesTab> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     if (_loading) {
       return const SizedBox(
         height: 180,
@@ -70,86 +68,108 @@ class _CompanyServicesTabState extends State<CompanyServicesTab> {
 
     if (_services.isEmpty) {
       return const SizedBox(
-        height: 160,
-        child: Center(child: Text('Nenhum servico disponivel')),
+        height: 150,
+        child: Center(child: Text('Nenhum serviço disponível')),
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth >= 700
-            ? (constraints.maxWidth - 12) / 2
-            : constraints.maxWidth;
-
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: _services.map((service) {
-            return Container(
-              width: width,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF11141B)
-                    : colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.22),
+    return Column(
+      children: _services.map((service) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 4),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: colorScheme.outline.withOpacity(0.18)),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colorScheme.primary.withOpacity(0.12),
+                ),
+                child: Icon(
+                  Icons.design_services_outlined,
+                  color: colorScheme.primary,
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    service.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (service.description.isNotEmpty) ...[
-                    const SizedBox(height: 6),
+
+              const SizedBox(width: 14),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      service.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withOpacity(0.65),
+                      service.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.schedule_outlined,
-                        size: 17,
-                        color: colorScheme.primary,
-                      ),
-                      const SizedBox(width: 5),
-                      Text('${service.durationMinutes} min'),
-                      const Spacer(),
+
+                    if (service.description.isNotEmpty) ...[
+                      const SizedBox(height: 5),
                       Text(
-                        _price(service.price),
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        service.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colorScheme.onSurface.withOpacity(0.62),
+                          fontSize: 13,
+                        ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 40,
-                    child: FilledButton(
-                      onPressed: () => widget.onSchedule(service),
-                      child: const Text('Agendar'),
+
+                    const SizedBox(height: 7),
+
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.schedule,
+                          size: 15,
+                          color: colorScheme.onSurface.withOpacity(0.65),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          '${service.durationMinutes} min',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            );
-          }).toList(),
+
+              const SizedBox(width: 16),
+
+              Text(
+                _price(service.price),
+                style: TextStyle(
+                  color: colorScheme.primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+
+              const SizedBox(width: 18),
+
+              SizedBox(
+                height: 38,
+                child: FilledButton(
+                  onPressed: () => widget.onSchedule(service),
+                  child: const Text('Agendar'),
+                ),
+              ),
+            ],
+          ),
         );
-      },
+      }).toList(),
     );
   }
 }
