@@ -9,9 +9,7 @@ class AuthGate {
   static final TokenStorage _tokenStorage = TokenStorage();
 
   static Future<bool> isAuthenticated() async {
-    final token = await _tokenStorage.getAccessToken();
-
-    return token != null && token.isNotEmpty;
+    return await _tokenStorage.isAccessTokenValid();
   }
 
   static Future<bool> requireLogin(

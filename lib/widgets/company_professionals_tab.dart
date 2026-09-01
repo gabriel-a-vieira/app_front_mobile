@@ -4,13 +4,7 @@ import 'package:flutter/material.dart';
 class CompanyProfessionalsTab extends StatefulWidget {
   final String companyId;
 
-  final void Function(PublicCompanyProfessional professional) onViewSchedule;
-
-  const CompanyProfessionalsTab({
-    super.key,
-    required this.companyId,
-    required this.onViewSchedule,
-  });
+  const CompanyProfessionalsTab({super.key, required this.companyId});
 
   @override
   State<CompanyProfessionalsTab> createState() =>
@@ -24,6 +18,8 @@ class _CompanyProfessionalsTabState extends State<CompanyProfessionalsTab> {
 
   bool _loading = true;
 
+  String? _error;
+
   List<PublicCompanyProfessional> _professionals = [];
 
   @override
@@ -34,6 +30,11 @@ class _CompanyProfessionalsTabState extends State<CompanyProfessionalsTab> {
   }
 
   Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
     try {
       final result = await _service.findProfessionals(
         companyId: widget.companyId,
@@ -45,10 +46,11 @@ class _CompanyProfessionalsTabState extends State<CompanyProfessionalsTab> {
         _professionals = result;
         _loading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
 
       setState(() {
+        _error = e.toString();
         _loading = false;
       });
     }
@@ -67,58 +69,92 @@ class _CompanyProfessionalsTabState extends State<CompanyProfessionalsTab> {
       );
     }
 
-    if (_professionals.isEmpty) {
-      return const SizedBox(
+    if (_error != null) {
+      return SizedBox(
         height: 160,
-        child: Center(child: Text('Nenhum profissional disponivel')),
+        child: Center(
+          child: Text(
+            'Erro ao carregar profissionais.',
+            style: TextStyle(
+              color: colorScheme.error,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       );
     }
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: _professionals.map((professional) {
-        return Container(
-          width: 230,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF11141B)
-                : colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
-          ),
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: colorScheme.primary.withOpacity(0.14),
-                child: Icon(
-                  Icons.person_outline,
-                  color: colorScheme.primary,
-                  size: 28,
+    if (_professionals.isEmpty) {
+      return const SizedBox(
+        height: 160,
+        child: Center(child: Text('Nenhum profissional disponível')),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double itemWidth;
+
+        if (constraints.maxWidth >= 760) {
+          itemWidth = (constraints.maxWidth - 36) / 4;
+        } else if (constraints.maxWidth >= 520) {
+          itemWidth = (constraints.maxWidth - 12) / 2;
+        } else {
+          itemWidth = constraints.maxWidth;
+        }
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: _professionals.map((professional) {
+            return Container(
+              width: itemWidth,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.18),
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                professional.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colorScheme.primary.withOpacity(0.14),
+                      border: Border.all(
+                        color: colorScheme.primary.withOpacity(0.25),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.person_outline,
+                      size: 32,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Text(
+                    professional.name,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                height: 38,
-                child: OutlinedButton(
-                  onPressed: () => widget.onViewSchedule(professional),
-                  child: const Text('Ver horarios'),
-                ),
-              ),
-            ],
-          ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 }

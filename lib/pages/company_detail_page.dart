@@ -8,6 +8,7 @@ import 'package:app_front_mobile/widgets/company_professionals_tab.dart';
 import 'package:app_front_mobile/widgets/company_reviews_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/widgets/service_booking_modal.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CompanyDetailPage extends StatefulWidget {
   final CompanySummary company;
@@ -23,6 +24,136 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
     baseUrl: 'http://localhost:8081',
   );
 
+  final _publicCompanyService = PublicCompanyService(
+    baseUrl: 'http://localhost:8081/public/company',
+  );
+
+  String _amenityLabel(String amenity) {
+    switch (amenity) {
+      case 'WIFI':
+        return 'Wi-fi';
+
+      case 'PARKING':
+        return 'Estacionamento';
+
+      case 'ACCESSIBILITY':
+        return 'Acessibilidade';
+
+      case 'CHILD_FRIENDLY':
+        return 'Atende crianças';
+
+      default:
+        return amenity;
+    }
+  }
+
+  IconData _amenityIcon(String amenity) {
+    switch (amenity) {
+      case 'WIFI':
+        return Icons.wifi;
+
+      case 'PARKING':
+        return Icons.local_parking;
+
+      case 'ACCESSIBILITY':
+        return Icons.accessible;
+
+      case 'CHILD_FRIENDLY':
+        return Icons.child_friendly;
+
+      default:
+        return Icons.check_circle_outline;
+    }
+  }
+
+  String _dayLabel(String day) {
+    switch (day) {
+      case 'MONDAY':
+        return 'Segunda-Feira';
+
+      case 'TUESDAY':
+        return 'Terça-Feira';
+
+      case 'WEDNESDAY':
+        return 'Quarta-Feira';
+
+      case 'THURSDAY':
+        return 'Quinta-Feira';
+
+      case 'FRIDAY':
+        return 'Sexta-Feira';
+
+      case 'SATURDAY':
+        return 'Sábado';
+
+      case 'SUNDAY':
+        return 'Domingo';
+
+      default:
+        return day;
+    }
+  }
+
+  String _todayDayWeek() {
+    switch (DateTime.now().weekday) {
+      case DateTime.monday:
+        return 'MONDAY';
+
+      case DateTime.tuesday:
+        return 'TUESDAY';
+
+      case DateTime.wednesday:
+        return 'WEDNESDAY';
+
+      case DateTime.thursday:
+        return 'THURSDAY';
+
+      case DateTime.friday:
+        return 'FRIDAY';
+
+      case DateTime.saturday:
+        return 'SATURDAY';
+
+      case DateTime.sunday:
+        return 'SUNDAY';
+
+      default:
+        return '';
+    }
+  }
+
+  String _formatHour(String value) {
+    if (value.length >= 5) {
+      return value.substring(0, 5);
+    }
+
+    return value;
+  }
+
+  String _paymentLabel(String payment) {
+    switch (payment) {
+      case 'CASH':
+        return 'Dinheiro';
+
+      case 'PIX':
+        return 'PIX';
+
+      case 'BANK_TRANSFER':
+        return 'Transferência bancária';
+
+      case 'CREDIT_CARD':
+        return 'Cartão de Crédito';
+
+      case 'DEBIT_CARD':
+        return 'Cartão de Débito';
+
+      default:
+        return payment;
+    }
+  }
+
+  PublicCompanyDetail? _companyDetail;
+  bool _loadingCompanyDetail = true;
   String _selectedTab = 'services';
 
   CompanyReviewSummary _reviewSummary = const CompanyReviewSummary(
@@ -45,6 +176,8 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
     super.initState();
 
     _loadReviewSummary();
+    _loadCompanyDetail();
+    _loadReviewSummary();
   }
 
   Future<void> _loadReviewSummary() async {
@@ -64,6 +197,27 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
 
       setState(() {
         _loadingReviewSummary = false;
+      });
+    }
+  }
+
+  Future<void> _loadCompanyDetail() async {
+    try {
+      final detail = await _publicCompanyService.findDetail(
+        companyId: widget.company.id,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _companyDetail = detail;
+        _loadingCompanyDetail = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingCompanyDetail = false;
       });
     }
   }
@@ -126,38 +280,31 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
     }
   }
 
-  Future<void> _openProfessionalSchedule(
-    PublicCompanyProfessional professional,
-  ) async {
-    final logged = await AuthGate.requireLogin(
-      context,
-      reason:
-          'Você precisa estar logado para visualizar os horários disponíveis deste profissional.',
-    );
+  Future<void> _openGoogleMaps() async {
+    final address = _companyDetail?.address;
 
-    if (!logged || !mounted) {
+    if (address == null) {
       return;
     }
 
-    /*
-     * Próxima integração:
-     *
-     * companyId: widget.company.id
-     * professionalId: professional.id
-     *
-     * Para mostrar slots REAIS de agendamento ainda precisamos
-     * saber quais serviços foram selecionados, pois a duração
-     * influencia diretamente os horários retornados pelo backend.
-     */
+    String query;
 
-    AppMessage.info(
-      context,
-      'Profissional "${professional.name}" selecionado. Escolha um serviço para consultar os horários disponíveis.',
+    if (address.latitude != null && address.longitude != null) {
+      query = '${address.latitude},${address.longitude}';
+    } else {
+      query = address.formattedAddress;
+    }
+
+    if (query.trim().isEmpty) {
+      return;
+    }
+
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/'
+      '?api=1&query=${Uri.encodeComponent(query)}',
     );
 
-    setState(() {
-      _selectedTab = 'services';
-    });
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   void _selectTab(String key) {
@@ -518,10 +665,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
         );
 
       case 'professionals':
-        return CompanyProfessionalsTab(
-          companyId: companyId,
-          onViewSchedule: _openProfessionalSchedule,
-        );
+        return CompanyProfessionalsTab(companyId: widget.company.id);
 
       case 'reviews':
         return CompanyReviewsTab(companyId: companyId);
@@ -532,6 +676,8 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
   }
 
   Widget _buildComodidadesSection(BuildContext context) {
+    final amenities = _companyDetail?.amenities ?? [];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -543,44 +689,49 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
             fontWeight: FontWeight.w700,
           ),
         ),
+
         const SizedBox(height: 6),
+
         Text(
-          'Clique no item para obter informações',
+          'Comodidades disponíveis no estabelecimento',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.62),
             fontSize: 14,
           ),
         ),
+
         const SizedBox(height: 18),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
 
-            final itemWidth = width >= 760
-                ? (width - 36) / 4
-                : width >= 480
-                ? (width - 12) / 2
-                : width;
+        if (_loadingCompanyDetail)
+          const Center(child: CircularProgressIndicator())
+        else if (amenities.isEmpty)
+          const Text('Nenhuma comodidade informada.')
+        else
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
 
-            final items = [
-              (icon: Icons.wifi, label: 'Wi-fi'),
-              (icon: Icons.local_parking, label: 'Estacionamento'),
-              (icon: Icons.accessible, label: 'Acessibilidade'),
-              (icon: Icons.child_friendly, label: 'Atende crianças'),
-            ];
+              final itemWidth = width >= 760
+                  ? (width - 36) / 4
+                  : width >= 480
+                  ? (width - 12) / 2
+                  : width;
 
-            return Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: items.map((item) {
-                return SizedBox(
-                  width: itemWidth,
-                  child: _AmenityCard(icon: item.icon, label: item.label),
-                );
-              }).toList(),
-            );
-          },
-        ),
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: amenities.map((amenity) {
+                  return SizedBox(
+                    width: itemWidth,
+                    child: _AmenityCard(
+                      icon: _amenityIcon(amenity),
+                      label: _amenityLabel(amenity),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
       ],
     );
   }
@@ -614,6 +765,11 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
   }
 
   Widget _buildLocationSection(BuildContext context) {
+    final address = _companyDetail?.address;
+
+    final hasAddress =
+        address != null && address.formattedAddress.trim().isNotEmpty;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -629,63 +785,43 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
+
               const SizedBox(height: 12),
 
-              /*
-               * Atualmente o endereço continua fixo,
-               * exatamente como no seu arquivo original.
-               *
-               * Em uma próxima etapa podemos puxar
-               * diretamente do CompanySummary / Address.
-               */
-              Text(
-                'Avenida Firmino da Silva 484, 484 - 89209-224 Parque Guarani - Joinville/SC',
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.76),
-                  fontSize: 14,
-                  height: 1.45,
+              if (_loadingCompanyDetail)
+                const Text('Carregando...')
+              else
+                Text(
+                  hasAddress
+                      ? address.formattedAddress
+                      : 'Endereço não informado',
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.76),
+                    fontSize: 14,
+                    height: 1.45,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
+
         const SizedBox(width: 14),
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
-            ),
-          ),
-          child: const Icon(Icons.navigation_outlined),
+
+        IconButton(
+          tooltip: 'Abrir no Google Maps',
+          onPressed: hasAddress ? _openGoogleMaps : null,
+          icon: const Icon(Icons.navigation_outlined),
         ),
       ],
     );
   }
 
   Widget _buildOpeningHoursSection(BuildContext context) {
-    /*
-     * Esse horário continua exatamente como no seu
-     * arquivo atual.
-     *
-     * Não estou vinculando ao Availability porque
-     * Availability representa PROFISSIONAIS,
-     * e não necessariamente o horário de funcionamento
-     * geral da empresa.
-     */
+    final days = _companyDetail?.openingHours ?? [];
 
-    final hours = [
-      ('Segunda-Feira', '09:00 - 12:00', '13:00 - 18:00', true),
-      ('Terça-Feira', '09:00 - 12:00', '14:00 - 20:30', false),
-      ('Quarta-Feira', '09:00 - 12:00', '14:00 - 20:30', false),
-      ('Quinta-Feira', '09:00 - 12:00', '14:00 - 20:30', false),
-      ('Sexta-Feira', '09:00 - 12:00', '14:00 - 20:30', false),
-      ('Sábado', '08:00 - 12:00', '13:00 - 17:00', false),
-    ];
+    final today = _todayDayWeek();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -698,88 +834,78 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
             fontWeight: FontWeight.w700,
           ),
         ),
+
         const SizedBox(height: 18),
 
-        ...hours.map((hour) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      Text(
-                        hour.$1,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 14,
-                        ),
-                      ),
-                      if (hour.$4)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E8F59).withOpacity(0.16),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: const Text(
-                            'Hoje',
-                            style: TextStyle(
-                              color: Color(0xFF2EC27E),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+        if (_loadingCompanyDetail)
+          const Center(child: CircularProgressIndicator())
+        else if (days.isEmpty)
+          const Text('Horários não informados')
+        else
+          ...days.map((day) {
+            final isToday = day.dayWeek == today;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      children: [
+                        Text(_dayLabel(day.dayWeek)),
+
+                        if (isToday)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E8F59).withOpacity(0.16),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'Hoje',
+                              style: TextStyle(
+                                color: Color(0xFF2EC27E),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      hour.$2,
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.78),
-                        fontSize: 14,
-                      ),
+
+                  if (day.intervals.isEmpty)
+                    const Text('Fechado')
+                  else
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: day.intervals.map((interval) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 3),
+                          child: Text(
+                            '${_formatHour(interval.startTime)}'
+                            ' - '
+                            '${_formatHour(interval.endTime)}',
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      hour.$3,
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.78),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }),
+                ],
+              ),
+            );
+          }),
       ],
     );
   }
 
   Widget _buildPaymentSection(BuildContext context) {
-    final payments = [
-      'Dinheiro',
-      'Cartão de Crédito',
-      'Cartão de Débito',
-      'PIX',
-    ];
+    final payments = _companyDetail?.paymentMethods ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -792,32 +918,21 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
             fontWeight: FontWeight.w700,
           ),
         ),
+
         const SizedBox(height: 16),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: payments.map((payment) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF232732)
-                    : Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                payment,
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.8),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+
+        if (_loadingCompanyDetail)
+          const Text('Carregando...')
+        else if (payments.isEmpty)
+          const Text('Não informado')
+        else
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: payments.map((payment) {
+              return Chip(label: Text(_paymentLabel(payment)));
+            }).toList(),
+          ),
       ],
     );
   }
