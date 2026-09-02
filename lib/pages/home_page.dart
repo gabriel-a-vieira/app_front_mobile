@@ -6,7 +6,7 @@ import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_front_mobile/pages/company_detail_page.dart';
-import 'package:app_front_mobile/pages/company_create_page.dart';
+import 'package:app_front_mobile/pages/company_form_page.dart';
 import 'package:app_front_mobile/pages/professional_management_page.dart';
 import 'package:app_front_mobile/pages/user_form_page.dart';
 import 'package:app_front_mobile/pages/client_management_page.dart';
@@ -15,6 +15,7 @@ import 'package:app_front_mobile/pages/availability_management_page.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/pages/my_appointments_page.dart';
 import 'package:app_front_mobile/utils/auth_gate.dart';
+import 'package:app_front_mobile/pages/company_management_page.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -299,7 +300,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _openCompanyCreatePage() async {
     final created = await Navigator.of(
       context,
-    ).push<bool>(MaterialPageRoute(builder: (_) => const CompanyCreatePage()));
+    ).push<bool>(MaterialPageRoute(builder: (_) => const CompanyFormPage()));
 
     if (!mounted) return;
 
@@ -386,6 +387,16 @@ class _HomePageState extends State<HomePage> {
     ).push(MaterialPageRoute(builder: (_) => const MyAppointmentsPage()));
   }
 
+  Future<void> _openCompanyManagementPage() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const CompanyManagementPage()));
+
+    if (!mounted) return;
+
+    await _reloadCompanies();
+  }
+
   void _openLoginModal(BuildContext context) {
     showDialog(
       context: context,
@@ -457,8 +468,8 @@ class _HomePageState extends State<HomePage> {
       tooltip: 'Admin',
       offset: const Offset(0, 36),
       onSelected: (value) {
-        if (value == 'company-create') {
-          _openCompanyCreatePage();
+        if (value == 'companies') {
+          _openCompanyManagementPage();
           return;
         }
 
@@ -502,8 +513,8 @@ class _HomePageState extends State<HomePage> {
         return [
           if (_isMasterAdmin)
             const PopupMenuItem<String>(
-              value: 'company-create',
-              child: Text('Cadastro de Empresa'),
+              value: 'companies',
+              child: Text('Empresas'),
             ),
           const PopupMenuDivider(),
           const PopupMenuItem<String>(value: 'users', child: Text('Usuarios')),

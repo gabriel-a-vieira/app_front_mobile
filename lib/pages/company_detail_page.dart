@@ -6,8 +6,8 @@ import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/company_services_tab.dart';
 import 'package:app_front_mobile/widgets/company_professionals_tab.dart';
 import 'package:app_front_mobile/widgets/company_reviews_tab.dart';
-import 'package:flutter/material.dart';
 import 'package:app_front_mobile/widgets/service_booking_modal.dart';
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CompanyDetailPage extends StatefulWidget {
@@ -28,6 +28,200 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
     baseUrl: 'http://localhost:8081/public/company',
   );
 
+  PublicCompanyDetail? _companyDetail;
+
+  bool _loadingCompanyDetail = true;
+
+  String _selectedTab = 'services';
+
+  CompanyReviewSummary _reviewSummary = const CompanyReviewSummary(
+    average: 0,
+    total: 0,
+  );
+
+  bool _loadingReviewSummary = true;
+
+  String get _displayName {
+    if (widget.company.tradeName.trim().isNotEmpty) {
+      return widget.company.tradeName.trim();
+    }
+
+    return widget.company.legalName.trim();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadCompanyDetail();
+    _loadReviewSummary();
+  }
+
+  Future<void> _loadReviewSummary() async {
+    try {
+      final summary = await _companyReviewService.findSummary(
+        companyId: widget.company.id,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _reviewSummary = summary;
+        _loadingReviewSummary = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingReviewSummary = false;
+      });
+    }
+  }
+
+  Future<void> _loadCompanyDetail() async {
+    try {
+      final detail = await _publicCompanyService.findDetail(
+        companyId: widget.company.id,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _companyDetail = detail;
+        _loadingCompanyDetail = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingCompanyDetail = false;
+      });
+    }
+  }
+
+  Future<void> _openMainSchedule() async {
+    final logged = await AuthGate.requireLogin(
+      context,
+      reason: 'Você precisa estar logado para realizar um agendamento.',
+    );
+
+    if (!logged || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _selectedTab = 'services';
+    });
+
+    AppMessage.info(
+      context,
+      'Selecione um serviço para continuar o agendamento.',
+    );
+  }
+
+  Future<void> _scheduleService(PublicCompanyServiceOption service) async {
+    final logged = await AuthGate.requireLogin(
+      context,
+      reason: 'Você precisa estar logado para agendar este serviço.',
+    );
+
+    if (!logged || !mounted) {
+      return;
+    }
+
+    final scheduled = await ServiceBookingModal.show(
+      context: context,
+      companyId: widget.company.id,
+      companyName: _displayName,
+      service: service,
+    );
+
+    if (scheduled == true && mounted) {
+      AppMessage.success(context, 'Seu horário foi agendado.');
+    }
+  }
+
+  /*
+   * Abre o endereço da empresa no Google Maps.
+   */
+  Future<void> _openGoogleMaps() async {
+    final address = _companyDetail?.address;
+
+    if (address == null) {
+      return;
+    }
+
+    String query;
+
+    if (address.latitude != null && address.longitude != null) {
+      query = '${address.latitude},${address.longitude}';
+    } else {
+      query = address.formattedAddress;
+    }
+
+    if (query.trim().isEmpty) {
+      return;
+    }
+
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/'
+      '?api=1&query=${Uri.encodeComponent(query)}',
+    );
+
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    if (!opened && mounted) {
+      AppMessage.info(context, 'Não foi possível abrir o Google Maps.');
+    }
+  }
+
+  /*
+   * Método único para Instagram, Facebook,
+   * Website e TikTok.
+   *
+   * Também aceita links cadastrados sem
+   * "https://".
+   */
+  Future<void> _openExternalUrl(String? value) async {
+    if (value == null || value.trim().isEmpty) {
+      return;
+    }
+
+    String url = value.trim();
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://$url';
+    }
+
+    final uri = Uri.tryParse(url);
+
+    if (uri == null || !uri.hasScheme) {
+      if (!mounted) return;
+
+      AppMessage.info(context, 'Link inválido.');
+
+      return;
+    }
+
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+      if (!opened && mounted) {
+        AppMessage.info(context, 'Não foi possível abrir o link.');
+      }
+    } catch (_) {
+      if (!mounted) return;
+
+      AppMessage.info(context, 'Não foi possível abrir o link.');
+    }
+  }
+
+  void _selectTab(String key) {
+    setState(() {
+      _selectedTab = key;
+    });
+  }
+
   String _amenityLabel(String amenity) {
     switch (amenity) {
       case 'WIFI':
@@ -42,8 +236,14 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
       case 'CHILD_FRIENDLY':
         return 'Atende crianças';
 
+      case 'AIR_CONDITIONING':
+        return 'Ar-condicionado';
+
+      case 'PET_FRIENDLY':
+        return 'Aceita pets';
+
       default:
-        return amenity;
+        return _formatEnumLabel(amenity);
     }
   }
 
@@ -61,9 +261,55 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
       case 'CHILD_FRIENDLY':
         return Icons.child_friendly;
 
+      case 'AIR_CONDITIONING':
+        return Icons.ac_unit;
+
+      case 'PET_FRIENDLY':
+        return Icons.pets_outlined;
+
       default:
         return Icons.check_circle_outline;
     }
+  }
+
+  /*
+   * Caso um novo enum seja criado no backend
+   * e ainda não exista tradução específica
+   * no frontend, evita mostrar algo como:
+   *
+   * PRIVATE_ROOM
+   *
+   * e mostra:
+   *
+   * Private Room
+   */
+  String _formatEnumLabel(String value) {
+    final normalized = value.trim();
+
+    if (normalized.isEmpty) {
+      return '';
+    }
+
+    final words = normalized
+        .toLowerCase()
+        .split('_')
+        .where((word) => word.isNotEmpty)
+        .toList();
+
+    if (words.isEmpty) {
+      return normalized;
+    }
+
+    return words
+        .map((word) {
+          if (word.length == 1) {
+            return word.toUpperCase();
+          }
+
+          return '${word[0].toUpperCase()}'
+              '${word.substring(1)}';
+        })
+        .join(' ');
   }
 
   String _dayLabel(String day) {
@@ -148,169 +394,8 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
         return 'Cartão de Débito';
 
       default:
-        return payment;
+        return _formatEnumLabel(payment);
     }
-  }
-
-  PublicCompanyDetail? _companyDetail;
-  bool _loadingCompanyDetail = true;
-  String _selectedTab = 'services';
-
-  CompanyReviewSummary _reviewSummary = const CompanyReviewSummary(
-    average: 0,
-    total: 0,
-  );
-
-  bool _loadingReviewSummary = true;
-
-  String get _displayName {
-    if (widget.company.tradeName.trim().isNotEmpty) {
-      return widget.company.tradeName.trim();
-    }
-
-    return widget.company.legalName.trim();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    _loadReviewSummary();
-    _loadCompanyDetail();
-    _loadReviewSummary();
-  }
-
-  Future<void> _loadReviewSummary() async {
-    try {
-      final summary = await _companyReviewService.findSummary(
-        companyId: widget.company.id.toString(),
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        _reviewSummary = summary;
-        _loadingReviewSummary = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-
-      setState(() {
-        _loadingReviewSummary = false;
-      });
-    }
-  }
-
-  Future<void> _loadCompanyDetail() async {
-    try {
-      final detail = await _publicCompanyService.findDetail(
-        companyId: widget.company.id,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        _companyDetail = detail;
-        _loadingCompanyDetail = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-
-      setState(() {
-        _loadingCompanyDetail = false;
-      });
-    }
-  }
-
-  Future<void> _openMainSchedule() async {
-    final logged = await AuthGate.requireLogin(
-      context,
-      reason: 'Você precisa estar logado para realizar um agendamento.',
-    );
-
-    if (!logged || !mounted) {
-      return;
-    }
-
-    /*
-     * O fluxo de agendamento do cliente final será conectado aqui.
-     *
-     * IMPORTANTE:
-     * não estou abrindo o AppointmentFormPage administrativo,
-     * pois aquele formulário permite selecionar Client e é voltado
-     * para administração.
-     *
-     * Aqui já sabemos a empresa:
-     *
-     * widget.company.id
-     *
-     * Por enquanto direcionamos o cliente para selecionar
-     * um serviço dentro da própria página.
-     */
-
-    setState(() {
-      _selectedTab = 'services';
-    });
-
-    AppMessage.info(
-      context,
-      'Selecione um serviço para continuar o agendamento.',
-    );
-  }
-
-  Future<void> _scheduleService(PublicCompanyServiceOption service) async {
-    final logged = await AuthGate.requireLogin(
-      context,
-      reason: 'Você precisa estar logado para agendar este serviço.',
-    );
-
-    if (!logged || !mounted) {
-      return;
-    }
-
-    final scheduled = await ServiceBookingModal.show(
-      context: context,
-      companyId: widget.company.id,
-      companyName: _displayName,
-      service: service,
-    );
-
-    if (scheduled == true && mounted) {
-      AppMessage.success(context, 'Seu horário foi agendado.');
-    }
-  }
-
-  Future<void> _openGoogleMaps() async {
-    final address = _companyDetail?.address;
-
-    if (address == null) {
-      return;
-    }
-
-    String query;
-
-    if (address.latitude != null && address.longitude != null) {
-      query = '${address.latitude},${address.longitude}';
-    } else {
-      query = address.formattedAddress;
-    }
-
-    if (query.trim().isEmpty) {
-      return;
-    }
-
-    final uri = Uri.parse(
-      'https://www.google.com/maps/search/'
-      '?api=1&query=${Uri.encodeComponent(query)}',
-    );
-
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  void _selectTab(String key) {
-    setState(() {
-      _selectedTab = key;
-    });
   }
 
   @override
@@ -399,6 +484,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
           ),
           child: Icon(Icons.storefront, color: colorScheme.primary, size: 28),
         ),
+
         const SizedBox(width: 14),
 
         Expanded(
@@ -655,7 +741,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
   }
 
   Widget _buildSelectedTabContent() {
-    final companyId = widget.company.id.toString();
+    final companyId = widget.company.id;
 
     switch (_selectedTab) {
       case 'services':
@@ -665,7 +751,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
         );
 
       case 'professionals':
-        return CompanyProfessionalsTab(companyId: widget.company.id);
+        return CompanyProfessionalsTab(companyId: companyId);
 
       case 'reviews':
         return CompanyReviewsTab(companyId: companyId);
@@ -938,12 +1024,52 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
   }
 
   Widget _buildSocialSection(BuildContext context) {
-    final icons = [
-      Icons.camera_alt_outlined,
-      Icons.language,
-      Icons.facebook_outlined,
-      Icons.music_note,
-    ];
+    if (_loadingCompanyDetail) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Redes Sociais',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text('Carregando...'),
+        ],
+      );
+    }
+
+    final detail = _companyDetail;
+
+    if (detail == null) {
+      return const SizedBox.shrink();
+    }
+
+    final socialLinks = [
+      _SocialLink(
+        tooltip: 'Instagram',
+        icon: Icons.camera_alt_outlined,
+        url: detail.instagramUrl,
+      ),
+      _SocialLink(
+        tooltip: 'Website',
+        icon: Icons.language,
+        url: detail.websiteUrl,
+      ),
+      _SocialLink(
+        tooltip: 'Facebook',
+        icon: Icons.facebook_outlined,
+        url: detail.facebookUrl,
+      ),
+      _SocialLink(
+        tooltip: 'TikTok',
+        icon: Icons.music_note,
+        url: detail.tiktokUrl,
+      ),
+    ].where((item) => item.url.trim().isNotEmpty).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -956,24 +1082,43 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
             fontWeight: FontWeight.w700,
           ),
         ),
+
         const SizedBox(height: 16),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: icons.map((icon) {
-            return Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFF232732)
-                    : Theme.of(context).colorScheme.surfaceContainerHighest,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon),
-            );
-          }).toList(),
-        ),
+
+        if (socialLinks.isEmpty)
+          Text(
+            'Nenhuma rede social informada.',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.60),
+            ),
+          )
+        else
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: socialLinks.map((social) {
+              return Tooltip(
+                message: social.tooltip,
+                child: InkWell(
+                  onTap: () => _openExternalUrl(social.url),
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF232732)
+                          : Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(social.icon),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
       ],
     );
   }
@@ -1011,7 +1156,9 @@ class _AmenityCard extends StatelessWidget {
       child: Column(
         children: [
           Icon(icon, size: 28, color: colorScheme.onSurface.withOpacity(0.75)),
+
           const SizedBox(height: 12),
+
           Text(
             label,
             textAlign: TextAlign.center,
@@ -1025,4 +1172,16 @@ class _AmenityCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _SocialLink {
+  final String tooltip;
+  final IconData icon;
+  final String url;
+
+  const _SocialLink({
+    required this.tooltip,
+    required this.icon,
+    required this.url,
+  });
 }
