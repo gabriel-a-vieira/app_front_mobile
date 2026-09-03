@@ -16,6 +16,7 @@ import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/pages/my_appointments_page.dart';
 import 'package:app_front_mobile/utils/auth_gate.dart';
 import 'package:app_front_mobile/pages/company_management_page.dart';
+import 'package:app_front_mobile/pages/product_management_page.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -397,6 +398,15 @@ class _HomePageState extends State<HomePage> {
     await _reloadCompanies();
   }
 
+  Future<void> _openProductManagementPage() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            ProductManagementPage(currentUserRole: _loggedUserRole ?? ''),
+      ),
+    );
+  }
+
   void _openLoginModal(BuildContext context) {
     showDialog(
       context: context,
@@ -503,6 +513,11 @@ class _HomePageState extends State<HomePage> {
           return;
         }
 
+        if (value == 'products') {
+          _openProductManagementPage();
+          return;
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Funcionalidade ainda nao implementada'),
@@ -520,7 +535,13 @@ class _HomePageState extends State<HomePage> {
           const PopupMenuItem<String>(value: 'users', child: Text('Usuarios')),
           const PopupMenuItem<String>(
             value: 'products',
-            child: Text('Cadastro de Produtos'),
+            child: Row(
+              children: [
+                Icon(Icons.inventory_2_outlined, size: 18),
+                SizedBox(width: 10),
+                Text('Produtos'),
+              ],
+            ),
           ),
           const PopupMenuItem<String>(
             value: 'professionals',

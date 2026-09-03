@@ -9,6 +9,7 @@ import 'package:app_front_mobile/widgets/company_reviews_tab.dart';
 import 'package:app_front_mobile/widgets/service_booking_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:app_front_mobile/widgets/company_products_tab.dart';
 
 class CompanyDetailPage extends StatefulWidget {
   final CompanySummary company;
@@ -676,7 +677,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
       (key: 'services', label: 'Serviços', enabled: true),
       (key: 'professionals', label: 'Profissionais', enabled: true),
       (key: 'loyalty', label: 'Fidelidade', enabled: false),
-      (key: 'products', label: 'Produtos', enabled: false),
+      (key: 'products', label: 'Produtos', enabled: true),
       (key: 'packages', label: 'Pacotes', enabled: false),
       (key: 'subscriptions', label: 'Assinaturas', enabled: false),
       (key: 'reviews', label: 'Avaliações', enabled: true),
@@ -755,6 +756,9 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
 
       case 'reviews':
         return CompanyReviewsTab(companyId: companyId);
+
+      case 'products':
+        return CompanyProductsTab(companyId: companyId);
 
       default:
         return const SizedBox.shrink();
