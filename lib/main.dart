@@ -7,8 +7,16 @@ import 'package:provider/provider.dart';
 import 'theme_notifier.dart'; // O ThemeNotifier para controlar o tema
 import 'locale_provider.dart'; // O LocaleProvider para controlar o idioma
 import 'app_router.dart'; // Importando o arquivo que define o buildRouter
+import 'package:app_front_mobile/services/google_auth_service.dart';
 
-void main() {
+Future<void> main() async {
+  
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await GoogleAuthService
+      .instance
+      .initialize();
+  
   runApp(
     MultiProvider(
       providers: [

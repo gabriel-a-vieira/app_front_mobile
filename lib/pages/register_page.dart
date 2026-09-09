@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:app_front_mobile/services/auth_service.dart';
+import 'package:app_front_mobile/services/google_auth_service.dart';
+import 'package:app_front_mobile/utils/app_message.dart';
+import 'package:app_front_mobile/widgets/google_auth_button.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -6,9 +11,17 @@ import '../l10n/app_localizations.dart';
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback? onLoginTap;
+
   final VoidCallback? onRegisterSuccess;
 
-  const RegisterPage({super.key, this.onLoginTap, this.onRegisterSuccess});
+  final void Function(AuthLoginResult result)? onExternalAuthSuccess;
+
+  const RegisterPage({
+    super.key,
+    this.onLoginTap,
+    this.onRegisterSuccess,
+    this.onExternalAuthSuccess,
+  });
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -18,33 +31,91 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameCtrl = TextEditingController();
+
   final _emailCtrl = TextEditingController();
+
   final _passCtrl = TextEditingController();
+
   final _scrollController = ScrollController();
+
   final _authService = AuthService(baseUrl: 'http://localhost:8081');
 
+  StreamSubscription<AuthLoginResult>? _googleSuccessSubscription;
+
+  StreamSubscription<Object>? _googleErrorSubscription;
+
   bool _loading = false;
+
   bool _obscure = true;
+
   bool _showScrollbar = false;
 
   static const Color _modalColor = Color(0xFF11141B);
+
   static const Color _headerColor = Color(0xFF1A1E26);
+
   static const Color _borderColor = Color(0xFF2A2F38);
+
   static const Color _inputFillColor = Color(0xFF1C212B);
-  static const Color _socialButtonColor = Color(0xFF090B10);
+
   static const Color _primaryBlue = Color(0xFF0089F7);
+
   static const Color _whiteText = Color(0xFFF5F7FA);
+
   static const Color _mutedText = Color(0xFF9EA6B2);
+
   static const Color _hintText = Color(0xFF8D95A3);
+
   static const Color _linkBlue = Color(0xFF36A9FF);
+
   static const Color _dangerRed = Color(0xFFFF5A5F);
 
   @override
   void initState() {
     super.initState();
 
+    /*
+     * Escutamos o resultado da autenticação
+     * externa realizada pelo Google.
+     *
+     * O GoogleAuthService:
+     *
+     * Google
+     *   ↓
+     * ID Token
+     *   ↓
+     * Backend /auth/external/GOOGLE
+     *   ↓
+     * JWT Softix
+     *
+     * Quando chegar aqui, o usuário já está
+     * autenticado no Softix.
+     */
+    _googleSuccessSubscription = GoogleAuthService.instance.successStream
+        .listen(_handleGoogleSuccess);
+
+    /*
+     * Qualquer erro ocorrido durante:
+     *
+     * - autenticação Google;
+     * - validação no backend;
+     * - criação do usuário;
+     * - geração do JWT;
+     *
+     * chega por este stream.
+     */
+    _googleErrorSubscription = GoogleAuthService.instance.errorStream.listen(
+      _handleGoogleError,
+    );
+
+    /*
+     * Mantém a lógica já existente do
+     * scrollbar.
+     */
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       if (_scrollController.hasClients) {
         setState(() {
@@ -56,11 +127,74 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void dispose() {
+    /*
+     * Muito importante:
+     *
+     * o GoogleAuthService é singleton e
+     * permanece vivo mesmo depois que
+     * este modal for fechado.
+     *
+     * Portanto precisamos cancelar as
+     * subscriptions desta tela.
+     */
+    _googleSuccessSubscription?.cancel();
+
+    _googleErrorSubscription?.cancel();
+
     _nameCtrl.dispose();
+
     _emailCtrl.dispose();
+
     _passCtrl.dispose();
+
     _scrollController.dispose();
+
     super.dispose();
+  }
+
+  void _handleGoogleSuccess(AuthLoginResult result) {
+    if (!mounted) {
+      return;
+    }
+
+    /*
+     * O cadastro com Google também é um
+     * login.
+     *
+     * Portanto NÃO chamamos:
+     *
+     * onRegisterSuccess
+     *
+     * porque esse callback do cadastro
+     * convencional normalmente manda o
+     * usuário para a tela de login.
+     *
+     * Aqui ele já possui JWT válido.
+     */
+    if (widget.onExternalAuthSuccess != null) {
+      widget.onExternalAuthSuccess!(result);
+
+      return;
+    }
+
+    /*
+     * Fallback caso esta página tenha sido
+     * aberta em algum ponto que ainda não
+     * passou onExternalAuthSuccess.
+     */
+    _close();
+  }
+
+  void _handleGoogleError(Object error) {
+    if (!mounted) {
+      return;
+    }
+
+    AppMessage.apiError(
+      context,
+      error,
+      fallback: 'Não foi possível continuar com Google.',
+    );
   }
 
   Future<void> _submit() async {
@@ -74,10 +208,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (!isValid) {
       debugPrint('Cadastro bloqueado pela validacao do formulario');
+
       return;
     }
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+    });
 
     try {
       debugPrint('Chamando AuthService.register');
@@ -90,29 +227,45 @@ class _RegisterPageState extends State<RegisterPage> {
 
       debugPrint('Cadastro realizado com sucesso');
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.registerSuccess)));
+      AppMessage.success(context, l10n.registerSuccess);
 
+      /*
+       * Cadastro convencional continua
+       * com o comportamento anterior:
+       *
+       * cadastro
+       *   ↓
+       * onRegisterSuccess
+       *   ↓
+       * abre login
+       */
       widget.onRegisterSuccess?.call();
     } catch (e, stackTrace) {
       debugPrint('Erro durante o cadastro: $e');
+
       debugPrint('StackTrace: $stackTrace');
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${l10n.registerError}: $e')));
+      AppMessage.apiError(context, e, fallback: l10n.registerError);
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
   void _close() {
     final navigator = Navigator.of(context);
+
     if (navigator.canPop()) {
       navigator.pop();
     }
@@ -191,6 +344,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildHeader(),
+
                     Flexible(
                       child: RawScrollbar(
                         controller: _scrollController,
@@ -208,6 +362,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
+
                     _buildFooter(),
                   ],
                 ),
@@ -233,6 +388,7 @@ class _RegisterPageState extends State<RegisterPage> {
       child: Row(
         children: [
           const SizedBox(width: 44),
+
           Expanded(
             child: Center(
               child: Text(
@@ -246,6 +402,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
           ),
+
           InkWell(
             onTap: _close,
             borderRadius: BorderRadius.circular(999),
@@ -279,21 +436,26 @@ class _RegisterPageState extends State<RegisterPage> {
             fontWeight: FontWeight.w500,
           ),
         ),
+
         const SizedBox(height: 12),
+
+        /*
+         * GOOGLE
+         *
+         * No Flutter Web usamos o botão oficial do Google.
+         * Ele fica em uma linha própria para não cortar o texto.
+         */
+        Center(
+          child: SizedBox(
+            width: 260,
+            child: GoogleAuthButton(loading: _loading),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
         Row(
           children: [
-            Expanded(
-              child: _SocialButton(
-                text: 'Google',
-                icon: const FaIcon(
-                  FontAwesomeIcons.google,
-                  size: 16,
-                  color: Color.fromARGB(255, 244, 72, 66),
-                ),
-                onTap: () {},
-              ),
-            ),
-            const SizedBox(width: 12),
             Expanded(
               child: _SocialButton(
                 text: 'Facebook',
@@ -305,7 +467,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 onTap: () {},
               ),
             ),
+
             const SizedBox(width: 12),
+
             Expanded(
               child: _SocialButton(
                 text: 'Apple',
@@ -319,10 +483,13 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ],
         ),
+
         const SizedBox(height: 24),
+
         Row(
           children: [
             const Expanded(child: Divider(color: _borderColor, thickness: 1)),
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -334,12 +501,17 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
             ),
+
             const Expanded(child: Divider(color: _borderColor, thickness: 1)),
           ],
         ),
+
         const SizedBox(height: 18),
+
         _FieldLabel(title: l10n.fullName, requiredField: true),
+
         const SizedBox(height: 8),
+
         TextFormField(
           controller: _nameCtrl,
           style: const TextStyle(color: _whiteText, fontSize: 15),
@@ -361,9 +533,13 @@ class _RegisterPageState extends State<RegisterPage> {
             return null;
           },
         ),
+
         const SizedBox(height: 16),
+
         _FieldLabel(title: l10n.email, requiredField: true),
+
         const SizedBox(height: 8),
+
         TextFormField(
           controller: _emailCtrl,
           keyboardType: TextInputType.emailAddress,
@@ -386,9 +562,13 @@ class _RegisterPageState extends State<RegisterPage> {
             return null;
           },
         ),
+
         const SizedBox(height: 16),
+
         _FieldLabel(title: l10n.password, requiredField: true),
+
         const SizedBox(height: 8),
+
         TextFormField(
           controller: _passCtrl,
           obscureText: _obscure,
@@ -397,7 +577,11 @@ class _RegisterPageState extends State<RegisterPage> {
             hintText: l10n.passwordHint,
             prefixIcon: Icons.lock_outline,
             suffixIcon: IconButton(
-              onPressed: () => setState(() => _obscure = !_obscure),
+              onPressed: () {
+                setState(() {
+                  _obscure = !_obscure;
+                });
+              },
               splashRadius: 18,
               icon: Icon(
                 _obscure
@@ -422,7 +606,9 @@ class _RegisterPageState extends State<RegisterPage> {
             return null;
           },
         ),
+
         const SizedBox(height: 24),
+
         SizedBox(
           width: double.infinity,
           height: 42,
@@ -480,6 +666,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
+
               InkWell(
                 onTap: widget.onLoginTap,
                 child: Text(
@@ -493,7 +680,9 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ],
           ),
+
           const SizedBox(height: 10),
+
           Wrap(
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -509,6 +698,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   fontWeight: FontWeight.w400,
                 ),
               ),
+
               Text(
                 l10n.termsOfUse,
                 style: const TextStyle(
@@ -529,11 +719,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
 class _FieldLabel extends StatelessWidget {
   final String title;
+
   final bool requiredField;
 
   const _FieldLabel({required this.title, this.requiredField = false});
 
   static const Color _whiteText = Color(0xFFF5F7FA);
+
   static const Color _dangerRed = Color(0xFFFF5A5F);
 
   @override
@@ -548,8 +740,10 @@ class _FieldLabel extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
+
         if (requiredField) ...[
           const SizedBox(width: 4),
+
           const Text(
             '*',
             style: TextStyle(
@@ -566,7 +760,9 @@ class _FieldLabel extends StatelessWidget {
 
 class _SocialButton extends StatelessWidget {
   final String text;
+
   final Widget icon;
+
   final VoidCallback onTap;
 
   const _SocialButton({
@@ -576,7 +772,9 @@ class _SocialButton extends StatelessWidget {
   });
 
   static const Color _socialButtonColor = Color(0xFF090B10);
+
   static const Color _borderColor = Color(0xFF2A2F38);
+
   static const Color _whiteText = Color(0xFFF5F7FA);
 
   @override
@@ -596,7 +794,9 @@ class _SocialButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             icon,
+
             const SizedBox(width: 10),
+
             Flexible(
               child: Text(
                 text,

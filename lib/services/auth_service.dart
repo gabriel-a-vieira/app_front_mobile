@@ -2,8 +2,11 @@ import 'package:dio/dio.dart';
 
 class AuthLoginResult {
   final String token;
+
   final String name;
+
   final String email;
+
   final String role;
 
   AuthLoginResult({
@@ -28,32 +31,33 @@ class AuthService {
   AuthService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
 
   final Dio _dio;
+
   final String baseUrl;
 
   Future<AuthLoginResult> login({
     required String email,
     required String password,
   }) async {
-    final url = '$baseUrl/auth/login';
-
     final response = await _dio.post(
-      url,
+      '$baseUrl/auth/login',
       data: {'email': email, 'password': password},
       options: Options(headers: {'Content-Type': 'application/json'}),
     );
 
-    final data = response.data;
+    return _parseLoginResult(response.data, fallbackEmail: email);
+  }
 
-    if (data is Map && data['token'] is String) {
-      return AuthLoginResult(
-        token: data['token'] as String,
-        name: data['name'] is String ? data['name'] as String : '',
-        email: data['email'] is String ? data['email'] as String : email,
-        role: data['role'] is String ? data['role'] as String : 'CLIENT',
-      );
-    }
+  Future<AuthLoginResult> externalLogin({
+    required String provider,
+    required String credential,
+  }) async {
+    final response = await _dio.post(
+      '$baseUrl/auth/external/$provider',
+      data: {'credential': credential},
+      options: Options(headers: {'Content-Type': 'application/json'}),
+    );
 
-    throw Exception('Invalid login response');
+    return _parseLoginResult(response.data);
   }
 
   Future<void> register({
@@ -72,5 +76,21 @@ class AuthService {
         'Erro ao cadastrar usuario. Status: ${response.statusCode}',
       );
     }
+  }
+
+  AuthLoginResult _parseLoginResult(dynamic data, {String fallbackEmail = ''}) {
+    if (data is! Map || data['token'] is! String) {
+      throw Exception('Invalid login response');
+    }
+
+    return AuthLoginResult(
+      token: data['token'].toString(),
+
+      name: data['name']?.toString() ?? '',
+
+      email: data['email']?.toString() ?? fallbackEmail,
+
+      role: data['role']?.toString() ?? 'CLIENT',
+    );
   }
 }

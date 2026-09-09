@@ -5,6 +5,12 @@ import '../l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 import '../storage/token_storage.dart';
 
+import 'dart:async';
+
+import 'package:app_front_mobile/services/google_auth_service.dart';
+import 'package:app_front_mobile/widgets/google_auth_button.dart';
+import 'package:app_front_mobile/utils/app_message.dart';
+
 class LoginPage extends StatefulWidget {
   final void Function(AuthLoginResult result)? onLoginSuccess;
   final VoidCallback? onRegisterTap;
@@ -26,6 +32,9 @@ class _LoginPageState extends State<LoginPage> {
   final _authService = AuthService(baseUrl: 'http://localhost:8081');
   final _tokenStorage = TokenStorage();
 
+  StreamSubscription<AuthLoginResult>? _googleSuccessSubscription;
+  StreamSubscription<Object>? _googleErrorSubscription;
+
   static const Color _modalColor = Color(0xFF11141B);
   static const Color _headerColor = Color(0xFF1A1E26);
   static const Color _borderColor = Color(0xFF2A2F38);
@@ -39,9 +48,43 @@ class _LoginPageState extends State<LoginPage> {
   static const Color _dangerRed = Color(0xFFFF5A5F);
 
   @override
+  void initState() {
+    super.initState();
+
+    _googleSuccessSubscription = GoogleAuthService.instance.successStream
+        .listen((result) {
+          if (!mounted) {
+            return;
+          }
+
+          widget.onLoginSuccess?.call(result);
+        });
+
+    _googleErrorSubscription = GoogleAuthService.instance.errorStream.listen((
+      error,
+    ) {
+      if (!mounted) {
+        return;
+      }
+
+      AppMessage.apiError(
+        context,
+        error,
+        fallback: 'Não foi possível entrar com Google.',
+      );
+    });
+  }
+
+  @override
   void dispose() {
+    _googleSuccessSubscription?.cancel();
+
+    _googleErrorSubscription?.cancel();
+
     _emailCtrl.dispose();
+
     _passCtrl.dispose();
+
     super.dispose();
   }
 
@@ -224,20 +267,15 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           const SizedBox(height: 12),
+          Center(
+            child: SizedBox(
+              width: 260,
+              child: GoogleAuthButton(loading: _loading),
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: _SocialButton(
-                  text: 'Google',
-                  icon: const FaIcon(
-                    FontAwesomeIcons.google,
-                    size: 16,
-                    color: Color.fromARGB(255, 244, 72, 66),
-                  ),
-                  onTap: () {},
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: _SocialButton(
                   text: 'Facebook',

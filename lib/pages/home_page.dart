@@ -17,6 +17,7 @@ import 'package:app_front_mobile/pages/my_appointments_page.dart';
 import 'package:app_front_mobile/utils/auth_gate.dart';
 import 'package:app_front_mobile/pages/company_management_page.dart';
 import 'package:app_front_mobile/pages/product_management_page.dart';
+import 'package:app_front_mobile/services/google_auth_service.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -290,10 +291,13 @@ class _HomePageState extends State<HomePage> {
   Future<void> _logout() async {
     await _tokenStorage.clearAccessToken();
 
+    await GoogleAuthService.instance.signOut();
+
     if (!mounted) return;
 
     setState(() {
       _loggedUserFirstName = null;
+
       _loggedUserRole = null;
     });
   }
@@ -455,11 +459,24 @@ class _HomePageState extends State<HomePage> {
           child: RegisterPage(
             onLoginTap: () {
               Navigator.of(dialogContext).pop();
+
               _openLoginModal(context);
             },
+
             onRegisterSuccess: () {
               Navigator.of(dialogContext).pop();
+
               _openLoginModal(context);
+            },
+
+            onExternalAuthSuccess: (result) {
+              setState(() {
+                _loggedUserFirstName = result.firstName;
+
+                _loggedUserRole = result.role;
+              });
+
+              Navigator.of(dialogContext).pop();
             },
           ),
         );
