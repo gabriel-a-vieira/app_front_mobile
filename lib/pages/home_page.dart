@@ -18,6 +18,7 @@ import 'package:app_front_mobile/utils/auth_gate.dart';
 import 'package:app_front_mobile/pages/company_management_page.dart';
 import 'package:app_front_mobile/pages/product_management_page.dart';
 import 'package:app_front_mobile/services/google_auth_service.dart';
+import 'package:app_front_mobile/pages/profile_page.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -286,6 +287,12 @@ class _HomePageState extends State<HomePage> {
 
   String _getLogoutLabel(BuildContext context) {
     return _text(context, 'Sair', 'Logout');
+  }
+
+  Future<void> _openProfilePage() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
   }
 
   Future<void> _logout() async {
@@ -830,12 +837,31 @@ class _HomePageState extends State<HomePage> {
       tooltip: label,
       offset: const Offset(0, 42),
       onSelected: (value) {
+        if (value == 'profile') {
+          _openProfilePage();
+          return;
+        }
+
         if (value == 'logout') {
           _logout();
+          return;
         }
       },
       itemBuilder: (context) {
         return [
+          const PopupMenuItem<String>(
+            value: 'profile',
+            child: Row(
+              children: [
+                Icon(Icons.person_outline, size: 18),
+                SizedBox(width: 8),
+                Text('Perfil'),
+              ],
+            ),
+          ),
+
+          const PopupMenuDivider(),
+
           PopupMenuItem<String>(
             value: 'logout',
             child: Row(
