@@ -1,8 +1,12 @@
+import 'package:app_front_mobile/services/city_service.dart';
 import 'package:app_front_mobile/services/profile_service.dart';
+import 'package:app_front_mobile/services/state_service.dart';
+import 'package:app_front_mobile/widgets/city_lookup_modal.dart';
+import 'package:app_front_mobile/widgets/state_lookup_modal.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
+import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -16,6 +20,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
   final _profileService = ProfileService(baseUrl: 'http://localhost:8081');
 
+  final _stateService = StateService(baseUrl: 'http://localhost:8081/state');
+
+  final _cityService = CityService(baseUrl: 'http://localhost:8081/city');
+
   final _tokenStorage = TokenStorage();
 
   final _nameController = TextEditingController();
@@ -28,34 +36,66 @@ class _ProfilePageState extends State<ProfilePage> {
 
   final _birthDateController = TextEditingController();
 
+  final _postalCodeController = TextEditingController();
+
+  final _streetController = TextEditingController();
+
+  final _numberController = TextEditingController();
+
+  final _neighborhoodController = TextEditingController();
+
+  final _stateController = TextEditingController();
+
+  final _cityController = TextEditingController();
+
+  final _complementController = TextEditingController();
+
+  final _latitudeController = TextEditingController();
+
+  final _longitudeController = TextEditingController();
+
   MyProfile? _profile;
 
   DateTime? _birthDate;
 
   String? _gender;
 
+  StateOption? _selectedState;
+
+  CityOption? _selectedCity;
+
+  List<StateOption> _states = [];
+
   bool _loading = true;
 
   bool _saving = false;
+
+  bool _loadingStates = true;
 
   @override
   void initState() {
     super.initState();
 
-    _loadProfile();
+    _loadInitialData();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-
     _emailController.dispose();
-
     _cpfController.dispose();
-
     _phoneController.dispose();
-
     _birthDateController.dispose();
+
+    _postalCodeController.dispose();
+    _streetController.dispose();
+    _numberController.dispose();
+    _neighborhoodController.dispose();
+    _stateController.dispose();
+    _cityController.dispose();
+    _complementController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
 
     super.dispose();
   }
@@ -70,8 +110,10 @@ class _ProfilePageState extends State<ProfilePage> {
     return token;
   }
 
-  Future<void> _loadProfile() async {
+  Future<void> _loadInitialData() async {
     try {
+      final states = await _stateService.findStates();
+
       final token = await _token();
 
       final profile = await _profileService.findMyProfile(token: token);
@@ -80,11 +122,15 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
+      setState(() {
+        _states = states;
+        _loadingStates = false;
+      });
+
       _applyProfile(profile);
 
       setState(() {
         _profile = profile;
-
         _loading = false;
       });
     } catch (e) {
@@ -94,6 +140,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       setState(() {
         _loading = false;
+        _loadingStates = false;
       });
 
       AppMessage.apiError(context, e, fallback: 'Erro ao carregar seu perfil.');
@@ -114,16 +161,119 @@ class _ProfilePageState extends State<ProfilePage> {
     _birthDateController.text = _formatDate(profile.birthDate);
 
     _gender = profile.gender;
+
+    _postalCodeController.text = _formatCep(profile.postalCode ?? '');
+
+    _streetController.text = profile.street ?? '';
+
+    _numberController.text = profile.number ?? '';
+
+    _neighborhoodController.text = profile.neighborhood ?? '';
+
+    _cityController.text = profile.city ?? '';
+
+    _complementController.text = profile.complement ?? '';
+
+    _latitudeController.text = profile.latitude?.toString() ?? '';
+
+    _longitudeController.text = profile.longitude?.toString() ?? '';
+
+    _selectedState = _findState(profile.state);
+
+    _stateController.text = _selectedState?.label ?? '';
+
+    final cityName = profile.city?.trim() ?? '';
+
+    if (cityName.isNotEmpty && _selectedState != null) {
+      _selectedCity = CityOption(
+        id: '',
+        name: cityName,
+        stateAbbreviation: _selectedState!.abbreviation,
+      );
+
+      _cityController.text = cityName;
+    } else {
+      _selectedCity = null;
+      _cityController.clear();
+    }
+  }
+
+  StateOption? _findState(String? abbreviation) {
+    if (abbreviation == null || abbreviation.isEmpty) {
+      return null;
+    }
+
+    for (final state in _states) {
+      if (state.abbreviation.toUpperCase() == abbreviation.toUpperCase()) {
+        return state;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _selectState() async {
+    if (_loadingStates) {
+      return;
+    }
+
+    final selected = await StateLookupModal.show(
+      context: context,
+      states: _states,
+      selectedState: _selectedState,
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    final changedState =
+        _selectedState?.abbreviation.toUpperCase() !=
+        selected.abbreviation.toUpperCase();
+
+    setState(() {
+      _selectedState = selected;
+      _stateController.text = selected.label;
+
+      if (changedState) {
+        _selectedCity = null;
+        _cityController.clear();
+      }
+    });
+  }
+
+  Future<void> _selectCity() async {
+    final state = _selectedState;
+
+    if (state == null) {
+      AppMessage.info(context, 'Selecione primeiro a UF.');
+
+      return;
+    }
+
+    final selected = await CityLookupModal.show(
+      context: context,
+      service: _cityService,
+      state: state,
+      selectedCity: _selectedCity,
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _selectedCity = selected;
+      _cityController.text = selected.name;
+    });
   }
 
   Future<void> _selectBirthDate() async {
-    final now = DateTime.now();
-
     final selected = await showDatePicker(
       context: context,
       initialDate: _birthDate ?? DateTime(2000, 1, 1),
       firstDate: DateTime(1900, 1, 1),
-      lastDate: now,
+      lastDate: DateTime.now(),
     );
 
     if (selected == null || !mounted) {
@@ -154,13 +304,31 @@ class _ProfilePageState extends State<ProfilePage> {
       final request = UpdateMyProfileRequest(
         name: _nameController.text.trim(),
 
-        cpfCnpj: _onlyNumbers(_cpfController.text),
+        cpfCnpj: onlyNumbers(_cpfController.text),
 
-        phone: _onlyNumbers(_phoneController.text),
+        phone: onlyNumbers(_phoneController.text),
 
         birthDate: _birthDate,
 
         gender: _gender,
+
+        postalCode: onlyNumbers(_postalCodeController.text),
+
+        street: _streetController.text.trim(),
+
+        number: _numberController.text.trim(),
+
+        neighborhood: _neighborhoodController.text.trim(),
+
+        city: _selectedCity?.name ?? '',
+
+        state: _selectedState?.abbreviation ?? '',
+
+        complement: _complementController.text.trim(),
+
+        latitude: _parseDouble(_latitudeController.text),
+
+        longitude: _parseDouble(_longitudeController.text),
       );
 
       final profile = await _profileService.updateMyProfile(
@@ -198,12 +366,18 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  String _onlyNumbers(String value) {
-    return value.replaceAll(RegExp(r'\D'), '');
+  double? _parseDouble(String value) {
+    final text = value.trim().replaceAll(',', '.');
+
+    if (text.isEmpty) {
+      return null;
+    }
+
+    return double.tryParse(text);
   }
 
   String _formatCpf(String value) {
-    final numbers = _onlyNumbers(value);
+    final numbers = onlyNumbers(value);
 
     if (numbers.length != 11) {
       return value;
@@ -216,7 +390,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String _formatPhone(String value) {
-    final numbers = _onlyNumbers(value);
+    final numbers = onlyNumbers(value);
 
     if (numbers.length == 11) {
       return '(${numbers.substring(0, 2)}) '
@@ -231,6 +405,17 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     return value;
+  }
+
+  String _formatCep(String value) {
+    final numbers = onlyNumbers(value);
+
+    if (numbers.length != 8) {
+      return value;
+    }
+
+    return '${numbers.substring(0, 5)}-'
+        '${numbers.substring(5, 8)}';
   }
 
   String _formatDate(DateTime? value) {
@@ -262,6 +447,28 @@ class _ProfilePageState extends State<ProfilePage> {
       default:
         return role;
     }
+  }
+
+  String? _validateCoordinate({required String value, required bool latitude}) {
+    if (value.trim().isEmpty) {
+      return null;
+    }
+
+    final number = _parseDouble(value);
+
+    if (number == null) {
+      return 'Valor inválido';
+    }
+
+    if (latitude && (number < -90 || number > 90)) {
+      return 'Latitude deve estar entre -90 e 90';
+    }
+
+    if (!latitude && (number < -180 || number > 180)) {
+      return 'Longitude deve estar entre -180 e 180';
+    }
+
+    return null;
   }
 
   @override
@@ -297,6 +504,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 18),
 
                   _buildPersonalCard(),
+
+                  const SizedBox(height: 18),
+
+                  _buildAddressCard(),
 
                   const SizedBox(height: 18),
 
@@ -347,11 +558,9 @@ class _ProfilePageState extends State<ProfilePage> {
             fontWeight: FontWeight.w800,
           ),
         ),
-
         const SizedBox(height: 6),
-
         Text(
-          'Gerencie as informações da sua conta e seus dados pessoais.',
+          'Gerencie as informações da sua conta, seus dados pessoais e endereço.',
           style: TextStyle(
             color: colorScheme.onSurface.withOpacity(0.62),
             fontSize: 14,
@@ -375,12 +584,10 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Row(
         children: [
           Icon(Icons.info_outline, color: colorScheme.primary),
-
           const SizedBox(width: 12),
-
           const Expanded(
             child: Text(
-              'Complete seus dados pessoais para facilitar seus próximos agendamentos.',
+              'Complete seus dados pessoais e endereço para facilitar seus próximos agendamentos.',
             ),
           ),
         ],
@@ -433,22 +640,95 @@ class _ProfilePageState extends State<ProfilePage> {
     return _buildCard(
       title: 'Informações pessoais',
       icon: Icons.assignment_ind_outlined,
+      child: _buildResponsiveFields([
+        TextFormField(
+          controller: _cpfController,
+          keyboardType: TextInputType.number,
+          decoration: _decoration('CPF', Icons.credit_card_outlined),
+          validator: (value) {
+            final numbers = onlyNumbers(value ?? '');
+
+            if (numbers.isNotEmpty && numbers.length != 11) {
+              return 'CPF deve possuir 11 dígitos';
+            }
+
+            return null;
+          },
+        ),
+
+        TextFormField(
+          controller: _phoneController,
+          keyboardType: TextInputType.phone,
+          decoration: _decoration('Telefone', Icons.phone_outlined),
+          validator: (value) {
+            final numbers = onlyNumbers(value ?? '');
+
+            if (numbers.isNotEmpty &&
+                (numbers.length < 10 || numbers.length > 11)) {
+              return 'Telefone inválido';
+            }
+
+            return null;
+          },
+        ),
+
+        TextFormField(
+          controller: _birthDateController,
+          readOnly: true,
+          onTap: _selectBirthDate,
+          decoration: _decoration(
+            'Data de nascimento',
+            Icons.calendar_month_outlined,
+          ).copyWith(suffixIcon: const Icon(Icons.calendar_today_outlined)),
+        ),
+
+        DropdownButtonFormField<String>(
+          value: _gender,
+          decoration: _decoration('Gênero', Icons.person_outline),
+          items: const [
+            DropdownMenuItem(value: 'MALE', child: Text('Masculino')),
+            DropdownMenuItem(value: 'FEMALE', child: Text('Feminino')),
+            DropdownMenuItem(value: 'OTHER', child: Text('Outro')),
+            DropdownMenuItem(
+              value: 'NOT_INFORMED',
+              child: Text('Prefiro não informar'),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _gender = value;
+            });
+          },
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildAddressCard() {
+    return _buildCard(
+      title: 'Endereço',
+      icon: Icons.location_on_outlined,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildResponsiveFields([
             TextFormField(
-              controller: _cpfController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(11),
-              ],
-              decoration: _decoration('CPF', Icons.credit_card_outlined),
-              validator: (value) {
-                final numbers = _onlyNumbers(value ?? '');
-
-                if (numbers.isNotEmpty && numbers.length != 11) {
-                  return 'CPF deve possuir 11 dígitos';
+              controller: _stateController,
+              readOnly: true,
+              onTap: _selectState,
+              decoration: _decoration('UF', Icons.map_outlined).copyWith(
+                hintText: _loadingStates
+                    ? 'Carregando UFs...'
+                    : 'Selecione a UF',
+                suffixIcon: IconButton(
+                  tooltip: 'Selecionar UF',
+                  onPressed: _loadingStates ? null : _selectState,
+                  icon: const Icon(Icons.search),
+                ),
+              ),
+              validator: (_) {
+                if (_selectedCity != null && _selectedState == null) {
+                  return 'Informe a UF';
                 }
 
                 return null;
@@ -456,41 +736,107 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
 
             TextFormField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(11),
-              ],
-              decoration: _decoration('Telefone', Icons.phone_outlined),
+              controller: _cityController,
+              readOnly: true,
+              onTap: _selectCity,
+              decoration: _decoration('Cidade', Icons.location_city_outlined)
+                  .copyWith(
+                    hintText: _selectedState == null
+                        ? 'Selecione primeiro a UF'
+                        : 'Selecione a cidade',
+                    suffixIcon: IconButton(
+                      tooltip: 'Selecionar cidade',
+                      onPressed: _selectedState == null ? null : _selectCity,
+                      icon: const Icon(Icons.search),
+                    ),
+                  ),
+              validator: (_) {
+                if (_selectedState != null && _selectedCity == null) {
+                  return 'Informe a cidade';
+                }
+
+                return null;
+              },
             ),
 
             TextFormField(
-              controller: _birthDateController,
-              readOnly: true,
-              onTap: _selectBirthDate,
-              decoration: _decoration(
-                'Data de nascimento',
-                Icons.calendar_month_outlined,
-              ).copyWith(suffixIcon: const Icon(Icons.calendar_today_outlined)),
+              controller: _postalCodeController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [CepInputFormatter()],
+              decoration: _decoration('CEP', Icons.markunread_mailbox_outlined),
+              validator: (value) {
+                final cep = onlyNumbers(value ?? '');
+
+                if (cep.isNotEmpty && cep.length != 8) {
+                  return 'CEP deve possuir 8 dígitos';
+                }
+
+                return null;
+              },
             ),
 
-            DropdownButtonFormField<String>(
-              value: _gender,
-              decoration: _decoration('Gênero', Icons.person_outline),
-              items: const [
-                DropdownMenuItem(value: 'MALE', child: Text('Masculino')),
-                DropdownMenuItem(value: 'FEMALE', child: Text('Feminino')),
-                DropdownMenuItem(value: 'OTHER', child: Text('Outro')),
-                DropdownMenuItem(
-                  value: 'NOT_INFORMED',
-                  child: Text('Prefiro não informar'),
-                ),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _gender = value;
-                });
+            TextFormField(
+              controller: _streetController,
+              decoration: _decoration('Rua', Icons.signpost_outlined),
+            ),
+
+            TextFormField(
+              controller: _numberController,
+              decoration: _decoration('Número', Icons.numbers),
+            ),
+
+            TextFormField(
+              controller: _neighborhoodController,
+              decoration: _decoration('Bairro', Icons.location_on_outlined),
+            ),
+
+            TextFormField(
+              controller: _complementController,
+              decoration: _decoration('Complemento', Icons.home_work_outlined),
+            ),
+          ]),
+
+          const SizedBox(height: 18),
+
+          Text(
+            'Coordenadas',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.65),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          _buildResponsiveFields([
+            TextFormField(
+              controller: _latitudeController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+                signed: true,
+              ),
+              decoration: _decoration(
+                'Latitude (opcional)',
+                Icons.my_location_outlined,
+              ),
+              validator: (value) {
+                return _validateCoordinate(value: value ?? '', latitude: true);
+              },
+            ),
+
+            TextFormField(
+              controller: _longitudeController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+                signed: true,
+              ),
+              decoration: _decoration(
+                'Longitude (opcional)',
+                Icons.explore_outlined,
+              ),
+              validator: (value) {
+                return _validateCoordinate(value: value ?? '', latitude: false);
               },
             ),
           ]),
@@ -603,9 +949,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Row(
             children: [
               Icon(icon, size: 21, color: colorScheme.primary),
-
               const SizedBox(width: 9),
-
               Text(
                 title,
                 style: const TextStyle(
@@ -615,9 +959,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ],
           ),
-
           const SizedBox(height: 20),
-
           child,
         ],
       ),

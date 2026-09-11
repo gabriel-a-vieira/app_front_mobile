@@ -40,25 +40,30 @@ class ProfileService {
 
 class MyProfile {
   final String userId;
-
   final String name;
-
   final String email;
-
   final String role;
 
   final String? personId;
 
   final String? cpfCnpj;
-
   final String? phone;
-
   final DateTime? birthDate;
-
   final String? gender;
 
-  final bool googleLinked;
+  final String? street;
+  final String? number;
+  final String? postalCode;
+  final String? complement;
+  final String? neighborhood;
 
+  final double? latitude;
+  final double? longitude;
+
+  final String? city;
+  final String? state;
+
+  final bool googleLinked;
   final bool personalDataCompleted;
 
   const MyProfile({
@@ -71,18 +76,21 @@ class MyProfile {
     required this.phone,
     required this.birthDate,
     required this.gender,
+    required this.street,
+    required this.number,
+    required this.postalCode,
+    required this.complement,
+    required this.neighborhood,
+    required this.latitude,
+    required this.longitude,
+    required this.city,
+    required this.state,
     required this.googleLinked,
     required this.personalDataCompleted,
   });
 
   factory MyProfile.fromJson(Map<String, dynamic> json) {
-    DateTime? birthDate;
-
     final rawBirthDate = json['birthDate']?.toString();
-
-    if (rawBirthDate != null && rawBirthDate.isNotEmpty) {
-      birthDate = DateTime.tryParse(rawBirthDate);
-    }
 
     return MyProfile(
       userId: json['userId']?.toString() ?? '',
@@ -92,11 +100,39 @@ class MyProfile {
       personId: json['personId']?.toString(),
       cpfCnpj: json['cpfCnpj']?.toString(),
       phone: json['phone']?.toString(),
-      birthDate: birthDate,
+      birthDate: rawBirthDate == null || rawBirthDate.isEmpty
+          ? null
+          : DateTime.tryParse(rawBirthDate),
       gender: json['gender']?.toString(),
+
+      street: json['street']?.toString(),
+      number: json['number']?.toString(),
+      postalCode: json['postalCode']?.toString(),
+      complement: json['complement']?.toString(),
+      neighborhood: json['neighborhood']?.toString(),
+
+      latitude: _toDouble(json['latitude']),
+      longitude: _toDouble(json['longitude']),
+
+      city: json['city']?.toString(),
+      state: json['state']?.toString(),
+
       googleLinked: json['googleLinked'] == true,
+
       personalDataCompleted: json['personalDataCompleted'] == true,
     );
+  }
+
+  static double? _toDouble(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    return double.tryParse(value.toString());
   }
 }
 
@@ -104,12 +140,21 @@ class UpdateMyProfileRequest {
   final String name;
 
   final String cpfCnpj;
-
   final String phone;
-
   final DateTime? birthDate;
-
   final String? gender;
+
+  final String street;
+  final String number;
+  final String postalCode;
+  final String complement;
+  final String neighborhood;
+
+  final double? latitude;
+  final double? longitude;
+
+  final String city;
+  final String state;
 
   const UpdateMyProfileRequest({
     required this.name,
@@ -117,6 +162,15 @@ class UpdateMyProfileRequest {
     required this.phone,
     required this.birthDate,
     required this.gender,
+    required this.street,
+    required this.number,
+    required this.postalCode,
+    required this.complement,
+    required this.neighborhood,
+    required this.latitude,
+    required this.longitude,
+    required this.city,
+    required this.state,
   });
 
   Map<String, dynamic> toJson() {
@@ -126,6 +180,18 @@ class UpdateMyProfileRequest {
       'phone': phone,
       'birthDate': birthDate == null ? null : _dateOnly(birthDate!),
       'gender': gender,
+
+      'street': street,
+      'number': number,
+      'postalCode': postalCode,
+      'complement': complement,
+      'neighborhood': neighborhood,
+
+      'latitude': latitude,
+      'longitude': longitude,
+
+      'city': city,
+      'state': state,
     };
   }
 
