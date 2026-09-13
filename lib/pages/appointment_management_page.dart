@@ -6,6 +6,7 @@ import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
 
 class AppointmentManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -109,7 +110,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> {
 
       setState(() {
         _loading = false;
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
       });
 
       AppMessage.apiError(context, e, fallback: 'Erro ao buscar agendamentos.');

@@ -145,7 +145,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
         _loading = false;
       });
 
-      AppMessage.apiError(context, e, fallback: 'Erro ao carregar dados: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao carregar dados.');
     }
   }
 

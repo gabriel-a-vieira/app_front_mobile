@@ -24,6 +24,7 @@ import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
 import '../locale_provider.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
 
 class LanguageOption {
   final Locale locale;
@@ -142,7 +143,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -176,7 +177,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -209,7 +210,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loadingMore = false;
       });
     }

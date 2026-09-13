@@ -6,6 +6,7 @@ import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
 
 class ProfessionalManagementPage extends StatefulWidget {
   const ProfessionalManagementPage({super.key});
@@ -91,7 +92,7 @@ class _ProfessionalManagementPageState
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -126,7 +127,7 @@ class _ProfessionalManagementPageState
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loadingMore = false;
       });
     }
@@ -229,7 +230,7 @@ class _ProfessionalManagementPageState
     } catch (e) {
       if (!mounted) return;
 
-      AppMessage.error(context, 'Erro ao excluir profissional: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao excluir profissional.');
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:app_front_mobile/services/professional_lookup_service.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
 
 class ProfessionalLookupModal extends StatefulWidget {
   final String token;
@@ -103,7 +104,7 @@ class _ProfessionalLookupModalState extends State<ProfessionalLookupModal> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
 
         _loading = false;
       });
