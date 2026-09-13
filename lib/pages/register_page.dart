@@ -9,6 +9,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../l10n/app_localizations.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback? onLoginTap;
@@ -51,13 +52,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _showScrollbar = false;
 
-  static const Color _modalColor = Color(0xFF11141B);
+  static const Color _modalColor = AppColors.darkSurface;
 
   static const Color _headerColor = Color(0xFF1A1E26);
 
   static const Color _borderColor = Color(0xFF2A2F38);
 
-  static const Color _inputFillColor = Color(0xFF1C212B);
+  static const Color _inputFillColor = AppColors.darkInputFill;
 
   static const Color _primaryBlue = Color(0xFF0089F7);
 

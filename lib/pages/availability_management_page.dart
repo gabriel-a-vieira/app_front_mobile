@@ -9,6 +9,7 @@ import 'package:app_front_mobile/widgets/professional_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class AvailabilityManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -597,7 +598,7 @@ class _AvailabilityManagementPageState
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+        color: isDark ? AppColors.darkSurface : colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),
@@ -607,7 +608,7 @@ class _AvailabilityManagementPageState
             height: 54,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             color: isDark
-                ? const Color(0xFF171A22)
+                ? AppColors.darkSurfaceElevated
                 : colorScheme.surfaceContainerHighest,
             child: Row(
               children: [

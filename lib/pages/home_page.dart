@@ -25,6 +25,7 @@ import '../theme_notifier.dart';
 import '../locale_provider.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class LanguageOption {
   final Locale locale;
@@ -1205,7 +1206,7 @@ class _CompanyCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isDark
-                ? const Color(0xFF11141B)
+                ? AppColors.darkSurface
                 : colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: colorScheme.outline.withOpacity(0.25)),
