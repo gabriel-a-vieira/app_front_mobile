@@ -129,7 +129,7 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
         _loadingData = false;
       });
 
-      AppMessage.error(context, 'Erro ao carregar servico: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao carregar servico.');
     }
   }
 
@@ -236,7 +236,7 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
     } catch (e) {
       if (!mounted) return;
 
-      AppMessage.error(context, 'Erro ao salvar servico: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao salvar servico.');
     } finally {
       if (mounted) {
         setState(() {

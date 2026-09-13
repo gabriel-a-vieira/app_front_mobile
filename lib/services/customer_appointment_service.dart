@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:app_front_mobile/config/api_client.dart';
 
 class CustomerAppointmentService {
   CustomerAppointmentService({Dio? dio, required this.baseUrl})
-    : _dio = dio ?? Dio();
+    : _dio = dio ?? ApiClient.dio;
 
   final Dio _dio;
   final String baseUrl;

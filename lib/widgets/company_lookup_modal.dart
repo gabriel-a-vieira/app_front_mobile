@@ -1,5 +1,6 @@
 import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
 
 class CompanyLookupModal extends StatefulWidget {
   final String? token;
@@ -78,7 +79,7 @@ class _CompanyLookupModalState extends State<CompanyLookupModal> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }

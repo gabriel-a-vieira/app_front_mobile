@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:app_front_mobile/config/api_client.dart';
 
 class CompanyLookupService {
-  CompanyLookupService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
+  CompanyLookupService({Dio? dio, required this.baseUrl}) : _dio = dio ?? ApiClient.dio;
 
   final Dio _dio;
   final String baseUrl;

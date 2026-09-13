@@ -1,6 +1,7 @@
 import 'package:app_front_mobile/services/public_company_service.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
 
 class CompanyProfessionalsTab extends StatefulWidget {
   final String companyId;
@@ -51,7 +52,7 @@ class _CompanyProfessionalsTabState extends State<CompanyProfessionalsTab> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }

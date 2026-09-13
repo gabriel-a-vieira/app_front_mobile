@@ -8,6 +8,7 @@ import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/widgets/professional_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
 
 class AvailabilityManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -122,7 +123,7 @@ class _AvailabilityManagementPageState
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -163,7 +164,7 @@ class _AvailabilityManagementPageState
 
       setState(() {
         _loadingMore = false;
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
       });
     }
   }
@@ -259,7 +260,7 @@ class _AvailabilityManagementPageState
     } catch (e) {
       if (!mounted) return;
 
-      AppMessage.error(context, 'Erro ao excluir disponibilidade: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao excluir disponibilidade.');
     }
   }
 
