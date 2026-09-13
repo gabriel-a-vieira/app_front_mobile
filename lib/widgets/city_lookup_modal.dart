@@ -1,5 +1,6 @@
 import 'package:app_front_mobile/services/city_service.dart';
 import 'package:app_front_mobile/services/state_service.dart';
+import 'package:app_front_mobile/widgets/common/lookup_dialog_shell.dart';
 import 'package:flutter/material.dart';
 
 class CityLookupModal {
@@ -102,39 +103,30 @@ class _CityLookupDialogState extends State<_CityLookupDialog> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Dialog(
-      insetPadding: const EdgeInsets.all(24),
-      backgroundColor: isDark ? const Color(0xFF15171D) : colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 680, maxHeight: 660),
-        child: Column(
-          children: [
-            _Header(
-              title: 'Selecionar cidade - ${widget.state.abbreviation}',
-              onClose: () => Navigator.of(context).pop(),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
-              child: TextField(
-                controller: _searchController,
-                autofocus: true,
-                enabled: !_loading,
-                onChanged: (_) => setState(() {}),
-                decoration: InputDecoration(
-                  hintText: 'Buscar cidade',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+    return LookupDialogShell(
+      title: 'Selecionar cidade - ${widget.state.abbreviation}',
+      maxWidth: 680,
+      maxHeight: 660,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
+            child: TextField(
+              controller: _searchController,
+              autofocus: true,
+              enabled: !_loading,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'Buscar cidade',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
-            Expanded(child: _buildContent(colorScheme)),
-          ],
-        ),
+          ),
+          Expanded(child: _buildContent(colorScheme)),
+        ],
       ),
     );
   }
@@ -201,39 +193,6 @@ class _CityLookupDialogState extends State<_CityLookupDialog> {
           onTap: () => Navigator.of(context).pop(city),
         );
       },
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  final String title;
-  final VoidCallback onClose;
-
-  const _Header({required this.title, required this.onClose});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withOpacity(0.18)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-            ),
-          ),
-          IconButton(onPressed: onClose, icon: const Icon(Icons.close)),
-        ],
-      ),
     );
   }
 }
