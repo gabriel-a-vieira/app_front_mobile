@@ -2,11 +2,9 @@ import 'package:app_front_mobile/l10n/app_localizations.dart';
 import 'package:app_front_mobile/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'theme_notifier.dart'; // O ThemeNotifier para controlar o tema
 import 'locale_provider.dart'; // O LocaleProvider para controlar o idioma
-import 'app_router.dart'; // Importando o arquivo que define o buildRouter
 import 'package:app_front_mobile/services/google_auth_service.dart';
 
 Future<void> main() async {
@@ -39,8 +37,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
     final localeProvider = Provider.of<LocaleProvider>(context);
-
-    final GoRouter router = buildRouter();
 
     return MaterialApp(
       title: 'Agenda App',

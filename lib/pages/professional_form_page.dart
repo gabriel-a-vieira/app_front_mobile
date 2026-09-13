@@ -140,7 +140,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
         _loadingData = false;
       });
 
-      AppMessage.error(context, 'Erro ao carregar dados: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao carregar dados.');
     }
   }
 
@@ -232,7 +232,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
         _loadingCities = false;
       });
 
-      AppMessage.error(context, 'Erro ao carregar cidades: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao carregar cidades.');
     }
   }
 
@@ -291,7 +291,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     } catch (e) {
       if (!mounted) return;
 
-      AppMessage.error(context, 'Erro ao salvar profissional: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao salvar profissional.');
     } finally {
       if (mounted) {
         setState(() {

@@ -30,7 +30,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  go_router: ^17.1.0
   dio: ^5.7.0
   flutter_secure_storage: ^11.0.0
   flutter_localizations:

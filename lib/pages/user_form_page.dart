@@ -4,6 +4,7 @@ import 'package:app_front_mobile/services/user_admin_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/app_message.dart';
 
 class UserFormPage extends StatefulWidget {
   final String currentUserRole;
@@ -115,7 +116,7 @@ class _UserFormPageState extends State<UserFormPage> {
     } catch (e) {
       if (!mounted) return;
 
-      _showMessage('Erro ao cadastrar usuario: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao cadastrar usuario.');
     } finally {
       if (mounted) {
         setState(() {

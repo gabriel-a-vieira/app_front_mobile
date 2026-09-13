@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
 
 class ClientManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -103,7 +104,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -140,7 +141,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -175,7 +176,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loadingMore = false;
       });
     }
@@ -280,7 +281,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
     } catch (e) {
       if (!mounted) return;
 
-      AppMessage.error(context, 'Erro ao excluir cliente: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao excluir cliente.');
     }
   }
 
