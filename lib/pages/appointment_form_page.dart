@@ -10,6 +10,7 @@ import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/widgets/professional_lookup_modal.dart';
 import 'package:app_front_mobile/widgets/service_offering_lookup_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class AppointmentFormPage extends StatefulWidget {
   final String? appointmentId;
@@ -35,23 +36,23 @@ class _AppointmentFormPageState extends State<AppointmentFormPage> {
   final _tokenStorage = TokenStorage();
 
   final _appointmentService = AppointmentService(
-    baseUrl: 'http://localhost:8081/appointment',
+    baseUrl: '${ApiConfig.baseUrl}/appointment',
   );
 
   final _companyLookupService = CompanyLookupService(
-    baseUrl: 'http://localhost:8081/company/companies/home-page',
+    baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
   );
 
   final _clientLookupService = ClientLookupService(
-    baseUrl: 'http://localhost:8081/client',
+    baseUrl: '${ApiConfig.baseUrl}/client',
   );
 
   final _professionalLookupService = ProfessionalLookupService(
-    baseUrl: 'http://localhost:8081/professional',
+    baseUrl: '${ApiConfig.baseUrl}/professional',
   );
 
   final _serviceLookupService = ServiceOfferingLookupService(
-    baseUrl: 'http://localhost:8081/service-offering',
+    baseUrl: '${ApiConfig.baseUrl}/service-offering',
   );
 
   final _companyCtrl = TextEditingController();

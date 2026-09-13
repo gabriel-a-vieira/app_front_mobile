@@ -5,6 +5,7 @@ import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/auth_gate.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class CompanyReviewsTab extends StatefulWidget {
   final String companyId;
@@ -16,7 +17,7 @@ class CompanyReviewsTab extends StatefulWidget {
 }
 
 class _CompanyReviewsTabState extends State<CompanyReviewsTab> {
-  final _service = CompanyReviewService(baseUrl: 'http://localhost:8081');
+  final _service = CompanyReviewService(baseUrl: ApiConfig.baseUrl);
 
   final _tokenStorage = TokenStorage();
 
@@ -195,7 +196,7 @@ class _CompanyReviewsTabState extends State<CompanyReviewsTab> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          'http://localhost:8081${review.imageUrl}',
+                          '${ApiConfig.baseUrl}${review.imageUrl}',
                           height: 180,
                           fit: BoxFit.cover,
                         ),

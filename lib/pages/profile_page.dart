@@ -7,6 +7,7 @@ import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -18,11 +19,11 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
 
-  final _profileService = ProfileService(baseUrl: 'http://localhost:8081');
+  final _profileService = ProfileService(baseUrl: ApiConfig.baseUrl);
 
-  final _stateService = StateService(baseUrl: 'http://localhost:8081/state');
+  final _stateService = StateService(baseUrl: '${ApiConfig.baseUrl}/state');
 
-  final _cityService = CityService(baseUrl: 'http://localhost:8081/city');
+  final _cityService = CityService(baseUrl: '${ApiConfig.baseUrl}/city');
 
   final _tokenStorage = TokenStorage();
 

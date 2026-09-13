@@ -7,6 +7,7 @@ import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/widgets/professional_lookup_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class AvailabilityManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -25,15 +26,15 @@ class AvailabilityManagementPage extends StatefulWidget {
 class _AvailabilityManagementPageState
     extends State<AvailabilityManagementPage> {
   final _availabilityService = AvailabilityService(
-    baseUrl: 'http://localhost:8081/availability',
+    baseUrl: '${ApiConfig.baseUrl}/availability',
   );
 
   final _professionalLookupService = ProfessionalLookupService(
-    baseUrl: 'http://localhost:8081/professional',
+    baseUrl: '${ApiConfig.baseUrl}/professional',
   );
 
   final _companyLookupService = CompanyLookupService(
-    baseUrl: 'http://localhost:8081/company/companies/home-page',
+    baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
   );
 
   final _tokenStorage = TokenStorage();
@@ -186,7 +187,10 @@ class _AvailabilityManagementPageState
     }
 
     if (_selectedIds.length > 1) {
-      AppMessage.info(context, 'Selecione apenas uma disponibilidade para editar');
+      AppMessage.info(
+        context,
+        'Selecione apenas uma disponibilidade para editar',
+      );
       return;
     }
 

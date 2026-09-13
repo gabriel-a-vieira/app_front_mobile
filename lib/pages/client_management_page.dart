@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class ClientManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -22,10 +23,10 @@ class ClientManagementPage extends StatefulWidget {
 }
 
 class _ClientManagementPageState extends State<ClientManagementPage> {
-  final _clientService = ClientService(baseUrl: 'http://localhost:8081/client');
+  final _clientService = ClientService(baseUrl: '${ApiConfig.baseUrl}/client');
 
   final _companyLookupService = CompanyLookupService(
-    baseUrl: 'http://localhost:8081/company/companies/home-page',
+    baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
   );
 
   final _tokenStorage = TokenStorage();

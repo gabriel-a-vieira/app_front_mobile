@@ -4,6 +4,7 @@ import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/widgets/professional_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class AvailabilityFormPage extends StatefulWidget {
   final String? availabilityId;
@@ -22,11 +23,11 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
   final _formKey = GlobalKey<FormState>();
 
   final _availabilityService = AvailabilityService(
-    baseUrl: 'http://localhost:8081/availability',
+    baseUrl: '${ApiConfig.baseUrl}/availability',
   );
 
   final _professionalLookupService = ProfessionalLookupService(
-    baseUrl: 'http://localhost:8081/professional',
+    baseUrl: '${ApiConfig.baseUrl}/professional',
   );
 
   final _tokenStorage = TokenStorage();

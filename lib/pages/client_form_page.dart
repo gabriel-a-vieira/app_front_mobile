@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class ClientFormPage extends StatefulWidget {
   final String? clientId;
@@ -36,14 +37,14 @@ class _ClientFormPageState extends State<ClientFormPage> {
 
   final _tokenStorage = TokenStorage();
 
-  final _clientService = ClientService(baseUrl: 'http://localhost:8081/client');
+  final _clientService = ClientService(baseUrl: '${ApiConfig.baseUrl}/client');
 
-  final _stateService = StateService(baseUrl: 'http://localhost:8081/state');
+  final _stateService = StateService(baseUrl: '${ApiConfig.baseUrl}/state');
 
-  final _cityService = CityService(baseUrl: 'http://localhost:8081/city');
+  final _cityService = CityService(baseUrl: '${ApiConfig.baseUrl}/city');
 
   final _companyLookupService = CompanyLookupService(
-    baseUrl: 'http://localhost:8081/company/companies/home-page',
+    baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
   );
 
   final _nameController = TextEditingController();

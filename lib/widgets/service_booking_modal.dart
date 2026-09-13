@@ -4,6 +4,7 @@ import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/booking_confirmation_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class ServiceBookingModal extends StatefulWidget {
   final String companyId;
@@ -44,11 +45,11 @@ class _ServiceBookingModalState extends State<ServiceBookingModal> {
   final _tokenStorage = TokenStorage();
 
   final _publicCompanyService = PublicCompanyService(
-    baseUrl: 'http://localhost:8081/public/company',
+    baseUrl: '${ApiConfig.baseUrl}/public/company',
   );
 
   final _appointmentService = CustomerAppointmentService(
-    baseUrl: 'http://localhost:8081/appointment',
+    baseUrl: '${ApiConfig.baseUrl}/appointment',
   );
 
   late final List<DateTime> _dates;

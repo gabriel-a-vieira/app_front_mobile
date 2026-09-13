@@ -3,6 +3,7 @@ import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/services/user_admin_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class UserFormPage extends StatefulWidget {
   final String currentUserRole;
@@ -23,11 +24,11 @@ class _UserFormPageState extends State<UserFormPage> {
   final _tokenStorage = TokenStorage();
 
   final _userAdminService = UserAdminService(
-    baseUrl: 'http://localhost:8081/auth/register',
+    baseUrl: '${ApiConfig.baseUrl}/auth/register',
   );
 
   final _companyLookupService = CompanyLookupService(
-    baseUrl: 'http://localhost:8081/company/companies/home-page',
+    baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
   );
 
   final _nameCtrl = TextEditingController();

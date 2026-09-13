@@ -5,6 +5,7 @@ import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class AppointmentManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -20,11 +21,11 @@ class AppointmentManagementPage extends StatefulWidget {
 
 class _AppointmentManagementPageState extends State<AppointmentManagementPage> {
   final _appointmentService = AppointmentService(
-    baseUrl: 'http://localhost:8081/appointment',
+    baseUrl: '${ApiConfig.baseUrl}/appointment',
   );
 
   final _companyLookupService = CompanyLookupService(
-    baseUrl: 'http://localhost:8081/company/companies/home-page',
+    baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
   );
 
   final _tokenStorage = TokenStorage();

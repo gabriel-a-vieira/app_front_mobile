@@ -3,6 +3,7 @@ import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/customer_appointment_detail_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class MyAppointmentsPage extends StatefulWidget {
   const MyAppointmentsPage({super.key});
@@ -13,7 +14,7 @@ class MyAppointmentsPage extends StatefulWidget {
 
 class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
   final _service = CustomerAppointmentService(
-    baseUrl: 'http://localhost:8081/appointment',
+    baseUrl: '${ApiConfig.baseUrl}/appointment',
   );
 
   final _tokenStorage = TokenStorage();

@@ -5,6 +5,7 @@ import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class CompanyFormPage extends StatefulWidget {
   final String? companyId;
@@ -49,10 +50,10 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
   final _tiktokCtrl = TextEditingController();
 
   final _companyService = CompanyService(
-    baseUrl: 'http://localhost:8081/company',
+    baseUrl: '${ApiConfig.baseUrl}/company',
   );
 
-  final _stateService = StateService(baseUrl: 'http://localhost:8081/state');
+  final _stateService = StateService(baseUrl: '${ApiConfig.baseUrl}/state');
 
   final _tokenStorage = TokenStorage();
 
