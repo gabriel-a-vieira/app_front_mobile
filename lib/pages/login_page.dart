@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:app_front_mobile/services/google_auth_service.dart';
 import 'package:app_front_mobile/widgets/google_auth_button.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class LoginPage extends StatefulWidget {
   final void Function(AuthLoginResult result)? onLoginSuccess;
@@ -29,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _loading = false;
   bool _obscure = true;
 
-  final _authService = AuthService(baseUrl: 'http://localhost:8081');
+  final _authService = AuthService(baseUrl: ApiConfig.baseUrl);
   final _tokenStorage = TokenStorage();
 
   StreamSubscription<AuthLoginResult>? _googleSuccessSubscription;

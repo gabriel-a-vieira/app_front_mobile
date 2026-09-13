@@ -6,6 +6,7 @@ import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class ProfessionalFormPage extends StatefulWidget {
   final String? professionalId;
@@ -24,12 +25,12 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
   final _formKey = GlobalKey<FormState>();
 
   final _professionalService = ProfessionalService(
-    baseUrl: 'http://localhost:8081/professional',
+    baseUrl: '${ApiConfig.baseUrl}/professional',
   );
 
-  final _stateService = StateService(baseUrl: 'http://localhost:8081/state');
+  final _stateService = StateService(baseUrl: '${ApiConfig.baseUrl}/state');
 
-  final _cityService = CityService(baseUrl: 'http://localhost:8081/city');
+  final _cityService = CityService(baseUrl: '${ApiConfig.baseUrl}/city');
 
   final _tokenStorage = TokenStorage();
 

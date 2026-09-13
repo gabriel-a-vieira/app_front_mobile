@@ -10,6 +10,7 @@ import 'package:app_front_mobile/widgets/service_booking_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app_front_mobile/widgets/company_products_tab.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class CompanyDetailPage extends StatefulWidget {
   final CompanySummary company;
@@ -22,11 +23,11 @@ class CompanyDetailPage extends StatefulWidget {
 
 class _CompanyDetailPageState extends State<CompanyDetailPage> {
   final _companyReviewService = CompanyReviewService(
-    baseUrl: 'http://localhost:8081',
+    baseUrl: ApiConfig.baseUrl,
   );
 
   final _publicCompanyService = PublicCompanyService(
-    baseUrl: 'http://localhost:8081/public/company',
+    baseUrl: '${ApiConfig.baseUrl}/public/company',
   );
 
   PublicCompanyDetail? _companyDetail;

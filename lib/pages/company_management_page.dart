@@ -3,6 +3,7 @@ import 'package:app_front_mobile/services/company_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class CompanyManagementPage extends StatefulWidget {
   const CompanyManagementPage({super.key});
@@ -12,7 +13,7 @@ class CompanyManagementPage extends StatefulWidget {
 }
 
 class _CompanyManagementPageState extends State<CompanyManagementPage> {
-  final _service = CompanyService(baseUrl: 'http://localhost:8081/company');
+  final _service = CompanyService(baseUrl: '${ApiConfig.baseUrl}/company');
 
   final _tokenStorage = TokenStorage();
 

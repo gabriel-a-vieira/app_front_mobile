@@ -5,6 +5,7 @@ import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class ProfessionalManagementPage extends StatefulWidget {
   const ProfessionalManagementPage({super.key});
@@ -17,7 +18,7 @@ class ProfessionalManagementPage extends StatefulWidget {
 class _ProfessionalManagementPageState
     extends State<ProfessionalManagementPage> {
   final _professionalService = ProfessionalService(
-    baseUrl: 'http://localhost:8081/professional',
+    baseUrl: '${ApiConfig.baseUrl}/professional',
   );
 
   final _tokenStorage = TokenStorage();
@@ -171,7 +172,10 @@ class _ProfessionalManagementPageState
 
   Future<void> _deleteSelectedProfessionals() async {
     if (_selectedIds.isEmpty) {
-      AppMessage.info(context, 'Selecione um ou mais profissionais para excluir');
+      AppMessage.info(
+        context,
+        'Selecione um ou mais profissionais para excluir',
+      );
       return;
     }
 

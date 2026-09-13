@@ -1,5 +1,6 @@
 import 'package:app_front_mobile/services/public_product_service.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class CompanyProductsTab extends StatefulWidget {
   final String companyId;
@@ -12,7 +13,7 @@ class CompanyProductsTab extends StatefulWidget {
 
 class _CompanyProductsTabState extends State<CompanyProductsTab> {
   final _service = PublicProductService(
-    baseUrl: 'http://localhost:8081/public/company',
+    baseUrl: '${ApiConfig.baseUrl}/public/company',
   );
 
   bool _loading = true;

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../l10n/app_localizations.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback? onLoginTap;
@@ -38,7 +39,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   final _scrollController = ScrollController();
 
-  final _authService = AuthService(baseUrl: 'http://localhost:8081');
+  final _authService = AuthService(baseUrl: ApiConfig.baseUrl);
 
   StreamSubscription<AuthLoginResult>? _googleSuccessSubscription;
 

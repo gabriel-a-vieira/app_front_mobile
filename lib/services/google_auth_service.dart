@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app_front_mobile/services/auth_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class GoogleAuthService {
   GoogleAuthService._();
@@ -11,9 +12,7 @@ class GoogleAuthService {
 
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
-  final AuthService _authService = AuthService(
-    baseUrl: 'http://localhost:8081',
-  );
+  final AuthService _authService = AuthService(baseUrl: ApiConfig.baseUrl);
 
   final TokenStorage _tokenStorage = TokenStorage();
 

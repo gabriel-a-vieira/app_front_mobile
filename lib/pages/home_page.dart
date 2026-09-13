@@ -23,6 +23,7 @@ import 'package:app_front_mobile/pages/profile_page.dart';
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
 import '../locale_provider.dart';
+import 'package:app_front_mobile/config/api_config.dart';
 
 class LanguageOption {
   final Locale locale;
@@ -62,7 +63,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final _companyService = CompanyService(
-    baseUrl: 'http://localhost:8081/company',
+    baseUrl: '${ApiConfig.baseUrl}/company',
   );
   final _searchController = TextEditingController();
   final _tokenStorage = TokenStorage();
