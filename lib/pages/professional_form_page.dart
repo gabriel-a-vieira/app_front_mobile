@@ -4,6 +4,8 @@ import 'package:app_front_mobile/services/state_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
+import 'package:app_front_mobile/widgets/city_lookup_modal.dart';
+import 'package:app_front_mobile/widgets/state_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/config/api_config.dart';
@@ -44,6 +46,8 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
   final _numberCtrl = TextEditingController();
   final _neighborhoodCtrl = TextEditingController();
   final _complementCtrl = TextEditingController();
+  final _stateCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
 
   bool _loading = false;
   bool _loadingData = false;
@@ -54,7 +58,6 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
   CityOption? _selectedCity;
 
   List<StateOption> _states = [];
-  List<CityOption> _cities = [];
 
   String _selectedGender = 'MASCULINO';
   String _selectedStatus = 'ACTIVE';
@@ -81,6 +84,8 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     _numberCtrl.dispose();
     _neighborhoodCtrl.dispose();
     _complementCtrl.dispose();
+    _stateCtrl.dispose();
+    _cityCtrl.dispose();
 
     super.dispose();
   }
@@ -178,6 +183,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
 
     if (professionalState.isNotEmpty) {
       _selectedState = _findStateByAbbreviation(professionalState);
+      _stateCtrl.text = _selectedState?.label ?? '';
     }
   }
 
@@ -209,8 +215,8 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
 
     setState(() {
       _loadingCities = true;
-      _cities = [];
       _selectedCity = null;
+      _cityCtrl.clear();
     });
 
     try {
@@ -219,10 +225,10 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
       if (!mounted) return;
 
       setState(() {
-        _cities = cities;
         _selectedCity = selectedCityId != null && selectedCityId.isNotEmpty
             ? _findCityById(cities, selectedCityId)
             : null;
+        _cityCtrl.text = _selectedCity?.name ?? '';
         _loadingCities = false;
       });
     } catch (e) {
@@ -422,34 +428,77 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     );
   }
 
-  Widget _buildStateDropdown() {
-    return DropdownButtonFormField<StateOption>(
-      value: _selectedState,
+  Future<void> _selectState() async {
+    if (_loadingStates) {
+      return;
+    }
+
+    final selected = await StateLookupModal.show(
+      context: context,
+      states: _states,
+      selectedState: _selectedState,
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    final changedState =
+        _selectedState?.abbreviation.toUpperCase() !=
+        selected.abbreviation.toUpperCase();
+
+    setState(() {
+      _selectedState = selected;
+      _stateCtrl.text = selected.label;
+    });
+
+    if (changedState) {
+      await _loadCitiesByState(selected.abbreviation);
+    }
+  }
+
+  Future<void> _selectCity() async {
+    final state = _selectedState;
+
+    if (state == null) {
+      AppMessage.info(context, 'Selecione primeiro a UF.');
+
+      return;
+    }
+
+    final selected = await CityLookupModal.show(
+      context: context,
+      service: _cityService,
+      state: state,
+      selectedCity: _selectedCity,
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _selectedCity = selected;
+      _cityCtrl.text = selected.name;
+    });
+  }
+
+  Widget _buildStateField() {
+    return TextFormField(
+      controller: _stateCtrl,
+      readOnly: true,
+      onTap: _selectState,
       decoration: _inputDecoration(
         label: 'UF',
         hint: _loadingStates ? 'Carregando UFs...' : 'Selecione a UF',
+        suffixIcon: IconButton(
+          tooltip: 'Selecionar UF',
+          onPressed: _loadingStates ? null : _selectState,
+          icon: const Icon(Icons.search),
+        ),
       ),
-      items: _states.map((state) {
-        return DropdownMenuItem<StateOption>(
-          value: state,
-          child: Text(state.label),
-        );
-      }).toList(),
-      onChanged: _loadingStates
-          ? null
-          : (value) async {
-              if (value == null) return;
-
-              setState(() {
-                _selectedState = value;
-                _selectedCity = null;
-                _cities = [];
-              });
-
-              await _loadCitiesByState(value.abbreviation);
-            },
-      validator: (value) {
-        if (value == null || value.abbreviation.isEmpty) {
+      validator: (_) {
+        if (_selectedState == null || _selectedState!.abbreviation.isEmpty) {
           return 'UF e obrigatoria';
         }
 
@@ -458,9 +507,11 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     );
   }
 
-  Widget _buildCityDropdown() {
-    return DropdownButtonFormField<CityOption>(
-      value: _selectedCity,
+  Widget _buildCityField() {
+    return TextFormField(
+      controller: _cityCtrl,
+      readOnly: true,
+      onTap: _selectCity,
       decoration: _inputDecoration(
         label: 'Cidade',
         hint: _selectedState == null
@@ -468,22 +519,14 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
             : _loadingCities
             ? 'Carregando cidades...'
             : 'Selecione a cidade',
+        suffixIcon: IconButton(
+          tooltip: 'Selecionar cidade',
+          onPressed: _selectedState == null ? null : _selectCity,
+          icon: const Icon(Icons.search),
+        ),
       ),
-      items: _cities.map((city) {
-        return DropdownMenuItem<CityOption>(
-          value: city,
-          child: Text(city.name),
-        );
-      }).toList(),
-      onChanged: _selectedState == null || _loadingCities
-          ? null
-          : (value) {
-              setState(() {
-                _selectedCity = value;
-              });
-            },
-      validator: (value) {
-        if (value == null || value.id.isEmpty) {
+      validator: (_) {
+        if (_selectedCity == null || _selectedCity!.id.isEmpty) {
           return 'Cidade e obrigatoria';
         }
 
@@ -665,7 +708,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
                   hint: '(00) 00000-0000',
                   requiredField: true,
                   keyboardType: TextInputType.phone,
-                  inputFormatters: [_PhoneInputFormatter()],
+                  inputFormatters: [PhoneInputFormatter()],
                   customValidator: (value) {
                     final digits = onlyNumbers(value);
 
@@ -734,8 +777,8 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
                 _buildTextField(controller: _streetCtrl, label: 'Rua'),
                 _buildTextField(controller: _numberCtrl, label: 'Numero'),
                 _buildTextField(controller: _neighborhoodCtrl, label: 'Bairro'),
-                _buildStateDropdown(),
-                _buildCityDropdown(),
+                _buildStateField(),
+                _buildCityField(),
               ]),
               const SizedBox(height: 14),
               _buildTextField(
@@ -836,38 +879,3 @@ class _CpfInputFormatter extends TextInputFormatter {
   }
 }
 
-class _PhoneInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final digits = onlyNumbers(newValue.text);
-    final limited = digits.length > 11 ? digits.substring(0, 11) : digits;
-
-    final formatted = _format(limited);
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
-  }
-
-  String _format(String value) {
-    if (value.isEmpty) return value;
-
-    if (value.length <= 2) {
-      return '($value';
-    }
-
-    if (value.length <= 6) {
-      return '(${value.substring(0, 2)}) ${value.substring(2)}';
-    }
-
-    if (value.length <= 10) {
-      return '(${value.substring(0, 2)}) ${value.substring(2, 6)}-${value.substring(6)}';
-    }
-
-    return '(${value.substring(0, 2)}) ${value.substring(2, 7)}-${value.substring(7)}';
-  }
-}

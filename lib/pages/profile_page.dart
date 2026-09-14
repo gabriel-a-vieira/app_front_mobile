@@ -660,6 +660,7 @@ class _ProfilePageState extends State<ProfilePage> {
         TextFormField(
           controller: _phoneController,
           keyboardType: TextInputType.phone,
+          inputFormatters: [PhoneInputFormatter()],
           decoration: _decoration('Telefone', Icons.phone_outlined),
           validator: (value) {
             final numbers = onlyNumbers(value ?? '');
