@@ -6,6 +6,7 @@ import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class ServiceOfferingFormPage extends StatefulWidget {
   final String? serviceId;
@@ -262,7 +263,7 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
       filled: true,
 
       fillColor: isDark
-          ? const Color(0xFF1C212B)
+          ? AppColors.darkInputFill
           : colorScheme.surfaceContainerHighest,
 
       labelStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.8)),
@@ -432,7 +433,7 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
       padding: const EdgeInsets.all(18),
 
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+        color: isDark ? AppColors.darkSurface : colorScheme.surface,
 
         borderRadius: BorderRadius.circular(12),
 

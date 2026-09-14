@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class ClientFormPage extends StatefulWidget {
   final String? clientId;
@@ -419,7 +420,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: isDark
-          ? const Color(0xFF1C212B)
+          ? AppColors.darkInputFill
           : colorScheme.surfaceContainerHighest,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -624,7 +625,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+        color: isDark ? AppColors.darkSurface : colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),

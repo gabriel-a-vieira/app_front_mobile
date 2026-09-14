@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 /// One column of a [SingleSelectLookupDialog]'s table: a header label and
 /// how to render that column for a given row.
@@ -134,7 +135,7 @@ class _SingleSelectLookupDialogState<T>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AlertDialog(
-      backgroundColor: isDark ? const Color(0xFF171A22) : null,
+      backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
       title: Text(widget.title),
       content: SizedBox(
         width: 760,
@@ -209,7 +210,7 @@ class _SingleSelectLookupDialogState<T>
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+        color: isDark ? AppColors.darkSurface : colorScheme.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),

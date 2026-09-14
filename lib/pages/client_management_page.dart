@@ -10,6 +10,7 @@ import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
 import 'package:app_front_mobile/widgets/common/async_list_section.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class ClientManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -240,7 +241,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
         final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
 
         return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF171A22) : null,
+          backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
           title: const Text('Excluir clientes'),
           content: Text(
             _selectedIds.length == 1
@@ -308,7 +309,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return AlertDialog(
-              backgroundColor: isDark ? const Color(0xFF171A22) : null,
+              backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
               title: const Text('Pesquisa avancada'),
               content: SizedBox(
                 width: 560,
@@ -538,7 +539,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       hintText: hint,
       filled: true,
       fillColor: isDark
-          ? const Color(0xFF1C212B)
+          ? AppColors.darkInputFill
           : colorScheme.surfaceContainerHighest,
       prefixIcon: Icon(
         Icons.search,
@@ -697,7 +698,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+        color: isDark ? AppColors.darkSurface : colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),
@@ -730,7 +731,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF171A22)
+            ? AppColors.darkSurfaceElevated
             : colorScheme.surfaceContainerHighest,
         border: Border(
           bottom: BorderSide(color: colorScheme.outline.withOpacity(0.18)),

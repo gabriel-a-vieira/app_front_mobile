@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
 import 'package:app_front_mobile/widgets/common/async_list_section.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class ServiceOfferingManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -239,7 +240,7 @@ class _ServiceOfferingManagementPageState
         final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
 
         return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF171A22) : null,
+          backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
 
           title: const Text('Excluir servicos'),
 
@@ -335,7 +336,7 @@ class _ServiceOfferingManagementPageState
         return StatefulBuilder(
           builder: (context, setModalState) {
             return AlertDialog(
-              backgroundColor: isDark ? const Color(0xFF171A22) : null,
+              backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
 
               title: const Text('Pesquisa avancada'),
 
@@ -786,7 +787,7 @@ class _ServiceOfferingManagementPageState
         filled: true,
 
         fillColor: isDark
-            ? const Color(0xFF1C212B)
+            ? AppColors.darkInputFill
             : colorScheme.surfaceContainerHighest,
 
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -818,7 +819,7 @@ class _ServiceOfferingManagementPageState
         padding: const EdgeInsets.symmetric(vertical: 64),
 
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+          color: isDark ? AppColors.darkSurface : colorScheme.surface,
 
           borderRadius: BorderRadius.circular(12),
 
@@ -851,7 +852,7 @@ class _ServiceOfferingManagementPageState
       width: double.infinity,
 
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+        color: isDark ? AppColors.darkSurface : colorScheme.surface,
 
         borderRadius: BorderRadius.circular(12),
 
@@ -883,7 +884,7 @@ class _ServiceOfferingManagementPageState
       padding: const EdgeInsets.symmetric(horizontal: 14),
 
       color: isDark
-          ? const Color(0xFF171A22)
+          ? AppColors.darkSurfaceElevated
           : colorScheme.surfaceContainerHighest,
 
       child: Row(

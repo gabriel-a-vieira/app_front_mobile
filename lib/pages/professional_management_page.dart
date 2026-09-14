@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
 import 'package:app_front_mobile/widgets/common/async_list_section.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class ProfessionalManagementPage extends StatefulWidget {
   const ProfessionalManagementPage({super.key});
@@ -189,7 +190,7 @@ class _ProfessionalManagementPageState
         final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
 
         return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF171A22) : null,
+          backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
           title: const Text('Excluir profissionais'),
           content: Text(
             _selectedIds.length == 1
@@ -252,7 +253,7 @@ class _ProfessionalManagementPageState
         return StatefulBuilder(
           builder: (context, setModalState) {
             return AlertDialog(
-              backgroundColor: isDark ? const Color(0xFF171A22) : null,
+              backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
               title: const Text('Pesquisa avancada'),
               content: SizedBox(
                 width: 520,
@@ -382,7 +383,7 @@ class _ProfessionalManagementPageState
       hintText: hint,
       filled: true,
       fillColor: isDark
-          ? const Color(0xFF1C212B)
+          ? AppColors.darkInputFill
           : colorScheme.surfaceContainerHighest,
       hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.45)),
       prefixIcon: Icon(
@@ -542,7 +543,7 @@ class _ProfessionalManagementPageState
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+        color: isDark ? AppColors.darkSurface : colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),
@@ -577,7 +578,7 @@ class _ProfessionalManagementPageState
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF171A22)
+            ? AppColors.darkSurfaceElevated
             : colorScheme.surfaceContainerHighest,
         border: Border(
           bottom: BorderSide(color: colorScheme.outline.withOpacity(0.18)),
