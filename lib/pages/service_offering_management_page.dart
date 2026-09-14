@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
+import 'package:app_front_mobile/widgets/common/async_list_section.dart';
 
 class ServiceOfferingManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -1024,68 +1025,15 @@ class _ServiceOfferingManagementPageState
   }
 
   Widget _buildContent() {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    if (_loading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 64),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Column(
-          children: [
-            Icon(Icons.error_outline, color: colorScheme.error, size: 42),
-
-            const SizedBox(height: 12),
-
-            Text(
-              'Erro ao buscar servicos',
-
-              style: TextStyle(
-                color: colorScheme.error,
-
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            OutlinedButton(
-              onPressed: _loadServices,
-
-              child: const Text('Tentar novamente'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        _buildGrid(),
-
-        if (!_last) ...[
-          const SizedBox(height: 20),
-
-          OutlinedButton(
-            onPressed: _loadingMore ? null : _loadMoreServices,
-
-            child: _loadingMore
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Carregar mais'),
-          ),
-        ],
-      ],
+    return AsyncListSection(
+      loading: _loading,
+      hasError: _error != null,
+      errorLabel: 'Erro ao buscar servicos',
+      onRetry: _loadServices,
+      content: _buildGrid(),
+      hasMore: !_last,
+      loadingMore: _loadingMore,
+      onLoadMore: _loadMoreServices,
     );
   }
 

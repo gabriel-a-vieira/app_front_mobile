@@ -9,6 +9,7 @@ import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
+import 'package:app_front_mobile/widgets/common/async_list_section.dart';
 
 class ClientManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -677,63 +678,15 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
   }
 
   Widget _buildContent() {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    if (_loading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 64),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 64),
-          child: Column(
-            children: [
-              Icon(Icons.error_outline, color: colorScheme.error, size: 42),
-              const SizedBox(height: 12),
-              Text(
-                'Erro ao buscar clientes',
-                style: TextStyle(
-                  color: colorScheme.error,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: _loadClients,
-                child: const Text('Tentar novamente'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        _buildClientsGrid(),
-        if (!_last) ...[
-          const SizedBox(height: 20),
-          Center(
-            child: OutlinedButton(
-              onPressed: _loadingMore ? null : _loadMoreClients,
-              child: _loadingMore
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Carregar mais'),
-            ),
-          ),
-        ],
-      ],
+    return AsyncListSection(
+      loading: _loading,
+      hasError: _error != null,
+      errorLabel: 'Erro ao buscar clientes',
+      onRetry: _loadClients,
+      content: _buildClientsGrid(),
+      hasMore: !_last,
+      loadingMore: _loadingMore,
+      onLoadMore: _loadMoreClients,
     );
   }
 
