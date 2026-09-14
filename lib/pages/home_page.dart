@@ -71,6 +71,7 @@ class _HomePageState extends State<HomePage> {
   String? _loggedUserFirstName;
   String? _selectedCompanyType;
   String? _loggedUserRole;
+  bool _favoritesOnly = false;
 
   List<CompanyTypeOption> _companyTypes = [];
   List<CompanySummary> _companies = [];
@@ -121,12 +122,15 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final types = await _companyService.findCompanyTypes();
+      final token = await _tokenStorage.getAccessToken();
 
       final companiesPage = await _companyService.findCompanies(
         page: 0,
         size: _size,
         type: _selectedCompanyType,
         search: _searchController.text,
+        favoritesOnly: _favoritesOnly,
+        token: token,
       );
 
       if (!mounted) return;
@@ -157,11 +161,15 @@ class _HomePageState extends State<HomePage> {
     });
 
     try {
+      final token = await _tokenStorage.getAccessToken();
+
       final companiesPage = await _companyService.findCompanies(
         page: 0,
         size: _size,
         type: _selectedCompanyType,
         search: _searchController.text,
+        favoritesOnly: _favoritesOnly,
+        token: token,
       );
 
       if (!mounted) return;
@@ -190,11 +198,15 @@ class _HomePageState extends State<HomePage> {
     });
 
     try {
+      final token = await _tokenStorage.getAccessToken();
+
       final companiesPage = await _companyService.findCompanies(
         page: _page + 1,
         size: _size,
         type: _selectedCompanyType,
         search: _searchController.text,
+        favoritesOnly: _favoritesOnly,
+        token: token,
       );
 
       if (!mounted) return;
@@ -213,6 +225,14 @@ class _HomePageState extends State<HomePage> {
         _loadingMore = false;
       });
     }
+  }
+
+  void _toggleFavoritesOnly() {
+    setState(() {
+      _favoritesOnly = !_favoritesOnly;
+    });
+
+    _reloadCompanies();
   }
 
   String _text(BuildContext context, String pt, String en) {
@@ -307,7 +327,10 @@ class _HomePageState extends State<HomePage> {
       _loggedUserFirstName = null;
 
       _loggedUserRole = null;
+      _favoritesOnly = false;
     });
+
+    await _reloadCompanies();
   }
 
   Future<void> _openCompanyCreatePage() async {
@@ -440,6 +463,8 @@ class _HomePageState extends State<HomePage> {
               });
 
               Navigator.of(dialogContext).pop();
+
+              _reloadCompanies();
             },
             onRegisterTap: () {
               Navigator.of(dialogContext).pop();
@@ -485,6 +510,8 @@ class _HomePageState extends State<HomePage> {
               });
 
               Navigator.of(dialogContext).pop();
+
+              _reloadCompanies();
             },
           ),
         );
@@ -943,6 +970,18 @@ class _HomePageState extends State<HomePage> {
             _reloadCompanies();
           },
         ),
+        if (_isLoggedIn)
+          ChoiceChip(
+            selected: _favoritesOnly,
+            avatar: Icon(
+              _favoritesOnly ? Icons.favorite : Icons.favorite_border,
+              size: 18,
+              color: _favoritesOnly ? const Color(0xFFE34B4B) : null,
+            ),
+            label: Text(_text(context, 'Favoritos', 'Favorites')),
+            selectedColor: const Color(0xFFE34B4B).withOpacity(0.18),
+            onSelected: (_) => _toggleFavoritesOnly(),
+          ),
         ..._companyTypes.map((type) {
           final selected = _selectedCompanyType == type.code;
 
@@ -1211,17 +1250,27 @@ class _CompanyCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 54,
+                  height: 54,
                   color: colorScheme.primary.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.storefront,
-                  color: colorScheme.primary,
-                  size: 28,
+                  child: company.imageUrl.trim().isEmpty
+                      ? Icon(
+                          Icons.storefront,
+                          color: colorScheme.primary,
+                          size: 28,
+                        )
+                      : Image.network(
+                          company.imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.storefront,
+                            color: colorScheme.primary,
+                            size: 28,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(width: 14),

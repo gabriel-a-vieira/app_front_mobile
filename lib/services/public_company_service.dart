@@ -48,8 +48,16 @@ class PublicCompanyService {
         .toList();
   }
 
-  Future<PublicCompanyDetail> findDetail({required String companyId}) async {
-    final response = await _dio.get('$baseUrl/$companyId/details');
+  Future<PublicCompanyDetail> findDetail({
+    required String companyId,
+    String? token,
+  }) async {
+    final response = await _dio.get(
+      '$baseUrl/$companyId/details',
+      options: token != null && token.isNotEmpty
+          ? Options(headers: {'Authorization': 'Bearer $token'})
+          : null,
+    );
 
     return PublicCompanyDetail.fromJson(
       Map<String, dynamic>.from(response.data),
@@ -134,6 +142,8 @@ class PublicCompanyDetail {
   final String websiteUrl;
   final String tiktokUrl;
 
+  final bool favorited;
+
   const PublicCompanyDetail({
     required this.id,
     required this.legalName,
@@ -147,6 +157,7 @@ class PublicCompanyDetail {
     required this.facebookUrl,
     required this.websiteUrl,
     required this.tiktokUrl,
+    this.favorited = false,
   });
 
   factory PublicCompanyDetail.fromJson(Map<String, dynamic> json) {
@@ -191,6 +202,7 @@ class PublicCompanyDetail {
       facebookUrl: json['facebookUrl']?.toString() ?? '',
       websiteUrl: json['websiteUrl']?.toString() ?? '',
       tiktokUrl: json['tiktokUrl']?.toString() ?? '',
+      favorited: json['favorited'] == true,
     );
   }
 }

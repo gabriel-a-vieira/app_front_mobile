@@ -78,6 +78,42 @@ class CepInputFormatter extends TextInputFormatter {
   }
 }
 
+class PhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = onlyNumbers(newValue.text);
+    final limited = digits.length > 11 ? digits.substring(0, 11) : digits;
+
+    final formatted = _formatPhone(limited);
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _formatPhone(String value) {
+    if (value.isEmpty) return value;
+
+    if (value.length <= 2) {
+      return '($value';
+    }
+
+    if (value.length <= 6) {
+      return '(${value.substring(0, 2)}) ${value.substring(2)}';
+    }
+
+    if (value.length <= 10) {
+      return '(${value.substring(0, 2)}) ${value.substring(2, 6)}-${value.substring(6)}';
+    }
+
+    return '(${value.substring(0, 2)}) ${value.substring(2, 7)}-${value.substring(7)}';
+  }
+}
+
 String onlyAlphanumeric(String value) {
   return value.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
 }
