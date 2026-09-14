@@ -24,6 +24,8 @@ class CompanyService {
     int size = 8,
     String? type,
     String? search,
+    bool favoritesOnly = false,
+    String? token,
   }) async {
     final response = await _dio.get(
       '$baseUrl/companies/home-page',
@@ -32,7 +34,9 @@ class CompanyService {
         'size': size,
         if (type != null && type.isNotEmpty) 'type': type,
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (favoritesOnly) 'favoritesOnly': true,
       },
+      options: token != null && token.isNotEmpty ? _authOptions(token) : null,
     );
 
     if (response.data is! Map) {
@@ -40,6 +44,21 @@ class CompanyService {
     }
 
     return CompanyPage.fromJson(response.data);
+  }
+
+  Future<bool> toggleFavorite({required String token, required String id}) async {
+    final response = await _dio.put(
+      '$baseUrl/$id/favorite',
+      options: _authOptions(token),
+    );
+
+    final data = response.data;
+
+    if (data is Map && data['favorited'] is bool) {
+      return data['favorited'] as bool;
+    }
+
+    return false;
   }
 
   /*
@@ -197,6 +216,9 @@ class CompanySummary {
   final String typeLabel;
   final String status;
 
+  final String imageUrl;
+  final bool favorited;
+
   CompanySummary({
     required this.id,
     required this.legalName,
@@ -204,6 +226,8 @@ class CompanySummary {
     required this.type,
     required this.typeLabel,
     required this.status,
+    this.imageUrl = '',
+    this.favorited = false,
   });
 
   factory CompanySummary.fromJson(Map json) {
@@ -214,6 +238,8 @@ class CompanySummary {
       type: json['type']?.toString() ?? '',
       typeLabel: json['typeLabel']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
+      imageUrl: json['imageUrl']?.toString() ?? '',
+      favorited: json['favorited'] == true,
     );
   }
 }

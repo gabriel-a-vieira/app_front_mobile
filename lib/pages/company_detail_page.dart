@@ -1,6 +1,7 @@
 import 'package:app_front_mobile/services/company_service.dart';
 import 'package:app_front_mobile/services/public_company_service.dart';
 import 'package:app_front_mobile/services/company_review_service.dart';
+import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/auth_gate.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/company_services_tab.dart';
@@ -30,9 +31,18 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
     baseUrl: '${ApiConfig.baseUrl}/public/company',
   );
 
+  final _companyService = CompanyService(
+    baseUrl: '${ApiConfig.baseUrl}/company',
+  );
+
+  final _tokenStorage = TokenStorage();
+
   PublicCompanyDetail? _companyDetail;
 
   bool _loadingCompanyDetail = true;
+
+  bool _favorited = false;
+  bool _togglingFavorite = false;
 
   String _selectedTab = 'services';
 
@@ -54,6 +64,8 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
   @override
   void initState() {
     super.initState();
+
+    _favorited = widget.company.favorited;
 
     _loadCompanyDetail();
     _loadReviewSummary();
@@ -82,14 +94,18 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
 
   Future<void> _loadCompanyDetail() async {
     try {
+      final token = await _tokenStorage.getAccessToken();
+
       final detail = await _publicCompanyService.findDetail(
         companyId: widget.company.id,
+        token: token,
       );
 
       if (!mounted) return;
 
       setState(() {
         _companyDetail = detail;
+        _favorited = detail.favorited;
         _loadingCompanyDetail = false;
       });
     } catch (_) {
@@ -98,6 +114,49 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
       setState(() {
         _loadingCompanyDetail = false;
       });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final logged = await AuthGate.requireLogin(
+      context,
+      reason: 'Você precisa estar logado para favoritar um estabelecimento.',
+    );
+
+    if (!logged || !mounted) {
+      return;
+    }
+
+    if (_togglingFavorite) {
+      return;
+    }
+
+    setState(() {
+      _togglingFavorite = true;
+    });
+
+    try {
+      final token = await _tokenStorage.getAccessToken();
+
+      final favorited = await _companyService.toggleFavorite(
+        token: token ?? '',
+        id: widget.company.id,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _favorited = favorited;
+        _togglingFavorite = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _togglingFavorite = false;
+      });
+
+      AppMessage.apiError(context, e);
     }
   }
 
@@ -476,15 +535,27 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: colorScheme.primary.withOpacity(0.12),
-            border: Border.all(color: colorScheme.primary.withOpacity(0.35)),
+        ClipOval(
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colorScheme.primary.withOpacity(0.12),
+              border: Border.all(color: colorScheme.primary.withOpacity(0.35)),
+            ),
+            child: (_companyDetail?.imageUrl ?? '').trim().isEmpty
+                ? Icon(Icons.storefront, color: colorScheme.primary, size: 28)
+                : Image.network(
+                    _companyDetail!.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                      Icons.storefront,
+                      color: colorScheme.primary,
+                      size: 28,
+                    ),
+                  ),
           ),
-          child: Icon(Icons.storefront, color: colorScheme.primary, size: 28),
         ),
 
         const SizedBox(width: 14),
@@ -513,7 +584,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
         const SizedBox(width: 16),
 
         InkWell(
-          onTap: () {},
+          onTap: _toggleFavorite,
           borderRadius: BorderRadius.circular(999),
           child: Container(
             width: 42,
@@ -524,7 +595,10 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
                   : colorScheme.surfaceContainerHighest,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.favorite_border, color: Color(0xFFE34B4B)),
+            child: Icon(
+              _favorited ? Icons.favorite : Icons.favorite_border,
+              color: const Color(0xFFE34B4B),
+            ),
           ),
         ),
 
@@ -625,9 +699,12 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
   Widget _buildMainImage(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final imageUrl = (_companyDetail?.imageUrl ?? '').trim();
+
     return Container(
       width: double.infinity,
       height: 410,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0F1116) : const Color(0xFFEDEFF4),
         borderRadius: BorderRadius.circular(12),
@@ -635,38 +712,51 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
           color: Theme.of(context).colorScheme.outline.withOpacity(0.18),
         ),
       ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.image_outlined,
-              size: 72,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+      child: imageUrl.isEmpty
+          ? _buildMainImagePlaceholder(context)
+          : Image.network(
+              imageUrl,
+              width: double.infinity,
+              height: 410,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  _buildMainImagePlaceholder(context),
             ),
-            const SizedBox(height: 14),
-            Text(
-              'Imagem do estabelecimento',
-              style: TextStyle(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withOpacity(0.72),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+    );
+  }
+
+  Widget _buildMainImagePlaceholder(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_outlined,
+            size: 72,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.45),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Imagem do estabelecimento',
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withOpacity(0.72),
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 6),
-            Text(
-              _displayName,
-              style: TextStyle(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withOpacity(0.52),
-                fontSize: 14,
-              ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _displayName,
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withOpacity(0.52),
+              fontSize: 14,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
