@@ -301,6 +301,84 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Usuário cadastrado com sucesso.'**
   String get registerSuccess;
+
+  /// No description provided for @logout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair'**
+  String get logout;
+
+  /// No description provided for @loginRequiredForAppointments.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voce precisa estar logado para visualizar seus agendamentos.'**
+  String get loginRequiredForAppointments;
+
+  /// No description provided for @findABusinessHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encontre um estabelecimento'**
+  String get findABusinessHint;
+
+  /// No description provided for @allCompanyTypes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos'**
+  String get allCompanyTypes;
+
+  /// No description provided for @errorLoadingBusinesses.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao buscar estabelecimentos.'**
+  String get errorLoadingBusinesses;
+
+  /// No description provided for @noBusinessesFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum estabelecimento encontrado'**
+  String get noBusinessesFound;
+
+  /// No description provided for @tryChangingFilter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tente alterar o filtro ou buscar outro nome.'**
+  String get tryChangingFilter;
+
+  /// No description provided for @loadMore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carregar mais'**
+  String get loadMore;
+
+  /// No description provided for @navHome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inicio'**
+  String get navHome;
+
+  /// No description provided for @navSearch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar'**
+  String get navSearch;
+
+  /// No description provided for @navMyAppointments.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meus Agendamentos'**
+  String get navMyAppointments;
+
+  /// No description provided for @welcomeMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seja bem vindo(a)'**
+  String get welcomeMessage;
+
+  /// No description provided for @nearbyBusinesses.
+  ///
+  /// In pt, this message translates to:
+  /// **'Empresas proximas'**
+  String get nearbyBusinesses;
 }
 
 class _AppLocalizationsDelegate
