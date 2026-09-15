@@ -19,6 +19,7 @@ import 'package:app_front_mobile/pages/company_management_page.dart';
 import 'package:app_front_mobile/pages/product_management_page.dart';
 import 'package:app_front_mobile/services/google_auth_service.dart';
 import 'package:app_front_mobile/pages/profile_page.dart';
+import 'package:app_front_mobile/services/profile_service.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -65,6 +66,7 @@ class _HomePageState extends State<HomePage> {
   final _companyService = CompanyService(
     baseUrl: '${ApiConfig.baseUrl}/company',
   );
+  final _profileService = ProfileService(baseUrl: ApiConfig.baseUrl);
   final _searchController = TextEditingController();
   final _tokenStorage = TokenStorage();
 
@@ -103,7 +105,29 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _restoreSession();
     _loadInitialData();
+  }
+
+  Future<void> _restoreSession() async {
+    final authenticated = await AuthGate.isAuthenticated();
+    if (!authenticated) return;
+
+    final token = await _tokenStorage.getAccessToken();
+    if (token == null) return;
+
+    try {
+      final profile = await _profileService.findMyProfile(token: token);
+
+      if (!mounted) return;
+
+      setState(() {
+        _loggedUserFirstName = profile.firstName;
+        _loggedUserRole = profile.role;
+      });
+    } catch (_) {
+      await _tokenStorage.clearAccessToken();
+    }
   }
 
   @override
