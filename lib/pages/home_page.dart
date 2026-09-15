@@ -19,6 +19,8 @@ import 'package:app_front_mobile/pages/company_management_page.dart';
 import 'package:app_front_mobile/pages/product_management_page.dart';
 import 'package:app_front_mobile/services/google_auth_service.dart';
 import 'package:app_front_mobile/pages/profile_page.dart';
+import 'package:app_front_mobile/services/profile_service.dart';
+import 'package:app_front_mobile/utils/auth_session.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -67,6 +69,7 @@ class _HomePageState extends State<HomePage> {
   final _companyService = CompanyService(
     baseUrl: '${ApiConfig.baseUrl}/company',
   );
+  final _profileService = ProfileService(baseUrl: ApiConfig.baseUrl);
   final _searchController = TextEditingController();
   final _tokenStorage = TokenStorage();
 
@@ -105,13 +108,69 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    AuthSession.sessionChanged.addListener(_onSessionChanged);
+    _syncSessionState(reloadCompaniesOnChange: false);
     _loadInitialData();
   }
 
   @override
   void dispose() {
+    AuthSession.sessionChanged.removeListener(_onSessionChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Fires on any login or logout anywhere in the app - the header's own
+  // "Entrar" modal, a login prompted by AuthGate.requireLogin from a
+  // booking/review/etc. flow, or ApiClient invalidating the token after a
+  // 401. Keeps this header correct without every login entry point having
+  // to know it needs to update it directly.
+  void _onSessionChanged() {
+    _syncSessionState(reloadCompaniesOnChange: true);
+  }
+
+  Future<void> _syncSessionState({required bool reloadCompaniesOnChange}) async {
+    final authenticated = await AuthGate.isAuthenticated();
+
+    if (!authenticated) {
+      if (!mounted || !_isLoggedIn) return;
+
+      setState(() {
+        _loggedUserFirstName = null;
+        _loggedUserRole = null;
+        _favoritesOnly = false;
+      });
+
+      if (reloadCompaniesOnChange) {
+        await _reloadCompanies();
+      }
+
+      return;
+    }
+
+    final token = await _tokenStorage.getAccessToken();
+    if (token == null) return;
+
+    try {
+      final profile = await _profileService.findMyProfile(token: token);
+
+      if (!mounted) return;
+
+      final changed =
+          _loggedUserFirstName != profile.firstName ||
+          _loggedUserRole != profile.role;
+
+      setState(() {
+        _loggedUserFirstName = profile.firstName;
+        _loggedUserRole = profile.role;
+      });
+
+      if (changed && reloadCompaniesOnChange) {
+        await _reloadCompanies();
+      }
+    } catch (_) {
+      await _tokenStorage.clearAccessToken();
+    }
   }
 
   Future<void> _loadInitialData() async {
@@ -309,20 +368,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _logout() async {
-    await _tokenStorage.clearAccessToken();
-
+    await AuthSession.invalidate();
     await GoogleAuthService.instance.signOut();
-
-    if (!mounted) return;
-
-    setState(() {
-      _loggedUserFirstName = null;
-
-      _loggedUserRole = null;
-      _favoritesOnly = false;
-    });
-
-    await _reloadCompanies();
   }
 
   Future<void> _openCompanyCreatePage() async {
@@ -445,14 +492,10 @@ class _HomePageState extends State<HomePage> {
           ),
           child: LoginPage(
             onLoginSuccess: (result) {
-              setState(() {
-                _loggedUserFirstName = result.firstName;
-                _loggedUserRole = result.role;
-              });
-
+              // AuthSession.sessionChanged (fired by LoginPage._submit via
+              // AuthSession.login) drives _onSessionChanged, which
+              // repopulates the header and reloads companies.
               Navigator.of(dialogContext).pop();
-
-              _reloadCompanies();
             },
             onRegisterTap: () {
               Navigator.of(dialogContext).pop();
@@ -491,15 +534,10 @@ class _HomePageState extends State<HomePage> {
             },
 
             onExternalAuthSuccess: (result) {
-              setState(() {
-                _loggedUserFirstName = result.firstName;
-
-                _loggedUserRole = result.role;
-              });
-
+              // AuthSession.sessionChanged (fired by GoogleAuthService via
+              // AuthSession.login) drives _onSessionChanged, which
+              // repopulates the header and reloads companies.
               Navigator.of(dialogContext).pop();
-
-              _reloadCompanies();
             },
           ),
         );
