@@ -3,13 +3,13 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../l10n/app_localizations.dart';
 import '../services/auth_service.dart';
-import '../storage/token_storage.dart';
 
 import 'dart:async';
 
 import 'package:app_front_mobile/services/google_auth_service.dart';
 import 'package:app_front_mobile/widgets/google_auth_button.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
+import 'package:app_front_mobile/utils/auth_session.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
 
@@ -32,7 +32,6 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscure = true;
 
   final _authService = AuthService(baseUrl: ApiConfig.baseUrl);
-  final _tokenStorage = TokenStorage();
 
   StreamSubscription<AuthLoginResult>? _googleSuccessSubscription;
   StreamSubscription<Object>? _googleErrorSubscription;
@@ -104,7 +103,7 @@ class _LoginPageState extends State<LoginPage> {
         password: _passCtrl.text,
       );
 
-      await _tokenStorage.saveAccessToken(result.token);
+      await AuthSession.login(result.token);
 
       if (!mounted) return;
 

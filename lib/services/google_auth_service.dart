@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:app_front_mobile/services/auth_service.dart';
-import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/utils/auth_session.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 
@@ -13,8 +13,6 @@ class GoogleAuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
   final AuthService _authService = AuthService(baseUrl: ApiConfig.baseUrl);
-
-  final TokenStorage _tokenStorage = TokenStorage();
 
   final StreamController<AuthLoginResult> _successController =
       StreamController<AuthLoginResult>.broadcast();
@@ -93,7 +91,7 @@ class GoogleAuthService {
        * Depois disso guardamos somente
        * o JWT gerado pelo Softix.
        */
-      await _tokenStorage.saveAccessToken(result.token);
+      await AuthSession.login(result.token);
 
       _successController.add(result);
     } catch (e) {
