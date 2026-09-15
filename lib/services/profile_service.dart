@@ -67,6 +67,16 @@ class MyProfile {
   final bool googleLinked;
   final bool personalDataCompleted;
 
+  String get firstName {
+    final trimmedName = name.trim();
+
+    if (trimmedName.isEmpty) {
+      return '';
+    }
+
+    return trimmedName.split(' ').first;
+  }
+
   const MyProfile({
     required this.userId,
     required this.name,
