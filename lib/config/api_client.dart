@@ -1,5 +1,6 @@
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/utils/auth_session.dart';
 import 'package:dio/dio.dart';
 
 /// Shared, authenticated [Dio] client.
@@ -24,6 +25,13 @@ class ApiClient {
           }
 
           handler.next(options);
+        },
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            await AuthSession.invalidate();
+          }
+
+          handler.next(error);
         },
       ),
     );

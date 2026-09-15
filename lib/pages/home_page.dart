@@ -19,6 +19,8 @@ import 'package:app_front_mobile/pages/company_management_page.dart';
 import 'package:app_front_mobile/pages/product_management_page.dart';
 import 'package:app_front_mobile/services/google_auth_service.dart';
 import 'package:app_front_mobile/pages/profile_page.dart';
+import 'package:app_front_mobile/services/profile_service.dart';
+import 'package:app_front_mobile/utils/auth_session.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -67,6 +69,7 @@ class _HomePageState extends State<HomePage> {
   final _companyService = CompanyService(
     baseUrl: '${ApiConfig.baseUrl}/company',
   );
+  final _profileService = ProfileService(baseUrl: ApiConfig.baseUrl);
   final _searchController = TextEditingController();
   final _tokenStorage = TokenStorage();
 
@@ -105,13 +108,52 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    AuthSession.invalidationTick.addListener(_onSessionInvalidated);
+    _restoreSession();
     _loadInitialData();
   }
 
   @override
   void dispose() {
+    AuthSession.invalidationTick.removeListener(_onSessionInvalidated);
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _restoreSession() async {
+    final authenticated = await AuthGate.isAuthenticated();
+    if (!authenticated) return;
+
+    final token = await _tokenStorage.getAccessToken();
+    if (token == null) return;
+
+    try {
+      final profile = await _profileService.findMyProfile(token: token);
+
+      if (!mounted) return;
+
+      setState(() {
+        _loggedUserFirstName = profile.firstName;
+        _loggedUserRole = profile.role;
+      });
+    } catch (_) {
+      await _tokenStorage.clearAccessToken();
+    }
+  }
+
+  // Fires whenever ApiClient sees a 401 from any request (token expired,
+  // or invalidated by a backend/DB reset) - keeps the header in sync even
+  // when the failing request happened on a screen other than this one.
+  void _onSessionInvalidated() {
+    if (!mounted || !_isLoggedIn) return;
+
+    setState(() {
+      _loggedUserFirstName = null;
+      _loggedUserRole = null;
+      _favoritesOnly = false;
+    });
+
+    _reloadCompanies();
   }
 
   Future<void> _loadInitialData() async {
