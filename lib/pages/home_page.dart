@@ -108,21 +108,45 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    AuthSession.invalidationTick.addListener(_onSessionInvalidated);
-    _restoreSession();
+    AuthSession.sessionChanged.addListener(_onSessionChanged);
+    _syncSessionState(reloadCompaniesOnChange: false);
     _loadInitialData();
   }
 
   @override
   void dispose() {
-    AuthSession.invalidationTick.removeListener(_onSessionInvalidated);
+    AuthSession.sessionChanged.removeListener(_onSessionChanged);
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _restoreSession() async {
+  // Fires on any login or logout anywhere in the app - the header's own
+  // "Entrar" modal, a login prompted by AuthGate.requireLogin from a
+  // booking/review/etc. flow, or ApiClient invalidating the token after a
+  // 401. Keeps this header correct without every login entry point having
+  // to know it needs to update it directly.
+  void _onSessionChanged() {
+    _syncSessionState(reloadCompaniesOnChange: true);
+  }
+
+  Future<void> _syncSessionState({required bool reloadCompaniesOnChange}) async {
     final authenticated = await AuthGate.isAuthenticated();
-    if (!authenticated) return;
+
+    if (!authenticated) {
+      if (!mounted || !_isLoggedIn) return;
+
+      setState(() {
+        _loggedUserFirstName = null;
+        _loggedUserRole = null;
+        _favoritesOnly = false;
+      });
+
+      if (reloadCompaniesOnChange) {
+        await _reloadCompanies();
+      }
+
+      return;
+    }
 
     final token = await _tokenStorage.getAccessToken();
     if (token == null) return;
@@ -132,28 +156,21 @@ class _HomePageState extends State<HomePage> {
 
       if (!mounted) return;
 
+      final changed =
+          _loggedUserFirstName != profile.firstName ||
+          _loggedUserRole != profile.role;
+
       setState(() {
         _loggedUserFirstName = profile.firstName;
         _loggedUserRole = profile.role;
       });
+
+      if (changed && reloadCompaniesOnChange) {
+        await _reloadCompanies();
+      }
     } catch (_) {
       await _tokenStorage.clearAccessToken();
     }
-  }
-
-  // Fires whenever ApiClient sees a 401 from any request (token expired,
-  // or invalidated by a backend/DB reset) - keeps the header in sync even
-  // when the failing request happened on a screen other than this one.
-  void _onSessionInvalidated() {
-    if (!mounted || !_isLoggedIn) return;
-
-    setState(() {
-      _loggedUserFirstName = null;
-      _loggedUserRole = null;
-      _favoritesOnly = false;
-    });
-
-    _reloadCompanies();
   }
 
   Future<void> _loadInitialData() async {
@@ -351,20 +368,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _logout() async {
-    await _tokenStorage.clearAccessToken();
-
+    await AuthSession.invalidate();
     await GoogleAuthService.instance.signOut();
-
-    if (!mounted) return;
-
-    setState(() {
-      _loggedUserFirstName = null;
-
-      _loggedUserRole = null;
-      _favoritesOnly = false;
-    });
-
-    await _reloadCompanies();
   }
 
   Future<void> _openCompanyCreatePage() async {
@@ -487,14 +492,10 @@ class _HomePageState extends State<HomePage> {
           ),
           child: LoginPage(
             onLoginSuccess: (result) {
-              setState(() {
-                _loggedUserFirstName = result.firstName;
-                _loggedUserRole = result.role;
-              });
-
+              // AuthSession.sessionChanged (fired by LoginPage._submit via
+              // AuthSession.login) drives _onSessionChanged, which
+              // repopulates the header and reloads companies.
               Navigator.of(dialogContext).pop();
-
-              _reloadCompanies();
             },
             onRegisterTap: () {
               Navigator.of(dialogContext).pop();
@@ -533,15 +534,10 @@ class _HomePageState extends State<HomePage> {
             },
 
             onExternalAuthSuccess: (result) {
-              setState(() {
-                _loggedUserFirstName = result.firstName;
-
-                _loggedUserRole = result.role;
-              });
-
+              // AuthSession.sessionChanged (fired by GoogleAuthService via
+              // AuthSession.login) drives _onSessionChanged, which
+              // repopulates the header and reloads companies.
               Navigator.of(dialogContext).pop();
-
-              _reloadCompanies();
             },
           ),
         );
