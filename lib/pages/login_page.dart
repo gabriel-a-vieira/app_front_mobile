@@ -114,9 +114,7 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${l10n.loginError}: $e')));
+      AppMessage.apiError(context, e, fallback: l10n.loginError);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
