@@ -8,6 +8,9 @@ import 'package:flutter/services.dart';
 import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
+import 'package:app_front_mobile/widgets/common/async_list_section.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class ClientManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -103,7 +106,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -140,7 +143,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -175,7 +178,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loadingMore = false;
       });
     }
@@ -238,7 +241,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
         final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
 
         return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF171A22) : null,
+          backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
           title: const Text('Excluir clientes'),
           content: Text(
             _selectedIds.length == 1
@@ -280,7 +283,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
     } catch (e) {
       if (!mounted) return;
 
-      AppMessage.error(context, 'Erro ao excluir cliente: $e');
+      AppMessage.apiError(context, e, fallback: 'Erro ao excluir cliente.');
     }
   }
 
@@ -306,7 +309,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return AlertDialog(
-              backgroundColor: isDark ? const Color(0xFF171A22) : null,
+              backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
               title: const Text('Pesquisa avancada'),
               content: SizedBox(
                 width: 560,
@@ -536,7 +539,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       hintText: hint,
       filled: true,
       fillColor: isDark
-          ? const Color(0xFF1C212B)
+          ? AppColors.darkInputFill
           : colorScheme.surfaceContainerHighest,
       prefixIcon: Icon(
         Icons.search,
@@ -676,63 +679,15 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
   }
 
   Widget _buildContent() {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    if (_loading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 64),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 64),
-          child: Column(
-            children: [
-              Icon(Icons.error_outline, color: colorScheme.error, size: 42),
-              const SizedBox(height: 12),
-              Text(
-                'Erro ao buscar clientes',
-                style: TextStyle(
-                  color: colorScheme.error,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: _loadClients,
-                child: const Text('Tentar novamente'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        _buildClientsGrid(),
-        if (!_last) ...[
-          const SizedBox(height: 20),
-          Center(
-            child: OutlinedButton(
-              onPressed: _loadingMore ? null : _loadMoreClients,
-              child: _loadingMore
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Carregar mais'),
-            ),
-          ),
-        ],
-      ],
+    return AsyncListSection(
+      loading: _loading,
+      hasError: _error != null,
+      errorLabel: 'Erro ao buscar clientes',
+      onRetry: _loadClients,
+      content: _buildClientsGrid(),
+      hasMore: !_last,
+      loadingMore: _loadingMore,
+      onLoadMore: _loadMoreClients,
     );
   }
 
@@ -743,7 +698,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+        color: isDark ? AppColors.darkSurface : colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),
@@ -776,7 +731,7 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF171A22)
+            ? AppColors.darkSurfaceElevated
             : colorScheme.surfaceContainerHighest,
         border: Border(
           bottom: BorderSide(color: colorScheme.outline.withOpacity(0.18)),

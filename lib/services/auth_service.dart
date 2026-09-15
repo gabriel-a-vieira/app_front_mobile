@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:app_front_mobile/config/api_client.dart';
 
 class AuthLoginResult {
   final String token;
@@ -28,7 +29,7 @@ class AuthLoginResult {
 }
 
 class AuthService {
-  AuthService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
+  AuthService({Dio? dio, required this.baseUrl}) : _dio = dio ?? ApiClient.dio;
 
   final Dio _dio;
 

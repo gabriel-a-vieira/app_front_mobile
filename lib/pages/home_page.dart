@@ -24,6 +24,8 @@ import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
 import '../locale_provider.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class LanguageOption {
   final Locale locale;
@@ -146,7 +148,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -184,7 +186,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -221,7 +223,7 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loadingMore = false;
       });
     }
@@ -233,16 +235,6 @@ class _HomePageState extends State<HomePage> {
     });
 
     _reloadCompanies();
-  }
-
-  String _text(BuildContext context, String pt, String en) {
-    final locale = Provider.of<LocaleProvider>(context, listen: false).locale;
-
-    if (locale.languageCode == 'en') {
-      return en;
-    }
-
-    return pt;
   }
 
   String _formatDate(BuildContext context) {
@@ -307,7 +299,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   String _getLogoutLabel(BuildContext context) {
-    return _text(context, 'Sair', 'Logout');
+    return AppLocalizations.of(context).logout;
   }
 
   Future<void> _openProfilePage() async {
@@ -407,11 +399,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _openMyAppointmentsPage() async {
     final logged = await AuthGate.requireLogin(
       context,
-      reason: _text(
-        context,
-        'Voce precisa estar logado para visualizar seus agendamentos.',
-        'You need to be logged in to view your appointments.',
-      ),
+      reason: AppLocalizations.of(context).loginRequiredForAppointments,
     );
 
     if (!logged || !mounted) {
@@ -915,11 +903,7 @@ class _HomePageState extends State<HomePage> {
       onSubmitted: (_) => _reloadCompanies(),
       style: TextStyle(color: colorScheme.onSurface, fontSize: 14),
       decoration: InputDecoration(
-        hintText: _text(
-          context,
-          'Encontre um estabelecimento',
-          'Find a business',
-        ),
+        hintText: AppLocalizations.of(context).findABusinessHint,
         prefixIcon: Icon(
           Icons.search,
           color: colorScheme.onSurface.withOpacity(0.65),
@@ -961,7 +945,7 @@ class _HomePageState extends State<HomePage> {
       children: [
         ChoiceChip(
           selected: _selectedCompanyType == null,
-          label: Text(_text(context, 'Todos', 'All')),
+          label: Text(AppLocalizations.of(context).allCompanyTypes),
           onSelected: (_) {
             setState(() {
               _selectedCompanyType = null;
@@ -978,7 +962,7 @@ class _HomePageState extends State<HomePage> {
               size: 18,
               color: _favoritesOnly ? const Color(0xFFE34B4B) : null,
             ),
-            label: Text(_text(context, 'Favoritos', 'Favorites')),
+            label: Text(AppLocalizations.of(context).favoritesLabel),
             selectedColor: const Color(0xFFE34B4B).withOpacity(0.18),
             onSelected: (_) => _toggleFavoritesOnly(),
           ),
@@ -1019,11 +1003,7 @@ class _HomePageState extends State<HomePage> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 48),
           child: Text(
-            _text(
-              context,
-              'Erro ao buscar estabelecimentos.',
-              'Error loading businesses.',
-            ),
+            AppLocalizations.of(context).errorLoadingBusinesses,
             style: TextStyle(
               color: colorScheme.error,
               fontSize: 15,
@@ -1043,11 +1023,7 @@ class _HomePageState extends State<HomePage> {
               Icon(Icons.location_on, color: colorScheme.error, size: 72),
               const SizedBox(height: 16),
               Text(
-                _text(
-                  context,
-                  'Nenhum estabelecimento encontrado',
-                  'No businesses found',
-                ),
+                AppLocalizations.of(context).noBusinessesFound,
                 style: TextStyle(
                   color: colorScheme.onSurface,
                   fontSize: 18,
@@ -1056,11 +1032,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 8),
               Text(
-                _text(
-                  context,
-                  'Tente alterar o filtro ou buscar outro nome.',
-                  'Try changing the filter or searching another name.',
-                ),
+                AppLocalizations.of(context).tryChangingFilter,
                 style: TextStyle(
                   color: colorScheme.onSurface.withOpacity(0.65),
                   fontSize: 14,
@@ -1115,7 +1087,7 @@ class _HomePageState extends State<HomePage> {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(_text(context, 'Carregar mais', 'Load more')),
+                      : Text(AppLocalizations.of(context).loadMore),
                 ),
               ),
             ],
@@ -1139,17 +1111,17 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(width: 26),
             _buildNavItem(
               context,
-              label: _text(context, 'Inicio', 'Home'),
+              label: AppLocalizations.of(context).navHome,
               selected: true,
             ),
             _buildNavItem(
               context,
-              label: _text(context, 'Buscar', 'Search'),
+              label: AppLocalizations.of(context).navSearch,
               selected: false,
             ),
             _buildNavItem(
               context,
-              label: _text(context, 'Meus Agendamentos', 'My Appointments'),
+              label: AppLocalizations.of(context).navMyAppointments,
               selected: false,
               onTap: _openMyAppointmentsPage,
             ),
@@ -1180,7 +1152,7 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _text(context, 'Seja bem vindo(a)', 'Welcome'),
+                  AppLocalizations.of(context).welcomeMessage,
                   style: TextStyle(
                     color: colorScheme.onSurface,
                     fontSize: 20,
@@ -1199,7 +1171,7 @@ class _HomePageState extends State<HomePage> {
                 _buildSearchInput(context),
                 const SizedBox(height: 42),
                 Text(
-                  _text(context, 'Empresas proximas', 'Nearby businesses'),
+                  AppLocalizations.of(context).nearbyBusinesses,
                   style: TextStyle(
                     color: colorScheme.onSurface,
                     fontSize: 20,
@@ -1243,7 +1215,7 @@ class _CompanyCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isDark
-                ? const Color(0xFF11141B)
+                ? AppColors.darkSurface
                 : colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: colorScheme.outline.withOpacity(0.25)),

@@ -5,6 +5,7 @@ import 'package:app_front_mobile/widgets/professional_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class AvailabilityFormPage extends StatefulWidget {
   final String? availabilityId;
@@ -349,7 +350,7 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: isDark
-          ? const Color(0xFF1C212B)
+          ? AppColors.darkInputFill
           : colorScheme.surfaceContainerHighest,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -456,7 +457,7 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+              color: isDark ? AppColors.darkSurface : colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
             ),

@@ -11,6 +11,7 @@ import 'package:app_front_mobile/services/google_auth_service.dart';
 import 'package:app_front_mobile/widgets/google_auth_button.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class LoginPage extends StatefulWidget {
   final void Function(AuthLoginResult result)? onLoginSuccess;
@@ -36,10 +37,10 @@ class _LoginPageState extends State<LoginPage> {
   StreamSubscription<AuthLoginResult>? _googleSuccessSubscription;
   StreamSubscription<Object>? _googleErrorSubscription;
 
-  static const Color _modalColor = Color(0xFF11141B);
+  static const Color _modalColor = AppColors.darkSurface;
   static const Color _headerColor = Color(0xFF1A1E26);
   static const Color _borderColor = Color(0xFF2A2F38);
-  static const Color _inputFillColor = Color(0xFF1C212B);
+  static const Color _inputFillColor = AppColors.darkInputFill;
   static const Color _socialButtonColor = Color(0xFF090B10);
   static const Color _primaryBlue = Color(0xFF0089F7);
   static const Color _whiteText = Color(0xFFF5F7FA);

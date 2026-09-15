@@ -4,6 +4,7 @@
   "loggedSuccessfully": "Logado com sucesso.",
   "selectLanguage": "Selecionar idioma",
   "signIn": "Entrar",
+  "favoritesLabel": "Favoritos",
 
   "accessAccount": "Acessar conta",
   "continueWith": "Continuar com",
@@ -37,5 +38,19 @@
 
   "loginError": "Erro durante o login",
   "registerError": "Erro durante o cadastro",
-  "registerSuccess": "Usuário cadastrado com sucesso."
+  "registerSuccess": "Usuário cadastrado com sucesso.",
+
+  "logout": "Sair",
+  "loginRequiredForAppointments": "Voce precisa estar logado para visualizar seus agendamentos.",
+  "findABusinessHint": "Encontre um estabelecimento",
+  "allCompanyTypes": "Todos",
+  "errorLoadingBusinesses": "Erro ao buscar estabelecimentos.",
+  "noBusinessesFound": "Nenhum estabelecimento encontrado",
+  "tryChangingFilter": "Tente alterar o filtro ou buscar outro nome.",
+  "loadMore": "Carregar mais",
+  "navHome": "Inicio",
+  "navSearch": "Buscar",
+  "navMyAppointments": "Meus Agendamentos",
+  "welcomeMessage": "Seja bem vindo(a)",
+  "nearbyBusinesses": "Empresas proximas"
 }

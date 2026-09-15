@@ -1,6 +1,8 @@
 import 'package:app_front_mobile/services/public_company_service.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class CompanyProfessionalsTab extends StatefulWidget {
   final String companyId;
@@ -51,7 +53,7 @@ class _CompanyProfessionalsTabState extends State<CompanyProfessionalsTab> {
       if (!mounted) return;
 
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
         _loading = false;
       });
     }
@@ -112,7 +114,7 @@ class _CompanyProfessionalsTabState extends State<CompanyProfessionalsTab> {
               width: itemWidth,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+                color: isDark ? AppColors.darkSurface : colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: colorScheme.outline.withOpacity(0.18),

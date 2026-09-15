@@ -4,6 +4,7 @@
   "loggedSuccessfully": "Logged in successfully.",
   "selectLanguage": "Select language",
   "signIn": "Sign in",
+  "favoritesLabel": "Favorites",
 
   "accessAccount": "Access account",
   "continueWith": "Continue with",
@@ -37,5 +38,19 @@
 
   "loginError": "Login error",
   "registerError": "Register error",
-  "registerSuccess": "User registered successfully."
+  "registerSuccess": "User registered successfully.",
+
+  "logout": "Logout",
+  "loginRequiredForAppointments": "You need to be logged in to view your appointments.",
+  "findABusinessHint": "Find a business",
+  "allCompanyTypes": "All",
+  "errorLoadingBusinesses": "Error loading businesses.",
+  "noBusinessesFound": "No businesses found",
+  "tryChangingFilter": "Try changing the filter or searching another name.",
+  "loadMore": "Load more",
+  "navHome": "Home",
+  "navSearch": "Search",
+  "navMyAppointments": "My Appointments",
+  "welcomeMessage": "Welcome",
+  "nearbyBusinesses": "Nearby businesses"
 }
