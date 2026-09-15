@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signIn => 'Sign in';
 
   @override
+  String get favoritesLabel => 'Favorites';
+
+  @override
   String get accessAccount => 'Access account';
 
   @override
@@ -109,4 +112,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get registerSuccess => 'User registered successfully.';
+
+  @override
+  String get logout => 'Logout';
+
+  @override
+  String get loginRequiredForAppointments =>
+      'You need to be logged in to view your appointments.';
+
+  @override
+  String get findABusinessHint => 'Find a business';
+
+  @override
+  String get allCompanyTypes => 'All';
+
+  @override
+  String get errorLoadingBusinesses => 'Error loading businesses.';
+
+  @override
+  String get noBusinessesFound => 'No businesses found';
+
+  @override
+  String get tryChangingFilter =>
+      'Try changing the filter or searching another name.';
+
+  @override
+  String get loadMore => 'Load more';
+
+  @override
+  String get navHome => 'Home';
+
+  @override
+  String get navSearch => 'Search';
+
+  @override
+  String get navMyAppointments => 'My Appointments';
+
+  @override
+  String get welcomeMessage => 'Welcome';
+
+  @override
+  String get nearbyBusinesses => 'Nearby businesses';
 }

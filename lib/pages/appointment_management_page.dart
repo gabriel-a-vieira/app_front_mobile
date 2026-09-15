@@ -6,6 +6,8 @@ import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/utils/api_error_handler.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class AppointmentManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -109,7 +111,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> {
 
       setState(() {
         _loading = false;
-        _error = e.toString();
+        _error = ApiErrorHandler.getMessage(e);
       });
 
       AppMessage.apiError(context, e, fallback: 'Erro ao buscar agendamentos.');
@@ -504,7 +506,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11141B) : colorScheme.surface,
+        color: isDark ? AppColors.darkSurface : colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colorScheme.outline.withOpacity(0.22)),
       ),
@@ -514,7 +516,7 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> {
             height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             color: isDark
-                ? const Color(0xFF171A22)
+                ? AppColors.darkSurfaceElevated
                 : colorScheme.surfaceContainerHighest,
             child: const Row(
               children: [

@@ -1,5 +1,6 @@
 import 'package:app_front_mobile/services/service_offering_lookup_service.dart';
 import 'package:flutter/material.dart';
+import 'package:app_front_mobile/theme/app_colors.dart';
 
 class ServiceOfferingLookupModal extends StatefulWidget {
   final String token;
@@ -119,7 +120,7 @@ class _ServiceOfferingLookupModalState
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AlertDialog(
-      backgroundColor: isDark ? const Color(0xFF171A22) : null,
+      backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
       title: Text('Selecionar servicos (${_selected.length})'),
       content: SizedBox(
         width: 820,
@@ -148,7 +149,7 @@ class _ServiceOfferingLookupModalState
                   : Container(
                       decoration: BoxDecoration(
                         color: isDark
-                            ? const Color(0xFF11141B)
+                            ? AppColors.darkSurface
                             : colorScheme.surface,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(

@@ -21,6 +21,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get signIn => 'Entrar';
 
   @override
+  String get favoritesLabel => 'Favoritos';
+
+  @override
   String get accessAccount => 'Acessar conta';
 
   @override
@@ -109,4 +112,45 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get registerSuccess => 'Usuário cadastrado com sucesso.';
+
+  @override
+  String get logout => 'Sair';
+
+  @override
+  String get loginRequiredForAppointments =>
+      'Voce precisa estar logado para visualizar seus agendamentos.';
+
+  @override
+  String get findABusinessHint => 'Encontre um estabelecimento';
+
+  @override
+  String get allCompanyTypes => 'Todos';
+
+  @override
+  String get errorLoadingBusinesses => 'Erro ao buscar estabelecimentos.';
+
+  @override
+  String get noBusinessesFound => 'Nenhum estabelecimento encontrado';
+
+  @override
+  String get tryChangingFilter =>
+      'Tente alterar o filtro ou buscar outro nome.';
+
+  @override
+  String get loadMore => 'Carregar mais';
+
+  @override
+  String get navHome => 'Inicio';
+
+  @override
+  String get navSearch => 'Buscar';
+
+  @override
+  String get navMyAppointments => 'Meus Agendamentos';
+
+  @override
+  String get welcomeMessage => 'Seja bem vindo(a)';
+
+  @override
+  String get nearbyBusinesses => 'Empresas proximas';
 }

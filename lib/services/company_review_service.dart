@@ -1,9 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:app_front_mobile/config/api_client.dart';
 
 class CompanyReviewService {
-  CompanyReviewService({Dio? dio, required this.baseUrl}) : _dio = dio ?? Dio();
+  CompanyReviewService({Dio? dio, required this.baseUrl}) : _dio = dio ?? ApiClient.dio;
 
   final Dio _dio;
   final String baseUrl;
