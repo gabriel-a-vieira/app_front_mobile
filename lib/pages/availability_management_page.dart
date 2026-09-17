@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/models/system_module.dart';
+import 'package:app_front_mobile/utils/user_permissions.dart';
 
 class AvailabilityManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -729,24 +731,27 @@ class _AvailabilityManagementPageState
                     Wrap(
                       spacing: 10,
                       children: [
-                        FilledButton.icon(
-                          onPressed: _openCreatePage,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Inserir'),
-                        ),
-                        FilledButton.icon(
-                          onPressed: _openEditPage,
-                          icon: const Icon(Icons.edit_outlined),
-                          label: const Text('Editar'),
-                        ),
-                        FilledButton.icon(
-                          onPressed: _deleteSelected,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: colorScheme.error,
+                        if (UserPermissions.can(SystemModule.availability, CrudAction.create))
+                          FilledButton.icon(
+                            onPressed: _openCreatePage,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Inserir'),
                           ),
-                          icon: const Icon(Icons.delete_outline),
-                          label: const Text('Excluir'),
-                        ),
+                        if (UserPermissions.can(SystemModule.availability, CrudAction.update))
+                          FilledButton.icon(
+                            onPressed: _openEditPage,
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text('Editar'),
+                          ),
+                        if (UserPermissions.can(SystemModule.availability, CrudAction.delete))
+                          FilledButton.icon(
+                            onPressed: _deleteSelected,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: colorScheme.error,
+                            ),
+                            icon: const Icon(Icons.delete_outline),
+                            label: const Text('Excluir'),
+                          ),
                         OutlinedButton.icon(
                           onPressed: _openFilters,
                           icon: Icon(

@@ -6,6 +6,8 @@ import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
+import 'package:app_front_mobile/models/system_module.dart';
+import 'package:app_front_mobile/utils/user_permissions.dart';
 
 class ProductManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -449,27 +451,30 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
           spacing: 10,
           runSpacing: 10,
           children: [
-            FilledButton.icon(
-              onPressed: _openCreate,
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Inserir'),
-            ),
-
-            FilledButton.icon(
-              onPressed: _canEdit ? _openEdit : null,
-              icon: const Icon(Icons.edit_outlined, size: 17),
-              label: const Text('Editar'),
-            ),
-
-            FilledButton.icon(
-              onPressed: _hasSelection ? _deleteSelected : null,
-              style: FilledButton.styleFrom(
-                backgroundColor: colorScheme.errorContainer,
-                foregroundColor: colorScheme.onErrorContainer,
+            if (UserPermissions.can(SystemModule.product, CrudAction.create))
+              FilledButton.icon(
+                onPressed: _openCreate,
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Inserir'),
               ),
-              icon: const Icon(Icons.delete_outline, size: 17),
-              label: const Text('Excluir'),
-            ),
+
+            if (UserPermissions.can(SystemModule.product, CrudAction.update))
+              FilledButton.icon(
+                onPressed: _canEdit ? _openEdit : null,
+                icon: const Icon(Icons.edit_outlined, size: 17),
+                label: const Text('Editar'),
+              ),
+
+            if (UserPermissions.can(SystemModule.product, CrudAction.delete))
+              FilledButton.icon(
+                onPressed: _hasSelection ? _deleteSelected : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: colorScheme.errorContainer,
+                  foregroundColor: colorScheme.onErrorContainer,
+                ),
+                icon: const Icon(Icons.delete_outline, size: 17),
+                label: const Text('Excluir'),
+              ),
 
             OutlinedButton.icon(
               onPressed: () {
