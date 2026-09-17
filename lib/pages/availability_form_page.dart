@@ -7,6 +7,67 @@ import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
 
+/// Parses a "HH:mm" (or "HH:mm:ss") API time string into a [TimeOfDay],
+/// returning null when the value is malformed instead of throwing.
+TimeOfDay? parseApiTime(String value) {
+  final parts = value.split(':');
+
+  if (parts.length < 2) {
+    return null;
+  }
+
+  final hour = int.tryParse(parts[0]);
+
+  final minute = int.tryParse(parts[1]);
+
+  if (hour == null || minute == null) {
+    return null;
+  }
+
+  return TimeOfDay(hour: hour, minute: minute);
+}
+
+/// Formats a [TimeOfDay] as "HH:mm", zero-padded.
+String formatTime(TimeOfDay value) {
+  final hour = value.hour.toString().padLeft(2, '0');
+
+  final minute = value.minute.toString().padLeft(2, '0');
+
+  return '$hour:$minute';
+}
+
+/// Formats a [TimeOfDay] as the "HH:mm:ss" shape the API expects.
+String timeToApi(TimeOfDay value) {
+  return '${formatTime(value)}:00';
+}
+
+/// Maps a day-of-week API code to its PT-BR label.
+String dayLabel(String day) {
+  return switch (day) {
+    'MONDAY' => 'Segunda-feira',
+    'TUESDAY' => 'Terca-feira',
+    'WEDNESDAY' => 'Quarta-feira',
+    'THURSDAY' => 'Quinta-feira',
+    'FRIDAY' => 'Sexta-feira',
+    'SATURDAY' => 'Sabado',
+    'SUNDAY' => 'Domingo',
+    _ => day,
+  };
+}
+
+/// True when [end] is strictly after [start]; false when either is missing.
+bool isEndAfterStart(TimeOfDay? start, TimeOfDay? end) {
+  if (start == null || end == null) {
+    return false;
+  }
+
+  final startMinutes = start.hour * 60 + start.minute;
+
+  final endMinutes = end.hour * 60 + end.minute;
+
+  return endMinutes > startMinutes;
+}
+
 class AvailabilityFormPage extends StatefulWidget {
   final String? availabilityId;
 
@@ -102,9 +163,9 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
 
       if (!mounted) return;
 
-      final start = _parseApiTime(availability.startTime);
+      final start = parseApiTime(availability.startTime);
 
-      final end = _parseApiTime(availability.endTime);
+      final end = parseApiTime(availability.endTime);
 
       setState(() {
         _selectedProfessional = ProfessionalLookupOption(
@@ -121,9 +182,9 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
         _startTime = start;
         _endTime = end;
 
-        _startTimeCtrl.text = start != null ? _formatTime(start) : '';
+        _startTimeCtrl.text = start != null ? formatTime(start) : '';
 
-        _endTimeCtrl.text = end != null ? _formatTime(end) : '';
+        _endTimeCtrl.text = end != null ? formatTime(end) : '';
 
         _loadingData = false;
       });
@@ -177,7 +238,7 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
     setState(() {
       _startTime = selected;
 
-      _startTimeCtrl.text = _formatTime(selected);
+      _startTimeCtrl.text = formatTime(selected);
     });
   }
 
@@ -194,7 +255,7 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
     setState(() {
       _endTime = selected;
 
-      _endTimeCtrl.text = _formatTime(selected);
+      _endTimeCtrl.text = formatTime(selected);
     });
   }
 
@@ -213,7 +274,7 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
       return;
     }
 
-    if (!_isEndAfterStart()) {
+    if (!isEndAfterStart(_startTime, _endTime)) {
       AppMessage.info(
         context,
         'Horario final deve ser posterior ao horario inicial',
@@ -233,9 +294,9 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
 
         dayWeek: _selectedDay,
 
-        startTime: _timeToApi(_startTime!),
+        startTime: timeToApi(_startTime!),
 
-        endTime: _timeToApi(_endTime!),
+        endTime: timeToApi(_endTime!),
 
         companyId: _selectedProfessional!.companyId,
       );
@@ -278,61 +339,6 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
         });
       }
     }
-  }
-
-  bool _isEndAfterStart() {
-    if (_startTime == null || _endTime == null) {
-      return false;
-    }
-
-    final start = _startTime!.hour * 60 + _startTime!.minute;
-
-    final end = _endTime!.hour * 60 + _endTime!.minute;
-
-    return end > start;
-  }
-
-  TimeOfDay? _parseApiTime(String value) {
-    final parts = value.split(':');
-
-    if (parts.length < 2) {
-      return null;
-    }
-
-    final hour = int.tryParse(parts[0]);
-
-    final minute = int.tryParse(parts[1]);
-
-    if (hour == null || minute == null) {
-      return null;
-    }
-
-    return TimeOfDay(hour: hour, minute: minute);
-  }
-
-  String _formatTime(TimeOfDay value) {
-    final hour = value.hour.toString().padLeft(2, '0');
-
-    final minute = value.minute.toString().padLeft(2, '0');
-
-    return '$hour:$minute';
-  }
-
-  String _timeToApi(TimeOfDay value) {
-    return '${_formatTime(value)}:00';
-  }
-
-  String _dayLabel(String day) {
-    return switch (day) {
-      'MONDAY' => 'Segunda-feira',
-      'TUESDAY' => 'Terca-feira',
-      'WEDNESDAY' => 'Quarta-feira',
-      'THURSDAY' => 'Quinta-feira',
-      'FRIDAY' => 'Sexta-feira',
-      'SATURDAY' => 'Sabado',
-      'SUNDAY' => 'Domingo',
-      _ => day,
-    };
   }
 
   InputDecoration _inputDecoration({
@@ -395,7 +401,7 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
       value: _selectedDay,
       decoration: _inputDecoration(label: 'Dia da semana'),
       items: _days.map((day) {
-        return DropdownMenuItem(value: day, child: Text(_dayLabel(day)));
+        return DropdownMenuItem(value: day, child: Text(dayLabel(day)));
       }).toList(),
       onChanged: (value) {
         if (value == null) return;
