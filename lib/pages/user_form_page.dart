@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/models/system_module.dart';
+import 'package:app_front_mobile/utils/user_permissions.dart';
 
 class UserFormPage extends StatefulWidget {
   final String currentUserRole;
@@ -376,7 +378,10 @@ class _UserFormPageState extends State<UserFormPage> {
           width: double.infinity,
           height: 48,
           child: FilledButton(
-            onPressed: _loading ? null : _submit,
+            onPressed:
+                _loading || !UserPermissions.can(SystemModule.user, CrudAction.create)
+                    ? null
+                    : _submit,
             style: FilledButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,

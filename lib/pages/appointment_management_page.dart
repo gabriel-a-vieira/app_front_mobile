@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/models/system_module.dart';
+import 'package:app_front_mobile/utils/user_permissions.dart';
 
 class AppointmentManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -624,24 +626,27 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> {
                     Wrap(
                       spacing: 10,
                       children: [
-                        FilledButton.icon(
-                          onPressed: _create,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Inserir'),
-                        ),
-                        FilledButton.icon(
-                          onPressed: _edit,
-                          icon: const Icon(Icons.edit_outlined),
-                          label: const Text('Editar'),
-                        ),
-                        FilledButton.icon(
-                          onPressed: _cancel,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: colorScheme.error,
+                        if (UserPermissions.can(SystemModule.appointment, CrudAction.create))
+                          FilledButton.icon(
+                            onPressed: _create,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Inserir'),
                           ),
-                          icon: const Icon(Icons.cancel_outlined),
-                          label: const Text('Cancelar'),
-                        ),
+                        if (UserPermissions.can(SystemModule.appointment, CrudAction.update))
+                          FilledButton.icon(
+                            onPressed: _edit,
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text('Editar'),
+                          ),
+                        if (UserPermissions.can(SystemModule.appointment, CrudAction.delete))
+                          FilledButton.icon(
+                            onPressed: _cancel,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: colorScheme.error,
+                            ),
+                            icon: const Icon(Icons.cancel_outlined),
+                            label: const Text('Cancelar'),
+                          ),
                         OutlinedButton.icon(
                           onPressed: _filtersModal,
                           icon: const Icon(Icons.tune),

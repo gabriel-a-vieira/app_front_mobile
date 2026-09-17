@@ -19,8 +19,12 @@ import 'package:app_front_mobile/pages/company_management_page.dart';
 import 'package:app_front_mobile/pages/product_management_page.dart';
 import 'package:app_front_mobile/services/google_auth_service.dart';
 import 'package:app_front_mobile/pages/profile_page.dart';
+import 'package:app_front_mobile/pages/permission_management_page.dart';
 import 'package:app_front_mobile/services/profile_service.dart';
+import 'package:app_front_mobile/services/permission_service.dart';
+import 'package:app_front_mobile/models/system_module.dart';
 import 'package:app_front_mobile/utils/auth_session.dart';
+import 'package:app_front_mobile/utils/user_permissions.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme_notifier.dart';
@@ -70,6 +74,9 @@ class _HomePageState extends State<HomePage> {
     baseUrl: '${ApiConfig.baseUrl}/company',
   );
   final _profileService = ProfileService(baseUrl: ApiConfig.baseUrl);
+  final _permissionService = PermissionService(
+    baseUrl: '${ApiConfig.baseUrl}/permission',
+  );
   final _searchController = TextEditingController();
   final _tokenStorage = TokenStorage();
 
@@ -141,6 +148,8 @@ class _HomePageState extends State<HomePage> {
         _favoritesOnly = false;
       });
 
+      UserPermissions.clear();
+
       if (reloadCompaniesOnChange) {
         await _reloadCompanies();
       }
@@ -164,6 +173,17 @@ class _HomePageState extends State<HomePage> {
         _loggedUserFirstName = profile.firstName;
         _loggedUserRole = profile.role;
       });
+
+      try {
+        final permissions = await _permissionService.findMyPermissions(
+          token: token,
+        );
+        UserPermissions.update(permissions);
+      } catch (_) {
+        // Fail-open: a failed fetch here shouldn't log the user out or block
+        // any action -- UserPermissions.can() already treats an unknown
+        // module as allowed, same as an empty/missing map.
+      }
 
       if (changed && reloadCompaniesOnChange) {
         await _reloadCompanies();
@@ -468,6 +488,12 @@ class _HomePageState extends State<HomePage> {
     await _reloadCompanies();
   }
 
+  Future<void> _openPermissionManagementPage() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PermissionManagementPage()),
+    );
+  }
+
   Future<void> _openProductManagementPage() async {
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -561,6 +587,11 @@ class _HomePageState extends State<HomePage> {
           return;
         }
 
+        if (value == 'permissions') {
+          _openPermissionManagementPage();
+          return;
+        }
+
         if (value == 'users') {
           _openUserCreatePage();
           return;
@@ -604,43 +635,60 @@ class _HomePageState extends State<HomePage> {
       },
       itemBuilder: (context) {
         return [
-          if (_isMasterAdmin)
+          if (_isMasterAdmin) ...[
             const PopupMenuItem<String>(
               value: 'companies',
               child: Text('Empresas'),
             ),
-          const PopupMenuDivider(),
-          const PopupMenuItem<String>(value: 'users', child: Text('Usuarios')),
-          const PopupMenuItem<String>(
-            value: 'products',
-            child: Row(
-              children: [
-                Icon(Icons.inventory_2_outlined, size: 18),
-                SizedBox(width: 10),
-                Text('Produtos'),
-              ],
+            const PopupMenuItem<String>(
+              value: 'permissions',
+              child: Text('Permissoes'),
             ),
-          ),
-          const PopupMenuItem<String>(
-            value: 'professionals',
-            child: Text('Profissionais'),
-          ),
-          const PopupMenuItem<String>(
-            value: 'clients',
-            child: Text('Clientes'),
-          ),
-          const PopupMenuItem<String>(
-            value: 'appointment',
-            child: Text('Agendamentos'),
-          ),
-          const PopupMenuItem<String>(
-            value: 'availability',
-            child: Text('Disponibilidade'),
-          ),
-          const PopupMenuItem<String>(
-            value: 'services',
-            child: Text('Servicos'),
-          ),
+            const PopupMenuDivider(),
+          ],
+          // USER only has a create flow today (no list/edit/delete page yet),
+          // so it's gated by CREATE instead of LIST like the other modules.
+          if (UserPermissions.can(SystemModule.user, CrudAction.create))
+            const PopupMenuItem<String>(
+              value: 'users',
+              child: Text('Usuarios'),
+            ),
+          if (UserPermissions.can(SystemModule.product, CrudAction.list))
+            const PopupMenuItem<String>(
+              value: 'products',
+              child: Row(
+                children: [
+                  Icon(Icons.inventory_2_outlined, size: 18),
+                  SizedBox(width: 10),
+                  Text('Produtos'),
+                ],
+              ),
+            ),
+          if (UserPermissions.can(SystemModule.professional, CrudAction.list))
+            const PopupMenuItem<String>(
+              value: 'professionals',
+              child: Text('Profissionais'),
+            ),
+          if (UserPermissions.can(SystemModule.client, CrudAction.list))
+            const PopupMenuItem<String>(
+              value: 'clients',
+              child: Text('Clientes'),
+            ),
+          if (UserPermissions.can(SystemModule.appointment, CrudAction.list))
+            const PopupMenuItem<String>(
+              value: 'appointment',
+              child: Text('Agendamentos'),
+            ),
+          if (UserPermissions.can(SystemModule.availability, CrudAction.list))
+            const PopupMenuItem<String>(
+              value: 'availability',
+              child: Text('Disponibilidade'),
+            ),
+          if (UserPermissions.can(SystemModule.serviceOffering, CrudAction.list))
+            const PopupMenuItem<String>(
+              value: 'services',
+              child: Text('Servicos'),
+            ),
         ];
       },
       child: Padding(

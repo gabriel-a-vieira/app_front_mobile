@@ -11,6 +11,8 @@ import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
 import 'package:app_front_mobile/widgets/common/async_list_section.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/models/system_module.dart';
+import 'package:app_front_mobile/utils/user_permissions.dart';
 
 class ClientManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -645,22 +647,25 @@ class _ClientManagementPageState extends State<ClientManagementPage> {
           spacing: 10,
           runSpacing: 10,
           children: [
-            _buildActionButton(
-              label: 'Inserir',
-              icon: Icons.add,
-              onPressed: _openCreatePage,
-            ),
-            _buildActionButton(
-              label: 'Editar',
-              icon: Icons.edit_outlined,
-              onPressed: _openEditPage,
-            ),
-            _buildActionButton(
-              label: 'Excluir',
-              icon: Icons.delete_outline,
-              danger: true,
-              onPressed: _deleteSelectedClients,
-            ),
+            if (UserPermissions.can(SystemModule.client, CrudAction.create))
+              _buildActionButton(
+                label: 'Inserir',
+                icon: Icons.add,
+                onPressed: _openCreatePage,
+              ),
+            if (UserPermissions.can(SystemModule.client, CrudAction.update))
+              _buildActionButton(
+                label: 'Editar',
+                icon: Icons.edit_outlined,
+                onPressed: _openEditPage,
+              ),
+            if (UserPermissions.can(SystemModule.client, CrudAction.delete))
+              _buildActionButton(
+                label: 'Excluir',
+                icon: Icons.delete_outline,
+                danger: true,
+                onPressed: _deleteSelectedClients,
+              ),
             _buildFilterButton(),
           ],
         ),
