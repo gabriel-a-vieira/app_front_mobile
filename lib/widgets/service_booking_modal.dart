@@ -6,6 +6,48 @@ import 'package:app_front_mobile/widgets/booking_confirmation_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 
+/// Formats a [DateTime] as the "yyyy-MM-dd" shape the API expects.
+String formatApiDate(DateTime date) {
+  return '${date.year}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+}
+
+/// Builds the "yyyy-MM-ddTHH:mm:00" appointment start-at payload from a date
+/// and a "HH:mm" slot string.
+String buildAppointmentStartAt(DateTime date, String time) {
+  final parts = time.split(':');
+
+  return '${formatApiDate(date)}T'
+      '${parts[0].padLeft(2, '0')}:'
+      '${parts[1].padLeft(2, '0')}:00';
+}
+
+/// Three-letter PT-BR weekday abbreviation for [date] (Seg..Dom).
+String weekDayAbbreviation(DateTime date) {
+  const values = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
+
+  return values[date.weekday - 1];
+}
+
+/// Filters "HH:mm" slots by period: 'MORNING' keeps hour < 12, 'AFTERNOON'
+/// keeps hour >= 12, anything else (e.g. 'ALL') returns every slot as-is.
+List<String> filterSlotsByPeriod(List<String> slots, String period) {
+  if (period == 'ALL') {
+    return slots;
+  }
+
+  return slots.where((slot) {
+    final hour = int.tryParse(slot.split(':').first) ?? 0;
+
+    if (period == 'MORNING') {
+      return hour < 12;
+    }
+
+    return hour >= 12;
+  }).toList();
+}
+
 class ServiceBookingModal extends StatefulWidget {
   final String companyId;
 
@@ -152,7 +194,7 @@ class _ServiceBookingModalState extends State<ServiceBookingModal> {
         companyId: widget.companyId,
         professionalId: _selectedProfessional!.id,
         serviceId: widget.service.id,
-        date: _apiDate(_selectedDate),
+        date: formatApiDate(_selectedDate),
       );
 
       if (!mounted) return;
@@ -172,21 +214,7 @@ class _ServiceBookingModalState extends State<ServiceBookingModal> {
     }
   }
 
-  List<String> get _visibleSlots {
-    if (_period == 'ALL') {
-      return _slots;
-    }
-
-    return _slots.where((slot) {
-      final hour = int.tryParse(slot.split(':').first) ?? 0;
-
-      if (_period == 'MORNING') {
-        return hour < 12;
-      }
-
-      return hour >= 12;
-    }).toList();
-  }
+  List<String> get _visibleSlots => filterSlotsByPeriod(_slots, _period);
 
   Future<void> _selectSlot(String slot) async {
     if (_selectedProfessional == null) {
@@ -214,7 +242,7 @@ class _ServiceBookingModalState extends State<ServiceBookingModal> {
         companyId: widget.companyId,
         professionalId: _selectedProfessional!.id,
         serviceId: widget.service.id,
-        startAt: _buildStartAt(_selectedDate, slot),
+        startAt: buildAppointmentStartAt(_selectedDate, slot),
         notes: confirmation.notes,
         prefersSilence: confirmation.prefersSilence,
       );
@@ -233,26 +261,6 @@ class _ServiceBookingModalState extends State<ServiceBookingModal> {
         fallback: 'Erro ao realizar agendamento.',
       );
     }
-  }
-
-  String _apiDate(DateTime date) {
-    return '${date.year}-'
-        '${date.month.toString().padLeft(2, '0')}-'
-        '${date.day.toString().padLeft(2, '0')}';
-  }
-
-  String _buildStartAt(DateTime date, String time) {
-    final parts = time.split(':');
-
-    return '${_apiDate(date)}T'
-        '${parts[0].padLeft(2, '0')}:'
-        '${parts[1].padLeft(2, '0')}:00';
-  }
-
-  String _weekDay(DateTime date) {
-    const values = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
-
-    return values[date.weekday - 1];
   }
 
   @override
@@ -317,7 +325,7 @@ class _ServiceBookingModalState extends State<ServiceBookingModal> {
                         ),
                         child: Column(
                           children: [
-                            Text(_weekDay(date)),
+                            Text(weekDayAbbreviation(date)),
                             const SizedBox(height: 4),
                             Text(
                               date.day.toString().padLeft(2, '0'),
