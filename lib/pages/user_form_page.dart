@@ -11,11 +11,16 @@ import 'package:app_front_mobile/utils/user_permissions.dart';
 
 class UserFormPage extends StatefulWidget {
   final String currentUserRole;
+  final String? userId;
 
-  const UserFormPage({super.key, required this.currentUserRole});
+  const UserFormPage({super.key, required this.currentUserRole, this.userId});
 
   bool get isMasterAdmin {
     return currentUserRole.toUpperCase() == 'MASTER_ADMIN';
+  }
+
+  bool get isEditing {
+    return userId != null && userId!.isNotEmpty;
   }
 
   @override
@@ -28,7 +33,7 @@ class _UserFormPageState extends State<UserFormPage> {
   final _tokenStorage = TokenStorage();
 
   final _userAdminService = UserAdminService(
-    baseUrl: '${ApiConfig.baseUrl}/auth/register',
+    baseUrl: '${ApiConfig.baseUrl}/users',
   );
 
   final _companyLookupService = CompanyLookupService(
@@ -41,6 +46,7 @@ class _UserFormPageState extends State<UserFormPage> {
   final _companyCtrl = TextEditingController();
 
   bool _loading = false;
+  bool _loadingData = false;
   bool _obscurePassword = true;
 
   String _selectedRole = 'CLIENT';
@@ -48,6 +54,15 @@ class _UserFormPageState extends State<UserFormPage> {
   CompanyLookupOption? _selectedCompany;
 
   final List<String> _roleOptions = ['COMPANY_ADMIN', 'CLIENT', 'PROFESSIONAL'];
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.isEditing) {
+      _loadUser();
+    }
+  }
 
   @override
   void dispose() {
@@ -67,6 +82,38 @@ class _UserFormPageState extends State<UserFormPage> {
     }
 
     return token;
+  }
+
+  Future<void> _loadUser() async {
+    setState(() {
+      _loadingData = true;
+    });
+
+    try {
+      final token = await _getToken();
+
+      final user = await _userAdminService.findById(
+        token: token,
+        id: widget.userId!,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _nameCtrl.text = user.name;
+        _emailCtrl.text = user.email;
+        _selectedRole = user.role;
+        _loadingData = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingData = false;
+      });
+
+      AppMessage.apiError(context, e, fallback: 'Erro ao carregar usuario');
+    }
   }
 
   Future<void> _openCompanyZoom() async {
@@ -91,7 +138,7 @@ class _UserFormPageState extends State<UserFormPage> {
 
     if (!isValid) return;
 
-    if (widget.isMasterAdmin && _selectedCompany == null) {
+    if (!widget.isEditing && widget.isMasterAdmin && _selectedCompany == null) {
       _showMessage('Selecione uma empresa');
       return;
     }
@@ -103,15 +150,32 @@ class _UserFormPageState extends State<UserFormPage> {
     try {
       final token = await _getToken();
 
-      final request = CreateUserRequest(
-        name: _nameCtrl.text.trim(),
-        email: _emailCtrl.text.trim(),
-        password: _passwordCtrl.text.trim(),
-        role: _selectedRole,
-        companyId: widget.isMasterAdmin ? _selectedCompany?.id : null,
-      );
+      if (widget.isEditing) {
+        final request = UpdateUserRequest(
+          name: _nameCtrl.text.trim(),
+          email: _emailCtrl.text.trim(),
+          role: _selectedRole,
+          password: _passwordCtrl.text.trim().isEmpty
+              ? null
+              : _passwordCtrl.text.trim(),
+        );
 
-      await _userAdminService.createUser(token: token, request: request);
+        await _userAdminService.update(
+          token: token,
+          id: widget.userId!,
+          request: request,
+        );
+      } else {
+        final request = CreateUserRequest(
+          name: _nameCtrl.text.trim(),
+          email: _emailCtrl.text.trim(),
+          password: _passwordCtrl.text.trim(),
+          role: _selectedRole,
+          companyId: widget.isMasterAdmin ? _selectedCompany?.id : null,
+        );
+
+        await _userAdminService.createUser(token: token, request: request);
+      }
 
       if (!mounted) return;
 
@@ -119,7 +183,7 @@ class _UserFormPageState extends State<UserFormPage> {
     } catch (e) {
       if (!mounted) return;
 
-      AppMessage.apiError(context, e, fallback: 'Erro ao cadastrar usuario.');
+      AppMessage.apiError(context, e, fallback: 'Erro ao salvar usuario.');
     } finally {
       if (mounted) {
         setState(() {
@@ -312,8 +376,8 @@ class _UserFormPageState extends State<UserFormPage> {
                   width: width,
                   child: _buildTextField(
                     controller: _passwordCtrl,
-                    label: 'Senha',
-                    requiredField: true,
+                    label: widget.isEditing ? 'Nova senha (opcional)' : 'Senha',
+                    requiredField: !widget.isEditing,
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
                       onPressed: () {
@@ -328,6 +392,10 @@ class _UserFormPageState extends State<UserFormPage> {
                       ),
                     ),
                     customValidator: (value) {
+                      if (value.isEmpty) {
+                        return null;
+                      }
+
                       if (value.length < 6) {
                         return 'Senha deve ter pelo menos 6 caracteres';
                       }
@@ -337,7 +405,7 @@ class _UserFormPageState extends State<UserFormPage> {
                   ),
                 ),
                 SizedBox(width: width, child: _buildRoleDropdown()),
-                if (widget.isMasterAdmin)
+                if (!widget.isEditing && widget.isMasterAdmin)
                   SizedBox(width: width, child: _buildCompanyField()),
               ],
             );
@@ -350,11 +418,24 @@ class _UserFormPageState extends State<UserFormPage> {
   Widget _buildBody() {
     final colorScheme = Theme.of(context).colorScheme;
 
+    final canSubmit = widget.isEditing
+        ? UserPermissions.can(SystemModule.user, CrudAction.update)
+        : UserPermissions.can(SystemModule.user, CrudAction.create);
+
+    if (_loadingData) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 80),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Cadastro de usuario',
+          widget.isEditing ? 'Editar usuario' : 'Cadastro de usuario',
           style: TextStyle(
             color: colorScheme.onSurface,
             fontSize: 24,
@@ -378,10 +459,7 @@ class _UserFormPageState extends State<UserFormPage> {
           width: double.infinity,
           height: 48,
           child: FilledButton(
-            onPressed:
-                _loading || !UserPermissions.can(SystemModule.user, CrudAction.create)
-                    ? null
-                    : _submit,
+            onPressed: _loading || !canSubmit ? null : _submit,
             style: FilledButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: colorScheme.onPrimary,
@@ -398,9 +476,9 @@ class _UserFormPageState extends State<UserFormPage> {
                       color: colorScheme.onPrimary,
                     ),
                   )
-                : const Text(
-                    'Cadastrar usuario',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                : Text(
+                    widget.isEditing ? 'Salvar alteracoes' : 'Cadastrar usuario',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
           ),
         ),
@@ -411,7 +489,9 @@ class _UserFormPageState extends State<UserFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Cadastro de usuario')),
+      appBar: AppBar(
+        title: Text(widget.isEditing ? 'Editar usuario' : 'Cadastro de usuario'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(

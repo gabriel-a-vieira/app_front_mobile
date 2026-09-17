@@ -4,9 +4,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-/// Covers PermissionService's parsing of the matrix (GET/PUT /permission)
-/// and the effective-permissions map (GET /permission/me), including how it
-/// tolerates an unknown module string in the response instead of throwing.
+/// Covers PermissionService's per-user API: parsing the paged list of
+/// configured profiles, a single user's matrix (GET/PUT /permission/{id}),
+/// bulk delete, and the effective-permissions map (GET /permission/me) --
+/// including how it tolerates an unknown module string in the response
+/// instead of throwing.
 class MockDio extends Mock implements Dio {}
 
 class FakeOptions extends Fake implements Options {}
@@ -34,12 +36,59 @@ void main() {
     );
   }
 
-  group('findMatrix', () {
-    test('parses each row into a RolePermissionEntry', () async {
-      when(() => dio.get(baseUrl, options: any(named: 'options'))).thenAnswer(
+  group('findProfiles', () {
+    test('parses each row into a PermissionProfile', () async {
+      when(
+        () => dio.get(
+          baseUrl,
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer(
+        (_) async => okResponse({
+          'content': [
+            {
+              'userId': 'user-1',
+              'name': 'Ana Souza',
+              'email': 'ana@softix.com',
+              'role': 'PROFESSIONAL',
+            },
+          ],
+          'number': 0,
+          'last': true,
+        }),
+      );
+
+      final page = await service.findProfiles(token: 't', page: 0, size: 10);
+
+      expect(page.content, hasLength(1));
+      expect(page.content.first.userId, 'user-1');
+      expect(page.content.first.role, 'PROFESSIONAL');
+      expect(page.last, isTrue);
+    });
+
+    test('returns an empty content list when the body has no content field', () async {
+      when(
+        () => dio.get(
+          baseUrl,
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+        ),
+      ).thenAnswer((_) async => okResponse({'number': 0, 'last': true}));
+
+      final page = await service.findProfiles(token: 't', page: 0, size: 10);
+
+      expect(page.content, isEmpty);
+    });
+  });
+
+  group('findUserMatrix', () {
+    test('parses each row into a ModulePermissionEntry', () async {
+      when(
+        () => dio.get('$baseUrl/user-1', options: any(named: 'options')),
+      ).thenAnswer(
         (_) async => okResponse([
           {
-            'role': 'COMPANY_ADMIN',
             'module': 'CLIENT',
             'canCreate': true,
             'canUpdate': false,
@@ -49,10 +98,9 @@ void main() {
         ]),
       );
 
-      final matrix = await service.findMatrix(token: 't');
+      final matrix = await service.findUserMatrix(token: 't', userId: 'user-1');
 
       expect(matrix, hasLength(1));
-      expect(matrix.first.role, 'COMPANY_ADMIN');
       expect(matrix.first.module, SystemModule.client);
       expect(matrix.first.canCreate, isTrue);
       expect(matrix.first.canUpdate, isFalse);
@@ -60,23 +108,26 @@ void main() {
 
     test('returns an empty list when the body is not a list', () async {
       when(
-        () => dio.get(baseUrl, options: any(named: 'options')),
+        () => dio.get('$baseUrl/user-1', options: any(named: 'options')),
       ).thenAnswer((_) async => okResponse('unexpected'));
 
-      final matrix = await service.findMatrix(token: 't');
+      final matrix = await service.findUserMatrix(token: 't', userId: 'user-1');
 
       expect(matrix, isEmpty);
     });
   });
 
-  group('updateMatrix', () {
+  group('updateUserMatrix', () {
     test('PUTs the entries serialized back to their API shape', () async {
       when(
-        () => dio.put(baseUrl, data: any(named: 'data'), options: any(named: 'options')),
+        () => dio.put(
+          '$baseUrl/user-1',
+          data: any(named: 'data'),
+          options: any(named: 'options'),
+        ),
       ).thenAnswer((_) async => okResponse(null));
 
-      const entry = RolePermissionEntry(
-        role: 'PROFESSIONAL',
+      const entry = ModulePermissionEntry(
         module: SystemModule.appointment,
         canCreate: true,
         canUpdate: true,
@@ -84,14 +135,13 @@ void main() {
         canDelete: false,
       );
 
-      await service.updateMatrix(token: 't', entries: [entry]);
+      await service.updateUserMatrix(token: 't', userId: 'user-1', entries: [entry]);
 
       verify(
         () => dio.put(
-          baseUrl,
+          '$baseUrl/user-1',
           data: [
             {
-              'role': 'PROFESSIONAL',
               'module': 'APPOINTMENT',
               'canCreate': true,
               'canUpdate': true,
@@ -99,6 +149,24 @@ void main() {
               'canDelete': false,
             },
           ],
+          options: any(named: 'options'),
+        ),
+      ).called(1);
+    });
+  });
+
+  group('deleteProfiles', () {
+    test('DELETEs with the user ids as the body', () async {
+      when(
+        () => dio.delete(baseUrl, data: any(named: 'data'), options: any(named: 'options')),
+      ).thenAnswer((_) async => okResponse(null));
+
+      await service.deleteProfiles(token: 't', userIds: ['user-1', 'user-2']);
+
+      verify(
+        () => dio.delete(
+          baseUrl,
+          data: ['user-1', 'user-2'],
           options: any(named: 'options'),
         ),
       ).called(1);

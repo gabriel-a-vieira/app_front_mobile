@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:app_front_mobile/pages/company_detail_page.dart';
 import 'package:app_front_mobile/pages/company_form_page.dart';
 import 'package:app_front_mobile/pages/professional_management_page.dart';
-import 'package:app_front_mobile/pages/user_form_page.dart';
+import 'package:app_front_mobile/pages/user_management_page.dart';
 import 'package:app_front_mobile/pages/client_management_page.dart';
 import 'package:app_front_mobile/pages/service_offering_management_page.dart';
 import 'package:app_front_mobile/pages/availability_management_page.dart';
@@ -410,20 +410,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _openUserCreatePage() async {
-    final created = await Navigator.of(context).push<bool>(
+  Future<void> _openUserManagementPage() async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => UserFormPage(currentUserRole: _loggedUserRole ?? ''),
+        builder: (_) => UserManagementPage(currentUserRole: _loggedUserRole ?? ''),
       ),
     );
-
-    if (!mounted) return;
-
-    if (created == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuario cadastrado com sucesso')),
-      );
-    }
   }
 
   Future<void> _openClientManagementPage() async {
@@ -593,7 +585,7 @@ class _HomePageState extends State<HomePage> {
         }
 
         if (value == 'users') {
-          _openUserCreatePage();
+          _openUserManagementPage();
           return;
         }
 
@@ -640,15 +632,16 @@ class _HomePageState extends State<HomePage> {
               value: 'companies',
               child: Text('Empresas'),
             ),
+            const PopupMenuDivider(),
+          ],
+          // Permissoes e por empresa: so o COMPANY_ADMIN da propria empresa
+          // gerencia -- MASTER_ADMIN ja tem bypass total em tudo.
+          if (_isCompanyAdmin)
             const PopupMenuItem<String>(
               value: 'permissions',
               child: Text('Permissoes'),
             ),
-            const PopupMenuDivider(),
-          ],
-          // USER only has a create flow today (no list/edit/delete page yet),
-          // so it's gated by CREATE instead of LIST like the other modules.
-          if (UserPermissions.can(SystemModule.user, CrudAction.create))
+          if (UserPermissions.can(SystemModule.user, CrudAction.list))
             const PopupMenuItem<String>(
               value: 'users',
               child: Text('Usuarios'),
