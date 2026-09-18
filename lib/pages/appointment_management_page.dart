@@ -631,18 +631,31 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> {
                             onPressed: _create,
                             icon: const Icon(Icons.add),
                             label: const Text('Inserir'),
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
                         if (UserPermissions.can(SystemModule.appointment, CrudAction.update))
                           FilledButton.icon(
                             onPressed: _edit,
                             icon: const Icon(Icons.edit_outlined),
                             label: const Text('Editar'),
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
                         if (UserPermissions.can(SystemModule.appointment, CrudAction.delete))
                           FilledButton.icon(
                             onPressed: _cancel,
                             style: FilledButton.styleFrom(
                               backgroundColor: colorScheme.error,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                             icon: const Icon(Icons.cancel_outlined),
                             label: const Text('Cancelar'),
@@ -651,6 +664,11 @@ class _AppointmentManagementPageState extends State<AppointmentManagementPage> {
                           onPressed: _filtersModal,
                           icon: const Icon(Icons.tune),
                           label: const Text('Filtros'),
+                          style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         ),
                       ],
                     ),
