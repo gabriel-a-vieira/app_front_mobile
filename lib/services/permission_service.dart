@@ -203,7 +203,16 @@ class PermissionService {
     required String token,
     required List<String> userIds,
   }) async {
-    await _dio.delete(baseUrl, data: userIds, options: _auth(token));
+    await _dio.delete(
+      baseUrl,
+      data: userIds,
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
   }
 
   Future<Map<SystemModule, ModulePermission>> findMyPermissions({

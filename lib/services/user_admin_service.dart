@@ -56,7 +56,16 @@ class UserAdminService {
     required String token,
     required List<String> ids,
   }) async {
-    await _dio.delete(baseUrl, data: ids, options: _auth(token));
+    await _dio.delete(
+      baseUrl,
+      data: ids,
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
   }
 }
 

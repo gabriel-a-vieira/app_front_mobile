@@ -1,12 +1,60 @@
 import 'package:app_front_mobile/services/availability_service.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
 /// Covers the pure JSON-mapping logic in availability_service.dart
 /// (AvailabilitySummary/AvailabilityPage.fromJson) plus
 /// AvailabilitySearchFilters' pure helpers. Availability windows feed
 /// directly into the booking slot calculation on the backend, so a
 /// mapping regression here would silently show wrong working hours.
+///
+/// Also covers deleteAvailabilities' request shape: a bulk delete sends
+/// a `List<String>` body, which Dio's ImplyContentTypeInterceptor does not
+/// auto-detect as JSON (it only recognizes `Map`/`List<Map>`/`String`), so
+/// the request must set Content-Type explicitly or the backend rejects it
+/// with "Required request body is missing".
+class MockDio extends Mock implements Dio {}
+
+class FakeOptions extends Fake implements Options {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakeOptions());
+  });
+
+  group('deleteAvailabilities', () {
+    late MockDio dio;
+    late AvailabilityService service;
+
+    const baseUrl = 'http://api.test/availability';
+
+    setUp(() {
+      dio = MockDio();
+      service = AvailabilityService(dio: dio, baseUrl: baseUrl);
+    });
+
+    test('sets Content-Type: application/json explicitly on the request', () async {
+      when(
+        () => dio.delete(baseUrl, data: any(named: 'data'), options: any(named: 'options')),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: baseUrl),
+          statusCode: 204,
+        ),
+      );
+
+      await service.deleteAvailabilities(token: 't', ids: ['avail-1']);
+
+      final captured = verify(
+        () => dio.delete(baseUrl, data: any(named: 'data'), options: captureAny(named: 'options')),
+      ).captured;
+
+      final options = captured.single as Options;
+      expect(options.headers?['Content-Type'], 'application/json');
+    });
+  });
+
   group('AvailabilitySummary.fromJson', () {
     test('maps every field', () {
       final summary = AvailabilitySummary.fromJson({

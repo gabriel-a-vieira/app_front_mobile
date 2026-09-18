@@ -75,7 +75,12 @@ class ServiceOfferingService {
     await _dio.delete(
       baseUrl,
       data: ids,
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
+      options: Options(
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ),
     );
   }
 }
