@@ -736,18 +736,31 @@ class _AvailabilityManagementPageState
                             onPressed: _openCreatePage,
                             icon: const Icon(Icons.add),
                             label: const Text('Inserir'),
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
                         if (UserPermissions.can(SystemModule.availability, CrudAction.update))
                           FilledButton.icon(
                             onPressed: _openEditPage,
                             icon: const Icon(Icons.edit_outlined),
                             label: const Text('Editar'),
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
                           ),
                         if (UserPermissions.can(SystemModule.availability, CrudAction.delete))
                           FilledButton.icon(
                             onPressed: _deleteSelected,
                             style: FilledButton.styleFrom(
                               backgroundColor: colorScheme.error,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                             icon: const Icon(Icons.delete_outline),
                             label: const Text('Excluir'),
@@ -763,6 +776,11 @@ class _AvailabilityManagementPageState
                             _filters.hasAdvancedFilters
                                 ? 'Filtros aplicados'
                                 : 'Filtros',
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ],
