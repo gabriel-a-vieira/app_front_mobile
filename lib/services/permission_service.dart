@@ -25,18 +25,15 @@ class ModulePermission {
   }
 }
 
-/// One editable row of the permission matrix screen: a (role, module) pair
-/// plus its four CRUD flags.
-class RolePermissionEntry {
-  final String role;
+/// One row of a specific user's permission matrix.
+class ModulePermissionEntry {
   final SystemModule module;
   final bool canCreate;
   final bool canUpdate;
   final bool canList;
   final bool canDelete;
 
-  const RolePermissionEntry({
-    required this.role,
+  const ModulePermissionEntry({
     required this.module,
     required this.canCreate,
     required this.canUpdate,
@@ -44,9 +41,8 @@ class RolePermissionEntry {
     required this.canDelete,
   });
 
-  factory RolePermissionEntry.fromJson(Map<String, dynamic> json) {
-    return RolePermissionEntry(
-      role: json['role']?.toString() ?? '',
+  factory ModulePermissionEntry.fromJson(Map<String, dynamic> json) {
+    return ModulePermissionEntry(
       module:
           SystemModule.fromApiValue(json['module']?.toString() ?? '') ??
           SystemModule.client,
@@ -59,7 +55,6 @@ class RolePermissionEntry {
 
   Map<String, dynamic> toJson() {
     return {
-      'role': role,
       'module': module.apiValue,
       'canCreate': canCreate,
       'canUpdate': canUpdate,
@@ -68,19 +63,73 @@ class RolePermissionEntry {
     };
   }
 
-  RolePermissionEntry copyWith({
+  ModulePermissionEntry copyWith({
     bool? canCreate,
     bool? canUpdate,
     bool? canList,
     bool? canDelete,
   }) {
-    return RolePermissionEntry(
-      role: role,
+    return ModulePermissionEntry(
       module: module,
       canCreate: canCreate ?? this.canCreate,
       canUpdate: canUpdate ?? this.canUpdate,
       canList: canList ?? this.canList,
       canDelete: canDelete ?? this.canDelete,
+    );
+  }
+}
+
+/// One row of the permission cadastro's list: a user that already has a
+/// custom permission profile configured for this company.
+class PermissionProfile {
+  final String userId;
+  final String name;
+  final String email;
+  final String role;
+
+  const PermissionProfile({
+    required this.userId,
+    required this.name,
+    required this.email,
+    required this.role,
+  });
+
+  factory PermissionProfile.fromJson(Map<String, dynamic> json) {
+    return PermissionProfile(
+      userId: json['userId']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      role: json['role']?.toString() ?? '',
+    );
+  }
+}
+
+class PermissionProfilePage {
+  final List<PermissionProfile> content;
+  final int number;
+  final bool last;
+
+  PermissionProfilePage({
+    required this.content,
+    required this.number,
+    required this.last,
+  });
+
+  factory PermissionProfilePage.fromJson(Map<String, dynamic> json) {
+    final rawContent = json['content'];
+
+    return PermissionProfilePage(
+      content: rawContent is List
+          ? rawContent
+                .whereType<Map>()
+                .map(
+                  (item) =>
+                      PermissionProfile.fromJson(Map<String, dynamic>.from(item)),
+                )
+                .toList()
+          : [],
+      number: json['number'] is int ? json['number'] : 0,
+      last: json['last'] == true,
     );
   }
 }
@@ -96,8 +145,32 @@ class PermissionService {
     return Options(headers: {'Authorization': 'Bearer $token'});
   }
 
-  Future<List<RolePermissionEntry>> findMatrix({required String token}) async {
-    final response = await _dio.get(baseUrl, options: _auth(token));
+  Future<PermissionProfilePage> findProfiles({
+    required String token,
+    required int page,
+    required int size,
+    String search = '',
+  }) async {
+    final response = await _dio.get(
+      baseUrl,
+      queryParameters: {
+        'page': page,
+        'size': size,
+        if (search.isNotEmpty) 'search': search,
+      },
+      options: _auth(token),
+    );
+
+    return PermissionProfilePage.fromJson(
+      Map<String, dynamic>.from(response.data as Map),
+    );
+  }
+
+  Future<List<ModulePermissionEntry>> findUserMatrix({
+    required String token,
+    required String userId,
+  }) async {
+    final response = await _dio.get('$baseUrl/$userId', options: _auth(token));
 
     final data = response.data;
 
@@ -108,20 +181,29 @@ class PermissionService {
     return data
         .whereType<Map>()
         .map(
-          (item) => RolePermissionEntry.fromJson(Map<String, dynamic>.from(item)),
+          (item) =>
+              ModulePermissionEntry.fromJson(Map<String, dynamic>.from(item)),
         )
         .toList();
   }
 
-  Future<void> updateMatrix({
+  Future<void> updateUserMatrix({
     required String token,
-    required List<RolePermissionEntry> entries,
+    required String userId,
+    required List<ModulePermissionEntry> entries,
   }) async {
     await _dio.put(
-      baseUrl,
+      '$baseUrl/$userId',
       data: entries.map((entry) => entry.toJson()).toList(),
       options: _auth(token),
     );
+  }
+
+  Future<void> deleteProfiles({
+    required String token,
+    required List<String> userIds,
+  }) async {
+    await _dio.delete(baseUrl, data: userIds, options: _auth(token));
   }
 
   Future<Map<SystemModule, ModulePermission>> findMyPermissions({

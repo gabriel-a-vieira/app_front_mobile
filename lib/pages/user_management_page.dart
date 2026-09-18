@@ -1,27 +1,27 @@
 import 'package:app_front_mobile/config/api_config.dart';
-import 'package:app_front_mobile/pages/permission_form_page.dart';
-import 'package:app_front_mobile/services/permission_service.dart';
+import 'package:app_front_mobile/models/system_module.dart';
+import 'package:app_front_mobile/pages/user_form_page.dart';
+import 'package:app_front_mobile/services/user_admin_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
+import 'package:app_front_mobile/utils/user_permissions.dart';
 import 'package:app_front_mobile/widgets/common/async_list_section.dart';
 import 'package:flutter/material.dart';
 
-/// COMPANY_ADMIN-only cadastro: which users of this company have a custom
-/// permission profile configured, following the same visual pattern as
-/// ClientManagementPage/ProfessionalManagementPage/ServiceOfferingManagementPage.
-class PermissionManagementPage extends StatefulWidget {
-  const PermissionManagementPage({super.key});
+class UserManagementPage extends StatefulWidget {
+  final String currentUserRole;
+
+  const UserManagementPage({super.key, required this.currentUserRole});
 
   @override
-  State<PermissionManagementPage> createState() =>
-      _PermissionManagementPageState();
+  State<UserManagementPage> createState() => _UserManagementPageState();
 }
 
-class _PermissionManagementPageState extends State<PermissionManagementPage> {
-  final _permissionService = PermissionService(
-    baseUrl: '${ApiConfig.baseUrl}/permission',
+class _UserManagementPageState extends State<UserManagementPage> {
+  final _userAdminService = UserAdminService(
+    baseUrl: '${ApiConfig.baseUrl}/users',
   );
 
   final _tokenStorage = TokenStorage();
@@ -29,7 +29,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
 
   final Set<String> _selectedIds = {};
 
-  List<PermissionProfile> _profiles = [];
+  List<UserSummary> _users = [];
 
   bool _loading = true;
   bool _loadingMore = false;
@@ -42,7 +42,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
   @override
   void initState() {
     super.initState();
-    _loadProfiles();
+    _loadUsers();
   }
 
   @override
@@ -61,7 +61,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
     return token;
   }
 
-  Future<void> _loadProfiles() async {
+  Future<void> _loadUsers() async {
     setState(() {
       _loading = true;
       _error = null;
@@ -73,7 +73,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
     try {
       final token = await _getToken();
 
-      final result = await _permissionService.findProfiles(
+      final result = await _userAdminService.findAll(
         token: token,
         page: 0,
         size: _size,
@@ -83,7 +83,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
       if (!mounted) return;
 
       setState(() {
-        _profiles = result.content;
+        _users = result.content;
         _page = result.number;
         _last = result.last;
         _loading = false;
@@ -98,7 +98,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
     }
   }
 
-  Future<void> _loadMoreProfiles() async {
+  Future<void> _loadMoreUsers() async {
     if (_loadingMore || _last) return;
 
     setState(() {
@@ -108,7 +108,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
     try {
       final token = await _getToken();
 
-      final result = await _permissionService.findProfiles(
+      final result = await _userAdminService.findAll(
         token: token,
         page: _page + 1,
         size: _size,
@@ -118,7 +118,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
       if (!mounted) return;
 
       setState(() {
-        _profiles.addAll(result.content);
+        _users.addAll(result.content);
         _page = result.number;
         _last = result.last;
         _loadingMore = false;
@@ -134,14 +134,16 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
   }
 
   Future<void> _openCreatePage() async {
-    final created = await Navigator.of(
-      context,
-    ).push<bool>(MaterialPageRoute(builder: (_) => const PermissionFormPage()));
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => UserFormPage(currentUserRole: widget.currentUserRole),
+      ),
+    );
 
     if (!mounted) return;
 
     if (created == true) {
-      await _loadProfiles();
+      await _loadUsers();
     }
   }
 
@@ -157,22 +159,24 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
     }
 
     final userId = _selectedIds.first;
-    final profile = _profiles.firstWhere((item) => item.userId == userId);
 
     final updated = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => PermissionFormPage(profile: profile),
+        builder: (_) => UserFormPage(
+          currentUserRole: widget.currentUserRole,
+          userId: userId,
+        ),
       ),
     );
 
     if (!mounted) return;
 
     if (updated == true) {
-      await _loadProfiles();
+      await _loadUsers();
     }
   }
 
-  Future<void> _deleteSelectedProfiles() async {
+  Future<void> _deleteSelectedUsers() async {
     if (_selectedIds.isEmpty) {
       AppMessage.info(context, 'Selecione um ou mais usuarios para excluir');
       return;
@@ -187,11 +191,11 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
 
         return AlertDialog(
           backgroundColor: isDark ? AppColors.darkSurfaceElevated : null,
-          title: const Text('Excluir permissoes'),
+          title: const Text('Excluir usuarios'),
           content: Text(
             _selectedIds.length == 1
-                ? 'Deseja realmente remover o perfil de permissoes selecionado? O usuario voltara a ter acesso total por padrao.'
-                : 'Deseja realmente remover os perfis de permissoes selecionados? Os usuarios voltarao a ter acesso total por padrao.',
+                ? 'Deseja realmente excluir o usuario selecionado?'
+                : 'Deseja realmente excluir os usuarios selecionados?',
           ),
           actions: [
             TextButton(
@@ -216,26 +220,28 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
     try {
       final token = await _getToken();
 
-      await _permissionService.deleteProfiles(
+      await _userAdminService.deleteUsers(
         token: token,
-        userIds: _selectedIds.toList(),
+        ids: _selectedIds.toList(),
       );
 
       if (!mounted) return;
 
-      AppMessage.success(context, 'Permissoes removidas com sucesso');
-      await _loadProfiles();
+      AppMessage.success(context, 'Usuario excluido com sucesso');
+      await _loadUsers();
     } catch (e) {
       if (!mounted) return;
 
-      AppMessage.apiError(context, e, fallback: 'Erro ao excluir permissoes.');
+      AppMessage.apiError(context, e, fallback: 'Erro ao excluir usuario.');
     }
   }
 
   String _roleLabel(String role) {
     return switch (role.toUpperCase()) {
+      'MASTER_ADMIN' => 'Administrador da plataforma',
       'COMPANY_ADMIN' => 'Administrador da empresa',
       'PROFESSIONAL' => 'Profissional',
+      'CLIENT' => 'Cliente',
       _ => role,
     };
   }
@@ -255,7 +261,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
         color: colorScheme.onSurface.withOpacity(0.65),
       ),
       suffixIcon: IconButton(
-        onPressed: _loadProfiles,
+        onPressed: _loadUsers,
         icon: const Icon(Icons.arrow_forward),
       ),
       enabledBorder: OutlineInputBorder(
@@ -304,7 +310,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Permissoes',
+                'Usuarios',
                 style: TextStyle(
                   color: colorScheme.onSurface,
                   fontSize: 24,
@@ -313,7 +319,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Defina o que cada usuario da empresa pode fazer em cada modulo',
+                'Gerencie os usuarios cadastrados no sistema',
                 style: TextStyle(
                   color: colorScheme.onSurface.withOpacity(0.65),
                   fontSize: 14,
@@ -327,22 +333,25 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
           spacing: 10,
           runSpacing: 10,
           children: [
-            _buildActionButton(
-              label: 'Inserir',
-              icon: Icons.add,
-              onPressed: _openCreatePage,
-            ),
-            _buildActionButton(
-              label: 'Editar',
-              icon: Icons.edit_outlined,
-              onPressed: _openEditPage,
-            ),
-            _buildActionButton(
-              label: 'Excluir',
-              icon: Icons.delete_outline,
-              danger: true,
-              onPressed: _deleteSelectedProfiles,
-            ),
+            if (UserPermissions.can(SystemModule.user, CrudAction.create))
+              _buildActionButton(
+                label: 'Inserir',
+                icon: Icons.add,
+                onPressed: _openCreatePage,
+              ),
+            if (UserPermissions.can(SystemModule.user, CrudAction.update))
+              _buildActionButton(
+                label: 'Editar',
+                icon: Icons.edit_outlined,
+                onPressed: _openEditPage,
+              ),
+            if (UserPermissions.can(SystemModule.user, CrudAction.delete))
+              _buildActionButton(
+                label: 'Excluir',
+                icon: Icons.delete_outline,
+                danger: true,
+                onPressed: _deleteSelectedUsers,
+              ),
           ],
         ),
       ],
@@ -352,7 +361,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
   Widget _buildSearch() {
     return TextField(
       controller: _searchController,
-      onSubmitted: (_) => _loadProfiles(),
+      onSubmitted: (_) => _loadUsers(),
       decoration: _inputDecoration(hint: 'Buscar por nome ou email'),
     );
   }
@@ -361,16 +370,16 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
     return AsyncListSection(
       loading: _loading,
       hasError: _error != null,
-      errorLabel: 'Erro ao buscar permissoes',
-      onRetry: _loadProfiles,
-      content: _buildProfilesGrid(),
+      errorLabel: 'Erro ao buscar usuarios',
+      onRetry: _loadUsers,
+      content: _buildUsersGrid(),
       hasMore: !_last,
       loadingMore: _loadingMore,
-      onLoadMore: _loadMoreProfiles,
+      onLoadMore: _loadMoreUsers,
     );
   }
 
-  Widget _buildProfilesGrid() {
+  Widget _buildUsersGrid() {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -386,10 +395,10 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
         child: Column(
           children: [
             _buildGridHeader(),
-            if (_profiles.isEmpty)
+            if (_users.isEmpty)
               _buildEmptyGridState()
             else
-              ..._profiles.map(_buildGridRow),
+              ..._users.map(_buildGridRow),
           ],
         ),
       ),
@@ -400,10 +409,9 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final allSelected =
-        _profiles.isNotEmpty && _selectedIds.length == _profiles.length;
+    final allSelected = _users.isNotEmpty && _selectedIds.length == _users.length;
     final partiallySelected =
-        _selectedIds.isNotEmpty && _selectedIds.length < _profiles.length;
+        _selectedIds.isNotEmpty && _selectedIds.length < _users.length;
 
     return Container(
       height: 54,
@@ -423,14 +431,14 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
             child: Checkbox(
               tristate: true,
               value: partiallySelected ? null : allSelected,
-              onChanged: _profiles.isEmpty
+              onChanged: _users.isEmpty
                   ? null
                   : (value) {
                       setState(() {
                         if (value == true) {
                           _selectedIds
                             ..clear()
-                            ..addAll(_profiles.map((item) => item.userId));
+                            ..addAll(_users.map((item) => item.id));
                         } else {
                           _selectedIds.clear();
                         }
@@ -446,17 +454,17 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
     );
   }
 
-  Widget _buildGridRow(PermissionProfile profile) {
+  Widget _buildGridRow(UserSummary user) {
     final colorScheme = Theme.of(context).colorScheme;
-    final selected = _selectedIds.contains(profile.userId);
+    final selected = _selectedIds.contains(user.id);
 
     return InkWell(
       onTap: () {
         setState(() {
           if (selected) {
-            _selectedIds.remove(profile.userId);
+            _selectedIds.remove(user.id);
           } else {
-            _selectedIds.add(profile.userId);
+            _selectedIds.add(user.id);
           }
         });
       },
@@ -478,17 +486,17 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
                 onChanged: (value) {
                   setState(() {
                     if (value == true) {
-                      _selectedIds.add(profile.userId);
+                      _selectedIds.add(user.id);
                     } else {
-                      _selectedIds.remove(profile.userId);
+                      _selectedIds.remove(user.id);
                     }
                   });
                 },
               ),
             ),
-            _buildBodyCell(profile.name, flex: 3),
-            _buildBodyCell(profile.email, flex: 3),
-            _buildBodyCell(_roleLabel(profile.role), flex: 2),
+            _buildBodyCell(user.name, flex: 3),
+            _buildBodyCell(user.email, flex: 3),
+            _buildBodyCell(_roleLabel(user.role), flex: 2),
           ],
         ),
       ),
@@ -538,13 +546,13 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
       child: Column(
         children: [
           Icon(
-            Icons.admin_panel_settings_outlined,
+            Icons.people_alt_outlined,
             color: colorScheme.onSurface.withOpacity(0.45),
             size: 52,
           ),
           const SizedBox(height: 14),
           Text(
-            'Nenhuma permissao configurada',
+            'Nenhum usuario encontrado',
             style: TextStyle(
               color: colorScheme.onSurface,
               fontSize: 17,
@@ -553,7 +561,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Insira um perfil de permissoes para um usuario da empresa',
+            'Cadastre um novo usuario ou ajuste a busca',
             style: TextStyle(
               color: colorScheme.onSurface.withOpacity(0.6),
               fontSize: 14,
@@ -567,7 +575,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Administracao de permissoes')),
+      appBar: AppBar(title: const Text('Administracao de usuarios')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(
