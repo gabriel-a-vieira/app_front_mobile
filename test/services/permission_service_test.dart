@@ -171,6 +171,28 @@ void main() {
         ),
       ).called(1);
     });
+
+    test('sets Content-Type: application/json explicitly on the request', () async {
+      // Regression test: a List<String> body isn't recognized by Dio's
+      // ImplyContentTypeInterceptor (it only auto-detects Map/List<Map>/
+      // String), so without an explicit header the interceptor leaves
+      // Content-Type unset, Dio falls back to `data.toString()` instead of
+      // JSON-encoding the list, and the backend rejects the request with
+      // "Required request body is missing" because no HttpMessageConverter
+      // can read a body with no matching content type.
+      when(
+        () => dio.delete(baseUrl, data: any(named: 'data'), options: any(named: 'options')),
+      ).thenAnswer((_) async => okResponse(null));
+
+      await service.deleteProfiles(token: 't', userIds: ['user-1']);
+
+      final captured = verify(
+        () => dio.delete(baseUrl, data: any(named: 'data'), options: captureAny(named: 'options')),
+      ).captured;
+
+      final options = captured.single as Options;
+      expect(options.headers?['Content-Type'], 'application/json');
+    });
   });
 
   group('findMyPermissions', () {
