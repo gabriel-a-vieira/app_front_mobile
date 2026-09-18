@@ -4,6 +4,8 @@ import 'package:app_front_mobile/services/state_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
+import 'package:app_front_mobile/widgets/city_lookup_modal.dart';
+import 'package:app_front_mobile/widgets/state_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/services/company_lookup_service.dart';
@@ -59,9 +61,12 @@ class _ClientFormPageState extends State<ClientFormPage> {
   final _neighborhoodController = TextEditingController();
   final _additionalNotesController = TextEditingController();
   final _companyController = TextEditingController();
+  final _stateCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
 
   bool _loading = true;
   bool _saving = false;
+  bool _loadingCities = false;
 
   DateTime? _selectedBirthDate;
 
@@ -71,7 +76,6 @@ class _ClientFormPageState extends State<ClientFormPage> {
 
   List<String> _paymentMethods = [];
   List<StateOption> _states = [];
-  List<CityOption> _cities = [];
 
   StateOption? _selectedState;
   CityOption? _selectedCity;
@@ -96,6 +100,8 @@ class _ClientFormPageState extends State<ClientFormPage> {
     _neighborhoodController.dispose();
     _additionalNotesController.dispose();
     _companyController.dispose();
+    _stateCtrl.dispose();
+    _cityCtrl.dispose();
 
     super.dispose();
   }
@@ -186,6 +192,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
 
       if (state != null) {
         _selectedState = state;
+        _stateCtrl.text = state.label;
         await _loadCitiesByState(
           state.abbreviation,
           selectedCityId: client.cityId,
@@ -204,8 +211,8 @@ class _ClientFormPageState extends State<ClientFormPage> {
     return null;
   }
 
-  CityOption? _findCityById(String id) {
-    for (final city in _cities) {
+  CityOption? _findCityById(List<CityOption> cities, String id) {
+    for (final city in cities) {
       if (city.id == id) {
         return city;
       }
@@ -218,16 +225,35 @@ class _ClientFormPageState extends State<ClientFormPage> {
     String state, {
     String? selectedCityId,
   }) async {
-    final cities = await _cityService.findByState(state: state);
-
-    if (!mounted) return;
+    if (state.isEmpty) return;
 
     setState(() {
-      _cities = cities;
-      _selectedCity = selectedCityId != null && selectedCityId.isNotEmpty
-          ? _findCityById(selectedCityId)
-          : null;
+      _loadingCities = true;
+      _selectedCity = null;
+      _cityCtrl.clear();
     });
+
+    try {
+      final cities = await _cityService.findByState(state: state);
+
+      if (!mounted) return;
+
+      setState(() {
+        _selectedCity = selectedCityId != null && selectedCityId.isNotEmpty
+            ? _findCityById(cities, selectedCityId)
+            : null;
+        _cityCtrl.text = _selectedCity?.name ?? '';
+        _loadingCities = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingCities = false;
+      });
+
+      AppMessage.apiError(context, e, fallback: 'Erro ao carregar cidades.');
+    }
   }
 
   Future<void> _openCompanyZoom() async {
@@ -482,30 +508,74 @@ class _ClientFormPageState extends State<ClientFormPage> {
     );
   }
 
-  Widget _buildStateDropdown() {
-    return DropdownButtonFormField<StateOption>(
-      value: _selectedState,
-      decoration: _inputDecoration(label: 'UF'),
-      items: _states.map((state) {
-        return DropdownMenuItem<StateOption>(
-          value: state,
-          child: Text(state.label),
-        );
-      }).toList(),
-      onChanged: (state) async {
-        if (state == null) return;
+  Future<void> _selectState() async {
+    final selected = await StateLookupModal.show(
+      context: context,
+      states: _states,
+      selectedState: _selectedState,
+    );
 
-        setState(() {
-          _selectedState = state;
-          _selectedCity = null;
-          _cities = [];
-        });
+    if (selected == null || !mounted) {
+      return;
+    }
 
-        await _loadCitiesByState(state.abbreviation);
-      },
-      validator: (value) {
-        if (value == null) {
-          return 'UF e obrigatorio';
+    final changedState =
+        _selectedState?.abbreviation.toUpperCase() !=
+        selected.abbreviation.toUpperCase();
+
+    setState(() {
+      _selectedState = selected;
+      _stateCtrl.text = selected.label;
+    });
+
+    if (changedState) {
+      await _loadCitiesByState(selected.abbreviation);
+    }
+  }
+
+  Future<void> _selectCity() async {
+    final state = _selectedState;
+
+    if (state == null) {
+      AppMessage.info(context, 'Selecione primeiro a UF.');
+
+      return;
+    }
+
+    final selected = await CityLookupModal.show(
+      context: context,
+      service: _cityService,
+      state: state,
+      selectedCity: _selectedCity,
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _selectedCity = selected;
+      _cityCtrl.text = selected.name;
+    });
+  }
+
+  Widget _buildStateField() {
+    return TextFormField(
+      controller: _stateCtrl,
+      readOnly: true,
+      onTap: _selectState,
+      decoration: _inputDecoration(
+        label: 'UF',
+        hint: 'Selecione a UF',
+        suffixIcon: IconButton(
+          tooltip: 'Selecionar UF',
+          onPressed: _selectState,
+          icon: const Icon(Icons.search),
+        ),
+      ),
+      validator: (_) {
+        if (_selectedState == null || _selectedState!.abbreviation.isEmpty) {
+          return 'UF e obrigatoria';
         }
 
         return null;
@@ -513,23 +583,26 @@ class _ClientFormPageState extends State<ClientFormPage> {
     );
   }
 
-  Widget _buildCityDropdown() {
-    return DropdownButtonFormField<CityOption>(
-      value: _selectedCity,
-      decoration: _inputDecoration(label: 'Cidade'),
-      items: _cities.map((city) {
-        return DropdownMenuItem<CityOption>(
-          value: city,
-          child: Text(city.name),
-        );
-      }).toList(),
-      onChanged: (city) {
-        setState(() {
-          _selectedCity = city;
-        });
-      },
-      validator: (value) {
-        if (value == null) {
+  Widget _buildCityField() {
+    return TextFormField(
+      controller: _cityCtrl,
+      readOnly: true,
+      onTap: _selectCity,
+      decoration: _inputDecoration(
+        label: 'Cidade',
+        hint: _selectedState == null
+            ? 'Selecione uma UF primeiro'
+            : _loadingCities
+            ? 'Carregando cidades...'
+            : 'Selecione a cidade',
+        suffixIcon: IconButton(
+          tooltip: 'Selecionar cidade',
+          onPressed: _selectedState == null ? null : _selectCity,
+          icon: const Icon(Icons.search),
+        ),
+      ),
+      validator: (_) {
+        if (_selectedCity == null || _selectedCity!.id.isEmpty) {
           return 'Cidade e obrigatoria';
         }
 
@@ -756,8 +829,8 @@ class _ClientFormPageState extends State<ClientFormPage> {
                     label: 'Complemento',
                   ),
                 ),
-                SizedBox(width: width, child: _buildStateDropdown()),
-                SizedBox(width: width, child: _buildCityDropdown()),
+                SizedBox(width: width, child: _buildStateField()),
+                SizedBox(width: width, child: _buildCityField()),
                 SizedBox(
                   width: constraints.maxWidth,
                   child: _buildTextField(
