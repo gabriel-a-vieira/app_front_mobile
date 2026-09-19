@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/test_app.dart';
+
 /// Regression coverage for the UF/Cidade fields: ClientFormPage used to be
 /// the only cadastro form using a plain DropdownButtonFormField for UF and
 /// Cidade, while every other form (e.g. ProfessionalFormPage) opens the
@@ -39,10 +41,10 @@ void main() {
   testWidgets(
     'UF and Cidade are search fields that open the shared lookup modal, not dropdowns',
     (tester) async {
+      await useDesktopTestSurface(tester);
+
       await tester.pumpWidget(
-        const MaterialApp(
-          home: ClientFormPage(currentUserRole: 'COMPANY_ADMIN'),
-        ),
+        testApp(const ClientFormPage(currentUserRole: 'COMPANY_ADMIN')),
       );
 
       // _loadInitialData() also calls StateService/ClientService for real

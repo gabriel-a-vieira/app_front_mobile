@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 
 class CompanyFormPage extends StatefulWidget {
   final String? companyId;
@@ -924,10 +925,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEdit ? 'Editar Empresa' : 'Cadastro de Empresa'),
-      ),
+    return AppScaffold(
       body: _loadingInitial
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -938,7 +936,17 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                   child: Form(
                     key: _formKey,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          widget.isEdit ? 'Editar Empresa' : 'Cadastro de Empresa',
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 22),
                         _buildFormCard(
                           title: 'Dados principais',
                           children: [

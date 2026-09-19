@@ -8,6 +8,7 @@ import 'package:app_front_mobile/utils/api_error_handler.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/user_permissions.dart';
 import 'package:app_front_mobile/widgets/common/async_list_section.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 
 class UserManagementPage extends StatefulWidget {
@@ -574,8 +575,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Administracao de usuarios')),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(

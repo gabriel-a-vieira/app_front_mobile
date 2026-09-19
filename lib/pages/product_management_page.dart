@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/models/system_module.dart';
 import 'package:app_front_mobile/utils/user_permissions.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 
 class ProductManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -889,8 +890,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Administracao de produtos')),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(

@@ -12,6 +12,7 @@ import 'package:app_front_mobile/utils/api_error_handler.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
 import 'package:app_front_mobile/models/system_module.dart';
 import 'package:app_front_mobile/utils/user_permissions.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 
 class AvailabilityManagementPage extends StatefulWidget {
   final String currentUserRole;
@@ -694,8 +695,7 @@ class _AvailabilityManagementPageState
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Administracao de disponibilidade')),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 
 /// Parses a "HH:mm" (or "HH:mm:ss") API time string into a [TimeOfDay],
 /// returning null when the value is malformed instead of throwing.
@@ -459,6 +460,17 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            widget.isEditing
+                ? 'Editar disponibilidade'
+                : 'Cadastrar disponibilidade',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 22),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
@@ -532,14 +544,7 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isEditing
-              ? 'Editar disponibilidade'
-              : 'Cadastrar disponibilidade',
-        ),
-      ),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(

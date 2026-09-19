@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/test_app.dart';
+
 /// Regression coverage for the toolbar buttons: Inserir/Editar/Excluir/
 /// Filtros used to render with Material 3's default fully-rounded
 /// (StadiumBorder) shape because no explicit `shape` was set, while every
@@ -44,9 +46,11 @@ void main() {
   testWidgets(
     'Inserir, Editar, Excluir and Filtros use a square 8px-radius shape',
     (tester) async {
+      await useDesktopTestSurface(tester);
+
       await tester.pumpWidget(
-        const MaterialApp(
-          home: AvailabilityManagementPage(currentUserRole: 'COMPANY_ADMIN'),
+        testApp(
+          const AvailabilityManagementPage(currentUserRole: 'COMPANY_ADMIN'),
         ),
       );
       await tester.pump();
