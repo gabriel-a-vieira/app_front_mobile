@@ -1,5 +1,9 @@
 import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
+import 'package:app_front_mobile/services/client_lookup_service.dart';
+import 'package:app_front_mobile/widgets/client_lookup_modal.dart';
+import 'package:app_front_mobile/services/professional_lookup_service.dart';
+import 'package:app_front_mobile/widgets/professional_lookup_modal.dart';
 import 'package:app_front_mobile/services/user_admin_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:flutter/material.dart';
@@ -40,10 +44,20 @@ class _UserFormPageState extends State<UserFormPage> {
     baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
   );
 
+  final _clientLookupService = ClientLookupService(
+    baseUrl: '${ApiConfig.baseUrl}/client',
+  );
+
+  final _professionalLookupService = ProfessionalLookupService(
+    baseUrl: '${ApiConfig.baseUrl}/professional',
+  );
+
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _companyCtrl = TextEditingController();
+  final _linkedClientCtrl = TextEditingController();
+  final _linkedProfessionalCtrl = TextEditingController();
 
   bool _loading = false;
   bool _loadingData = false;
@@ -52,6 +66,9 @@ class _UserFormPageState extends State<UserFormPage> {
   String _selectedRole = 'CLIENT';
 
   CompanyLookupOption? _selectedCompany;
+  ClientLookupOption? _selectedClient;
+  ProfessionalLookupOption? _selectedProfessional;
+  bool _autoCreateLinkedRecord = false;
 
   final List<String> _roleOptions = ['COMPANY_ADMIN', 'CLIENT', 'PROFESSIONAL'];
 
@@ -70,6 +87,8 @@ class _UserFormPageState extends State<UserFormPage> {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _companyCtrl.dispose();
+    _linkedClientCtrl.dispose();
+    _linkedProfessionalCtrl.dispose();
 
     super.dispose();
   }
@@ -104,6 +123,26 @@ class _UserFormPageState extends State<UserFormPage> {
         _emailCtrl.text = user.email;
         _selectedRole = user.role;
         _loadingData = false;
+
+        if (user.clientId.isNotEmpty) {
+          _selectedClient = ClientLookupOption(
+            id: user.clientId,
+            name: user.clientName,
+            cpfCnpj: '',
+            companyId: '',
+          );
+          _linkedClientCtrl.text = user.clientName;
+        }
+
+        if (user.professionalId.isNotEmpty) {
+          _selectedProfessional = ProfessionalLookupOption(
+            id: user.professionalId,
+            name: user.professionalName,
+            cpfCnpj: '',
+            companyId: '',
+          );
+          _linkedProfessionalCtrl.text = user.professionalName;
+        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -133,6 +172,56 @@ class _UserFormPageState extends State<UserFormPage> {
     });
   }
 
+  Future<void> _openClientZoom() async {
+    final token = await _tokenStorage.getAccessToken();
+
+    final client = await ClientLookupModal.show(
+      context: context,
+      token: token ?? '',
+      service: _clientLookupService,
+    );
+
+    if (client == null) return;
+
+    setState(() {
+      _selectedClient = client;
+      _linkedClientCtrl.text = client.name;
+      _autoCreateLinkedRecord = false;
+    });
+  }
+
+  void _clearClientLink() {
+    setState(() {
+      _selectedClient = null;
+      _linkedClientCtrl.clear();
+    });
+  }
+
+  Future<void> _openProfessionalZoom() async {
+    final token = await _tokenStorage.getAccessToken();
+
+    final professional = await ProfessionalLookupModal.show(
+      context: context,
+      token: token ?? '',
+      service: _professionalLookupService,
+    );
+
+    if (professional == null) return;
+
+    setState(() {
+      _selectedProfessional = professional;
+      _linkedProfessionalCtrl.text = professional.name;
+      _autoCreateLinkedRecord = false;
+    });
+  }
+
+  void _clearProfessionalLink() {
+    setState(() {
+      _selectedProfessional = null;
+      _linkedProfessionalCtrl.clear();
+    });
+  }
+
   Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
 
@@ -158,6 +247,11 @@ class _UserFormPageState extends State<UserFormPage> {
           password: _passwordCtrl.text.trim().isEmpty
               ? null
               : _passwordCtrl.text.trim(),
+          clientId: _selectedRole == 'CLIENT' ? _selectedClient?.id : null,
+          professionalId: _selectedRole == 'PROFESSIONAL'
+              ? _selectedProfessional?.id
+              : null,
+          autoCreateLinkedRecord: _autoCreateLinkedRecord,
         );
 
         await _userAdminService.update(
@@ -172,6 +266,11 @@ class _UserFormPageState extends State<UserFormPage> {
           password: _passwordCtrl.text.trim(),
           role: _selectedRole,
           companyId: widget.isMasterAdmin ? _selectedCompany?.id : null,
+          clientId: _selectedRole == 'CLIENT' ? _selectedClient?.id : null,
+          professionalId: _selectedRole == 'PROFESSIONAL'
+              ? _selectedProfessional?.id
+              : null,
+          autoCreateLinkedRecord: _autoCreateLinkedRecord,
         );
 
         await _userAdminService.createUser(token: token, request: request);
@@ -290,6 +389,20 @@ class _UserFormPageState extends State<UserFormPage> {
 
         setState(() {
           _selectedRole = value;
+
+          if (_selectedRole != 'CLIENT') {
+            _selectedClient = null;
+            _linkedClientCtrl.clear();
+          }
+
+          if (_selectedRole != 'PROFESSIONAL') {
+            _selectedProfessional = null;
+            _linkedProfessionalCtrl.clear();
+          }
+
+          if (_selectedRole != 'CLIENT' && _selectedRole != 'PROFESSIONAL') {
+            _autoCreateLinkedRecord = false;
+          }
         });
       },
     );
@@ -321,6 +434,88 @@ class _UserFormPageState extends State<UserFormPage> {
         icon: const Icon(Icons.search),
       ),
     );
+  }
+
+  Widget _buildLinkedEntityField() {
+    if (_selectedRole == 'CLIENT') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTextField(
+            controller: _linkedClientCtrl,
+            label: 'Cliente vinculado',
+            hint: 'Selecione um cliente existente (opcional)',
+            readOnly: true,
+            onTap: _openClientZoom,
+            suffixIcon: _selectedClient != null
+                ? IconButton(
+                    onPressed: _clearClientLink,
+                    icon: const Icon(Icons.close),
+                  )
+                : IconButton(
+                    onPressed: _openClientZoom,
+                    icon: const Icon(Icons.search),
+                  ),
+          ),
+          CheckboxListTile(
+            value: _autoCreateLinkedRecord,
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'Cliente ainda nao existe - criar automaticamente',
+            ),
+            onChanged: _selectedClient != null
+                ? null
+                : (value) {
+                    setState(() {
+                      _autoCreateLinkedRecord = value ?? false;
+                    });
+                  },
+          ),
+        ],
+      );
+    }
+
+    if (_selectedRole == 'PROFESSIONAL') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTextField(
+            controller: _linkedProfessionalCtrl,
+            label: 'Profissional vinculado',
+            hint: 'Selecione um profissional existente (opcional)',
+            readOnly: true,
+            onTap: _openProfessionalZoom,
+            suffixIcon: _selectedProfessional != null
+                ? IconButton(
+                    onPressed: _clearProfessionalLink,
+                    icon: const Icon(Icons.close),
+                  )
+                : IconButton(
+                    onPressed: _openProfessionalZoom,
+                    icon: const Icon(Icons.search),
+                  ),
+          ),
+          CheckboxListTile(
+            value: _autoCreateLinkedRecord,
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'Profissional ainda nao existe - criar automaticamente',
+            ),
+            onChanged: _selectedProfessional != null
+                ? null
+                : (value) {
+                    setState(() {
+                      _autoCreateLinkedRecord = value ?? false;
+                    });
+                  },
+          ),
+        ],
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 
   Widget _buildFormCard() {
@@ -407,6 +602,10 @@ class _UserFormPageState extends State<UserFormPage> {
                 SizedBox(width: width, child: _buildRoleDropdown()),
                 if (!widget.isEditing && widget.isMasterAdmin)
                   SizedBox(width: width, child: _buildCompanyField()),
+                SizedBox(
+                  width: constraints.maxWidth,
+                  child: _buildLinkedEntityField(),
+                ),
               ],
             );
           },

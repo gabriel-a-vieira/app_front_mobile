@@ -209,6 +209,9 @@ class ClientSummary {
   final String cityId;
   final String city;
   final String state;
+  final String userId;
+  final String userName;
+  final String userEmail;
 
   ClientSummary({
     required this.id,
@@ -230,6 +233,9 @@ class ClientSummary {
     required this.cityId,
     required this.city,
     required this.state,
+    this.userId = '',
+    this.userName = '',
+    this.userEmail = '',
   });
 
   factory ClientSummary.fromJson(Map json) {
@@ -253,6 +259,9 @@ class ClientSummary {
       cityId: json['cityId']?.toString() ?? '',
       city: json['city']?.toString() ?? '',
       state: json['state']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
+      userName: json['userName']?.toString() ?? '',
+      userEmail: json['userEmail']?.toString() ?? '',
     );
   }
 }
@@ -275,6 +284,7 @@ class ClientRequest {
   final String complement;
   final String neighborhood;
   final String companyId;
+  final String? userId;
 
   ClientRequest({
     required this.name,
@@ -294,6 +304,7 @@ class ClientRequest {
     required this.complement,
     required this.neighborhood,
     required this.companyId,
+    this.userId,
   });
 
   Map<String, dynamic> toJson() {
@@ -308,6 +319,7 @@ class ClientRequest {
       'additionalNotes': additionalNotes,
       'status': status,
       if (companyId.isNotEmpty) 'companyId': companyId,
+      'userId': userId,
       'address': {
         'street': street,
         'number': number,

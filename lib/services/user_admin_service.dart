@@ -99,12 +99,20 @@ class UserSummary {
   final String name;
   final String email;
   final String role;
+  final String clientId;
+  final String clientName;
+  final String professionalId;
+  final String professionalName;
 
   UserSummary({
     required this.id,
     required this.name,
     required this.email,
     required this.role,
+    this.clientId = '',
+    this.clientName = '',
+    this.professionalId = '',
+    this.professionalName = '',
   });
 
   factory UserSummary.fromJson(Map<String, dynamic> json) {
@@ -113,6 +121,10 @@ class UserSummary {
       name: json['name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       role: json['role']?.toString() ?? '',
+      clientId: json['clientId']?.toString() ?? '',
+      clientName: json['clientName']?.toString() ?? '',
+      professionalId: json['professionalId']?.toString() ?? '',
+      professionalName: json['professionalName']?.toString() ?? '',
     );
   }
 }
@@ -123,6 +135,9 @@ class CreateUserRequest {
   final String password;
   final String role;
   final String? companyId;
+  final String? clientId;
+  final String? professionalId;
+  final bool autoCreateLinkedRecord;
 
   CreateUserRequest({
     required this.name,
@@ -130,6 +145,9 @@ class CreateUserRequest {
     required this.password,
     required this.role,
     this.companyId,
+    this.clientId,
+    this.professionalId,
+    this.autoCreateLinkedRecord = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -139,6 +157,9 @@ class CreateUserRequest {
       'password': password,
       'role': role,
       if (companyId != null && companyId!.isNotEmpty) 'companyId': companyId,
+      'clientId': clientId,
+      'professionalId': professionalId,
+      'autoCreateLinkedRecord': autoCreateLinkedRecord,
     };
   }
 }
@@ -148,12 +169,18 @@ class UpdateUserRequest {
   final String email;
   final String role;
   final String? password;
+  final String? clientId;
+  final String? professionalId;
+  final bool autoCreateLinkedRecord;
 
   UpdateUserRequest({
     required this.name,
     required this.email,
     required this.role,
     this.password,
+    this.clientId,
+    this.professionalId,
+    this.autoCreateLinkedRecord = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -162,6 +189,9 @@ class UpdateUserRequest {
       'email': email,
       'role': role,
       if (password != null && password!.isNotEmpty) 'password': password,
+      'clientId': clientId,
+      'professionalId': professionalId,
+      'autoCreateLinkedRecord': autoCreateLinkedRecord,
     };
   }
 }
