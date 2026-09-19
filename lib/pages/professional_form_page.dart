@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/services/user_lookup_service.dart';
+import 'package:app_front_mobile/widgets/user_lookup_modal.dart';
 
 class ProfessionalFormPage extends StatefulWidget {
   final String? professionalId;
@@ -35,6 +37,10 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
 
   final _cityService = CityService(baseUrl: '${ApiConfig.baseUrl}/city');
 
+  final _userLookupService = UserLookupService(
+    baseUrl: '${ApiConfig.baseUrl}/users',
+  );
+
   final _tokenStorage = TokenStorage();
 
   final _nameCtrl = TextEditingController();
@@ -49,6 +55,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
   final _complementCtrl = TextEditingController();
   final _stateCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
+  final _linkedUserCtrl = TextEditingController();
 
   bool _loading = false;
   bool _loadingData = false;
@@ -57,6 +64,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
 
   StateOption? _selectedState;
   CityOption? _selectedCity;
+  UserLookupOption? _selectedUser;
 
   List<StateOption> _states = [];
 
@@ -87,6 +95,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     _complementCtrl.dispose();
     _stateCtrl.dispose();
     _cityCtrl.dispose();
+    _linkedUserCtrl.dispose();
 
     super.dispose();
   }
@@ -186,6 +195,16 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
       _selectedState = _findStateByAbbreviation(professionalState);
       _stateCtrl.text = _selectedState?.label ?? '';
     }
+
+    if (professional.userId.isNotEmpty) {
+      _selectedUser = UserLookupOption(
+        id: professional.userId,
+        name: professional.userName,
+        email: professional.userEmail,
+        role: 'PROFESSIONAL',
+      );
+      _linkedUserCtrl.text = professional.userName;
+    }
   }
 
   StateOption? _findStateByAbbreviation(String abbreviation) {
@@ -270,6 +289,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
         cityId: _selectedCity?.id ?? '',
         city: _selectedCity?.name ?? '',
         state: _selectedState?.abbreviation ?? '',
+        userId: _selectedUser?.id,
       );
 
       if (widget.isEditing) {
@@ -482,6 +502,43 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
       _selectedCity = selected;
       _cityCtrl.text = selected.name;
     });
+  }
+
+  Future<void> _openUserZoom() async {
+    final token = await _tokenStorage.getAccessToken();
+
+    final user = await UserLookupModal.show(
+      context: context,
+      token: token ?? '',
+      service: _userLookupService,
+    );
+
+    if (user == null) return;
+
+    setState(() {
+      _selectedUser = user;
+      _linkedUserCtrl.text = user.name;
+    });
+  }
+
+  void _clearUserLink() {
+    setState(() {
+      _selectedUser = null;
+      _linkedUserCtrl.clear();
+    });
+  }
+
+  Widget _buildUserField() {
+    return _buildTextField(
+      controller: _linkedUserCtrl,
+      label: 'Usuario vinculado',
+      hint: 'Selecione um usuario existente (opcional)',
+      readOnly: true,
+      onTap: _openUserZoom,
+      suffixIcon: _selectedUser != null
+          ? IconButton(onPressed: _clearUserLink, icon: const Icon(Icons.close))
+          : IconButton(onPressed: _openUserZoom, icon: const Icon(Icons.search)),
+    );
   }
 
   Widget _buildStateField() {
@@ -752,6 +809,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
                     });
                   },
                 ),
+                _buildUserField(),
               ]),
             ],
           ),

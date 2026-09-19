@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
+import 'package:app_front_mobile/services/user_lookup_service.dart';
+import 'package:app_front_mobile/widgets/user_lookup_modal.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
 
@@ -50,6 +52,10 @@ class _ClientFormPageState extends State<ClientFormPage> {
     baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
   );
 
+  final _userLookupService = UserLookupService(
+    baseUrl: '${ApiConfig.baseUrl}/users',
+  );
+
   final _nameController = TextEditingController();
   final _cpfCnpjController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -63,6 +69,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
   final _companyController = TextEditingController();
   final _stateCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
+  final _linkedUserCtrl = TextEditingController();
 
   bool _loading = true;
   bool _saving = false;
@@ -80,6 +87,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
   StateOption? _selectedState;
   CityOption? _selectedCity;
   CompanyLookupOption? _selectedCompany;
+  UserLookupOption? _selectedUser;
 
   @override
   void initState() {
@@ -102,6 +110,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
     _companyController.dispose();
     _stateCtrl.dispose();
     _cityCtrl.dispose();
+    _linkedUserCtrl.dispose();
 
     super.dispose();
   }
@@ -185,6 +194,16 @@ class _ClientFormPageState extends State<ClientFormPage> {
 
     if (client.companyId.isNotEmpty) {
       _companyController.text = client.companyId;
+    }
+
+    if (client.userId.isNotEmpty) {
+      _selectedUser = UserLookupOption(
+        id: client.userId,
+        name: client.userName,
+        email: client.userEmail,
+        role: 'CLIENT',
+      );
+      _linkedUserCtrl.text = client.userName;
     }
 
     if (client.state.isNotEmpty) {
@@ -277,6 +296,30 @@ class _ClientFormPageState extends State<ClientFormPage> {
     });
   }
 
+  Future<void> _openUserZoom() async {
+    final token = await _tokenStorage.getAccessToken();
+
+    final user = await UserLookupModal.show(
+      context: context,
+      token: token ?? '',
+      service: _userLookupService,
+    );
+
+    if (user == null) return;
+
+    setState(() {
+      _selectedUser = user;
+      _linkedUserCtrl.text = user.name;
+    });
+  }
+
+  void _clearUserLink() {
+    setState(() {
+      _selectedUser = null;
+      _linkedUserCtrl.clear();
+    });
+  }
+
   Future<void> _selectBirthDate() async {
     final now = DateTime.now();
 
@@ -339,6 +382,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
         postalCode: onlyNumbers(_postalCodeController.text),
         complement: _complementController.text.trim(),
         neighborhood: _neighborhoodController.text.trim(),
+        userId: _selectedUser?.id,
       );
 
       if (widget.isEdit) {
@@ -690,6 +734,19 @@ class _ClientFormPageState extends State<ClientFormPage> {
     );
   }
 
+  Widget _buildUserField() {
+    return _buildTextField(
+      controller: _linkedUserCtrl,
+      label: 'Usuario vinculado',
+      hint: 'Selecione um usuario existente (opcional)',
+      readOnly: true,
+      onTap: _openUserZoom,
+      suffixIcon: _selectedUser != null
+          ? IconButton(onPressed: _clearUserLink, icon: const Icon(Icons.close))
+          : IconButton(onPressed: _openUserZoom, icon: const Icon(Icons.search)),
+    );
+  }
+
   Widget _buildFormCard() {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -831,6 +888,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
                 ),
                 SizedBox(width: width, child: _buildStateField()),
                 SizedBox(width: width, child: _buildCityField()),
+                SizedBox(width: width, child: _buildUserField()),
                 SizedBox(
                   width: constraints.maxWidth,
                   child: _buildTextField(
