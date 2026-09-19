@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 
 class ServiceOfferingFormPage extends StatefulWidget {
   final String? serviceId;
@@ -485,7 +486,17 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
       key: _formKey,
 
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            widget.isEditing ? 'Editar servico' : 'Cadastrar servico',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 22),
           _buildFormCard(
             title: 'Dados do servico',
 
@@ -618,11 +629,7 @@ class _ServiceOfferingFormPageState extends State<ServiceOfferingFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.isEditing ? 'Editar servico' : 'Cadastrar servico';
-
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
 

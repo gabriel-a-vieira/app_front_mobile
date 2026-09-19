@@ -2,6 +2,8 @@ import 'package:app_front_mobile/pages/availability_form_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/test_app.dart';
+
 /// Covers the pure time/day helpers extracted from AvailabilityFormPage's
 /// private State methods, plus the one submit-validation path reachable
 /// without mocking the page's network dependencies: submitting the form
@@ -96,12 +98,12 @@ void main() {
     testWidgets('submitting an empty form shows the required-field errors', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        const MaterialApp(home: AvailabilityFormPage()),
-      );
+      await useDesktopTestSurface(tester);
 
-      // The AppBar title and the submit button share the same label in create
-      // mode, so target the button by type instead of by text.
+      await tester.pumpWidget(testApp(const AvailabilityFormPage()));
+
+      // The page's own heading and the submit button share the same label in
+      // create mode, so target the button by type instead of by text.
       await tester.tap(find.byType(FilledButton));
       await tester.pump();
 

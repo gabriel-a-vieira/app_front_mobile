@@ -3,6 +3,7 @@ import 'package:app_front_mobile/services/product_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 
@@ -242,13 +243,12 @@ class _ProductFormPageState extends State<ProductFormPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const AppScaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEdit ? 'Editar Produto' : 'Novo Produto'),
-      ),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Center(
@@ -259,6 +259,15 @@ class _ProductFormPageState extends State<ProductFormPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    widget.isEdit ? 'Editar Produto' : 'Novo Produto',
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
                   if (_isMasterAdmin) _buildCompanyField(),
 
                   if (_isMasterAdmin) const SizedBox(height: 16),

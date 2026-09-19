@@ -6,6 +6,7 @@ import 'package:app_front_mobile/widgets/state_lookup_modal.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 
@@ -475,11 +476,12 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const AppScaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Meu perfil')),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
         child: Center(

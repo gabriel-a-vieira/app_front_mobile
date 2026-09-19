@@ -12,6 +12,7 @@ import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
 import 'package:app_front_mobile/services/user_lookup_service.dart';
 import 'package:app_front_mobile/widgets/user_lookup_modal.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 
 class ProfessionalFormPage extends StatefulWidget {
   final String? professionalId;
@@ -734,7 +735,17 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     return Form(
       key: _formKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            widget.isEditing ? 'Editar profissional' : 'Cadastrar profissional',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 22),
           _buildFormCard(
             title: 'Dados pessoais',
             children: [
@@ -883,12 +894,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.isEditing
-        ? 'Editar profissional'
-        : 'Cadastrar profissional';
-
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(

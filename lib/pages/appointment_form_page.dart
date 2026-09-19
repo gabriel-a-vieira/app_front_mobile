@@ -12,6 +12,7 @@ import 'package:app_front_mobile/widgets/service_offering_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 
 class AppointmentFormPage extends StatefulWidget {
   final String? appointmentId;
@@ -649,7 +650,17 @@ class _AppointmentFormPageState extends State<AppointmentFormPage> {
     return Form(
       key: _formKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            widget.isEditing ? 'Editar agendamento' : 'Novo agendamento',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 22),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
@@ -833,12 +844,7 @@ class _AppointmentFormPageState extends State<AppointmentFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isEditing ? 'Editar agendamento' : 'Novo agendamento',
-        ),
-      ),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(

@@ -6,6 +6,7 @@ import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/user_lookup_modal.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 
 /// Inserir/Editar form for a single user's permission profile: pick a user
@@ -330,6 +331,15 @@ class _PermissionFormPageState extends State<PermissionFormPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          widget.isEditing ? 'Editar permissoes' : 'Cadastrar permissoes',
+          style: TextStyle(
+            color: colorScheme.onSurface,
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 22),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(18),
@@ -369,10 +379,7 @@ class _PermissionFormPageState extends State<PermissionFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEditing ? 'Editar permissoes' : 'Cadastrar permissoes'),
-      ),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(

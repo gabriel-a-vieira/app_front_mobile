@@ -11,6 +11,7 @@ import 'package:app_front_mobile/widgets/service_booking_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app_front_mobile/widgets/company_products_tab.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 
 class CompanyDetailPage extends StatefulWidget {
@@ -461,14 +462,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
-        title: Text(
-          _displayName,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-      ),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 36),
         child: Center(

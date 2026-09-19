@@ -14,6 +14,7 @@ import 'package:app_front_mobile/services/user_lookup_service.dart';
 import 'package:app_front_mobile/widgets/user_lookup_modal.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 
 class ClientFormPage extends StatefulWidget {
   final String? clientId;
@@ -974,10 +975,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEdit ? 'Editar cliente' : 'Cadastro de cliente'),
-      ),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(

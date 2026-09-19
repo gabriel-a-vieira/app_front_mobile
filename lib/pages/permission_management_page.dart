@@ -6,6 +6,7 @@ import 'package:app_front_mobile/theme/app_colors.dart';
 import 'package:app_front_mobile/utils/api_error_handler.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/widgets/common/async_list_section.dart';
+import 'package:app_front_mobile/widgets/app_scaffold.dart';
 import 'package:flutter/material.dart';
 
 /// COMPANY_ADMIN-only cadastro: which users of this company have a custom
@@ -566,8 +567,7 @@ class _PermissionManagementPageState extends State<PermissionManagementPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Administracao de permissoes')),
+    return AppScaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 48),
         child: Center(
