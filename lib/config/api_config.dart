@@ -6,5 +6,11 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String baseUrl = 'http://localhost:8081';
+  /// Defined at build time, e.g.
+  /// `flutter build web --dart-define=API_BASE_URL=https://api.example.com`.
+  /// Falls back to the local backend when not provided.
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:8081',
+  );
 }
