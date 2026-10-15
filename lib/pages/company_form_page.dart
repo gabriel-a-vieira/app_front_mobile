@@ -1,3 +1,4 @@
+import 'package:app_front_mobile/services/city_service.dart';
 import 'package:app_front_mobile/services/company_service.dart';
 import 'package:app_front_mobile/services/state_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
@@ -8,6 +9,8 @@ import 'package:flutter/services.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/theme/app_colors.dart';
 import 'package:app_front_mobile/widgets/app_scaffold.dart';
+import 'package:app_front_mobile/widgets/city_lookup_modal.dart';
+import 'package:app_front_mobile/widgets/state_lookup_modal.dart';
 
 class CompanyFormPage extends StatefulWidget {
   final String? companyId;
@@ -39,6 +42,8 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
 
   final _districtCtrl = TextEditingController();
 
+  final _stateCtrl = TextEditingController();
+
   final _cityCtrl = TextEditingController();
 
   final _complementCtrl = TextEditingController();
@@ -57,16 +62,21 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
 
   final _stateService = StateService(baseUrl: '${ApiConfig.baseUrl}/state');
 
+  final _cityService = CityService(baseUrl: '${ApiConfig.baseUrl}/city');
+
   final _tokenStorage = TokenStorage();
 
   bool _loadingInitial = true;
   bool _saving = false;
+  bool _loadingCities = false;
 
   String? _selectedType;
 
   String _selectedStatus = 'ACTIVE';
 
   StateOption? _selectedState;
+
+  CityOption? _selectedCity;
 
   List<CompanyTypeOption> _types = [];
 
@@ -112,6 +122,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     _streetCtrl.dispose();
     _numberCtrl.dispose();
     _districtCtrl.dispose();
+    _stateCtrl.dispose();
     _cityCtrl.dispose();
     _complementCtrl.dispose();
 
@@ -178,6 +189,14 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
 
         _loadingInitial = false;
       });
+
+      if (company != null && _selectedState != null) {
+        await _loadCitiesByState(
+          _selectedState!.abbreviation,
+          selectedCityId: company.cityId,
+          selectedCityName: company.city,
+        );
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -210,8 +229,6 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
 
     _districtCtrl.text = company.district;
 
-    _cityCtrl.text = company.city;
-
     _complementCtrl.text = company.complement;
 
     _instagramCtrl.text = company.instagramUrl;
@@ -238,14 +255,77 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
       ..clear()
       ..addAll(company.openingHours);
 
-    _selectedState = null;
+    _selectedState = _findStateByAbbreviation(company.state);
 
+    _stateCtrl.text = _selectedState?.label ?? '';
+  }
+
+  StateOption? _findStateByAbbreviation(String abbreviation) {
     for (final state in _states) {
-      if (state.abbreviation.toUpperCase() == company.state.toUpperCase()) {
-        _selectedState = state;
-
-        break;
+      if (state.abbreviation.toUpperCase() == abbreviation.toUpperCase()) {
+        return state;
       }
+    }
+
+    return null;
+  }
+
+  CityOption? _findCity(List<CityOption> cities, {String? id, String? name}) {
+    if (id != null && id.isNotEmpty) {
+      for (final city in cities) {
+        if (city.id == id) {
+          return city;
+        }
+      }
+    }
+
+    // Respostas antigas da API nao trazem cityId; cai para o nome.
+    if (name != null && name.trim().isNotEmpty) {
+      for (final city in cities) {
+        if (city.name.toUpperCase() == name.trim().toUpperCase()) {
+          return city;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _loadCitiesByState(
+    String state, {
+    String? selectedCityId,
+    String? selectedCityName,
+  }) async {
+    if (state.isEmpty) return;
+
+    setState(() {
+      _loadingCities = true;
+      _selectedCity = null;
+      _cityCtrl.clear();
+    });
+
+    try {
+      final cities = await _cityService.findByState(state: state);
+
+      if (!mounted) return;
+
+      setState(() {
+        _selectedCity = _findCity(
+          cities,
+          id: selectedCityId,
+          name: selectedCityName,
+        );
+        _cityCtrl.text = _selectedCity?.name ?? '';
+        _loadingCities = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loadingCities = false;
+      });
+
+      AppMessage.apiError(context, e, fallback: 'Erro ao carregar cidades.');
     }
   }
 
@@ -292,7 +372,9 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
 
         district: _districtCtrl.text.trim(),
 
-        city: _cityCtrl.text.trim(),
+        cityId: _selectedCity?.id ?? '',
+
+        city: _selectedCity?.name ?? '',
 
         state: _selectedState?.abbreviation ?? '',
 
@@ -539,7 +621,11 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
         '${clean.substring(5, 8)}';
   }
 
-  InputDecoration _inputDecoration({required String label, String? hint}) {
+  InputDecoration _inputDecoration({
+    required String label,
+    String? hint,
+    Widget? suffixIcon,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -547,6 +633,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     return InputDecoration(
       labelText: label,
       hintText: hint,
+      suffixIcon: suffixIcon,
       filled: true,
       fillColor: isDark
           ? AppColors.darkInputFill
@@ -708,24 +795,102 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
     );
   }
 
-  Widget _buildStateDropdown() {
-    return DropdownButtonFormField<StateOption>(
-      value: _selectedState,
-      decoration: _inputDecoration(label: 'UF'),
-      items: _states.map((state) {
-        return DropdownMenuItem<StateOption>(
-          value: state,
-          child: Text(state.label),
-        );
-      }).toList(),
-      onChanged: (value) {
-        setState(() {
-          _selectedState = value;
-        });
-      },
-      validator: (value) {
-        if (value == null || value.abbreviation.isEmpty) {
+  Future<void> _selectState() async {
+    final selected = await StateLookupModal.show(
+      context: context,
+      states: _states,
+      selectedState: _selectedState,
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    final changedState =
+        _selectedState?.abbreviation.toUpperCase() !=
+        selected.abbreviation.toUpperCase();
+
+    setState(() {
+      _selectedState = selected;
+      _stateCtrl.text = selected.label;
+    });
+
+    if (changedState) {
+      await _loadCitiesByState(selected.abbreviation);
+    }
+  }
+
+  Future<void> _selectCity() async {
+    final state = _selectedState;
+
+    if (state == null) {
+      AppMessage.info(context, 'Selecione primeiro a UF.');
+
+      return;
+    }
+
+    final selected = await CityLookupModal.show(
+      context: context,
+      service: _cityService,
+      state: state,
+      selectedCity: _selectedCity,
+    );
+
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _selectedCity = selected;
+      _cityCtrl.text = selected.name;
+    });
+  }
+
+  Widget _buildStateField() {
+    return TextFormField(
+      controller: _stateCtrl,
+      readOnly: true,
+      onTap: _selectState,
+      decoration: _inputDecoration(
+        label: 'UF',
+        hint: 'Selecione a UF',
+        suffixIcon: IconButton(
+          tooltip: 'Selecionar UF',
+          onPressed: _selectState,
+          icon: const Icon(Icons.search),
+        ),
+      ),
+      validator: (_) {
+        if (_selectedState == null || _selectedState!.abbreviation.isEmpty) {
           return 'UF e obrigatoria';
+        }
+
+        return null;
+      },
+    );
+  }
+
+  Widget _buildCityField() {
+    return TextFormField(
+      controller: _cityCtrl,
+      readOnly: true,
+      onTap: _selectCity,
+      decoration: _inputDecoration(
+        label: 'Cidade',
+        hint: _selectedState == null
+            ? 'Selecione uma UF primeiro'
+            : _loadingCities
+            ? 'Carregando cidades...'
+            : 'Selecione a cidade',
+        suffixIcon: IconButton(
+          tooltip: 'Selecionar cidade',
+          onPressed: _selectedState == null ? null : _selectCity,
+          icon: const Icon(Icons.search),
+        ),
+      ),
+      validator: (_) {
+        if (_selectedCity == null || _selectedCity!.id.isEmpty) {
+          return 'Cidade e obrigatoria';
         }
 
         return null;
@@ -1032,11 +1197,8 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                                 controller: _districtCtrl,
                                 label: 'Bairro',
                               ),
-                              _buildTextField(
-                                controller: _cityCtrl,
-                                label: 'Cidade',
-                              ),
-                              _buildStateDropdown(),
+                              _buildStateField(),
+                              _buildCityField(),
                             ]),
                             const SizedBox(height: 14),
                             _buildTextField(
