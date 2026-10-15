@@ -345,6 +345,7 @@ class CompanyDetail {
   final String street;
   final String number;
   final String district;
+  final String cityId;
   final String city;
   final String state;
   final String complement;
@@ -372,6 +373,7 @@ class CompanyDetail {
     required this.street,
     required this.number,
     required this.district,
+    this.cityId = '',
     required this.city,
     required this.state,
     required this.complement,
@@ -397,6 +399,7 @@ class CompanyDetail {
       street: json['street']?.toString() ?? '',
       number: json['number']?.toString() ?? '',
       district: json['district']?.toString() ?? '',
+      cityId: json['cityId']?.toString() ?? '',
       city: json['city']?.toString() ?? '',
       state: json['state']?.toString() ?? '',
       complement: json['complement']?.toString() ?? '',
@@ -438,6 +441,7 @@ class CompanySaveRequest {
   final String street;
   final String number;
   final String district;
+  final String cityId;
   final String city;
   final String state;
   final String complement;
@@ -464,6 +468,7 @@ class CompanySaveRequest {
     required this.street,
     required this.number,
     required this.district,
+    this.cityId = '',
     required this.city,
     required this.state,
     required this.complement,
@@ -488,6 +493,7 @@ class CompanySaveRequest {
       'street': street,
       'number': number,
       'district': district,
+      'cityId': cityId,
       'city': city,
       'state': state,
       'complement': complement,
