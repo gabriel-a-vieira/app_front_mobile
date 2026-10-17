@@ -42,7 +42,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
   final _service = ProductService(baseUrl: '${ApiConfig.baseUrl}/product');
 
   final _companyLookupService = CompanyLookupService(
-    baseUrl: '${ApiConfig.baseUrl}/company',
+    baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
   );
 
   String? _companyId;
