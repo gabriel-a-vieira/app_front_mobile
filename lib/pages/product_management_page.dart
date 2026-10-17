@@ -26,7 +26,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   final _service = ProductService(baseUrl: '${ApiConfig.baseUrl}/product');
 
   final _companyLookupService = CompanyLookupService(
-    baseUrl: '${ApiConfig.baseUrl}/company',
+    baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
   );
 
   final _tokenStorage = TokenStorage();
