@@ -2,7 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:app_front_mobile/config/api_client.dart';
 
 class ProfessionalService {
-  ProfessionalService({Dio? dio, required this.baseUrl}) : _dio = dio ?? ApiClient.dio;
+  ProfessionalService({Dio? dio, required this.baseUrl})
+    : _dio = dio ?? ApiClient.dio;
 
   final Dio _dio;
   final String baseUrl;
@@ -270,6 +271,7 @@ class ProfessionalRequest {
   final String state;
   final String cityId;
   final String? userId;
+  final String? companyId;
 
   ProfessionalRequest({
     required this.name,
@@ -287,6 +289,7 @@ class ProfessionalRequest {
     required this.state,
     required this.cityId,
     this.userId,
+    this.companyId,
   });
 
   Map<String, dynamic> toJson() {
@@ -298,6 +301,7 @@ class ProfessionalRequest {
       'gender': gender,
       'status': status,
       'userId': userId,
+      'companyId': companyId,
       'address': {
         'street': street,
         'number': number,

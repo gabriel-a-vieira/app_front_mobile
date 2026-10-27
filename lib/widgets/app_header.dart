@@ -164,22 +164,26 @@ class _AppHeaderState extends State<AppHeader> {
   }
 
   Future<void> _openPermissionManagementPage() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PermissionManagementPage()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const PermissionManagementPage()));
   }
 
   Future<void> _openUserManagementPage() async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => UserManagementPage(currentUserRole: _loggedUserRole ?? ''),
+        builder: (_) =>
+            UserManagementPage(currentUserRole: _loggedUserRole ?? ''),
       ),
     );
   }
 
   Future<void> _openProfessionalManagementPage() async {
     await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ProfessionalManagementPage()),
+      MaterialPageRoute(
+        builder: (_) =>
+            ProfessionalManagementPage(currentUserRole: _loggedUserRole ?? ''),
+      ),
     );
   }
 
@@ -408,7 +412,10 @@ class _AppHeaderState extends State<AppHeader> {
               value: 'availability',
               child: Text('Disponibilidade'),
             ),
-          if (UserPermissions.can(SystemModule.serviceOffering, CrudAction.list))
+          if (UserPermissions.can(
+            SystemModule.serviceOffering,
+            CrudAction.list,
+          ))
             const PopupMenuItem<String>(
               value: 'services',
               child: Text('Servicos'),

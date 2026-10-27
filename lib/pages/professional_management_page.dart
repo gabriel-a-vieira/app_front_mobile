@@ -14,7 +14,9 @@ import 'package:app_front_mobile/utils/user_permissions.dart';
 import 'package:app_front_mobile/widgets/app_scaffold.dart';
 
 class ProfessionalManagementPage extends StatefulWidget {
-  const ProfessionalManagementPage({super.key});
+  final String currentUserRole;
+
+  const ProfessionalManagementPage({super.key, required this.currentUserRole});
 
   @override
   State<ProfessionalManagementPage> createState() =>
@@ -140,7 +142,10 @@ class _ProfessionalManagementPageState
 
   Future<void> _openCreatePage() async {
     final created = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const ProfessionalFormPage()),
+      MaterialPageRoute(
+        builder: (_) =>
+            ProfessionalFormPage(currentUserRole: widget.currentUserRole),
+      ),
     );
 
     if (!mounted) return;
@@ -165,7 +170,10 @@ class _ProfessionalManagementPageState
 
     final updated = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => ProfessionalFormPage(professionalId: professionalId),
+        builder: (_) => ProfessionalFormPage(
+          currentUserRole: widget.currentUserRole,
+          professionalId: professionalId,
+        ),
       ),
     );
 
@@ -235,7 +243,11 @@ class _ProfessionalManagementPageState
     } catch (e) {
       if (!mounted) return;
 
-      AppMessage.apiError(context, e, fallback: 'Erro ao excluir profissional.');
+      AppMessage.apiError(
+        context,
+        e,
+        fallback: 'Erro ao excluir profissional.',
+      );
     }
   }
 
@@ -493,19 +505,28 @@ class _ProfessionalManagementPageState
           spacing: 10,
           runSpacing: 10,
           children: [
-            if (UserPermissions.can(SystemModule.professional, CrudAction.create))
+            if (UserPermissions.can(
+              SystemModule.professional,
+              CrudAction.create,
+            ))
               _buildActionButton(
                 label: 'Inserir',
                 icon: Icons.add,
                 onPressed: _openCreatePage,
               ),
-            if (UserPermissions.can(SystemModule.professional, CrudAction.update))
+            if (UserPermissions.can(
+              SystemModule.professional,
+              CrudAction.update,
+            ))
               _buildActionButton(
                 label: 'Editar',
                 icon: Icons.edit_outlined,
                 onPressed: _openEditPage,
               ),
-            if (UserPermissions.can(SystemModule.professional, CrudAction.delete))
+            if (UserPermissions.can(
+              SystemModule.professional,
+              CrudAction.delete,
+            ))
               _buildActionButton(
                 label: 'Excluir',
                 icon: Icons.delete_outline,
