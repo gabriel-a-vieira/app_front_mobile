@@ -1,10 +1,12 @@
 import 'package:app_front_mobile/services/city_service.dart';
+import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/services/professional_service.dart';
 import 'package:app_front_mobile/services/state_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/input_formatters.dart';
 import 'package:app_front_mobile/widgets/city_lookup_modal.dart';
+import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/widgets/state_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,12 +17,22 @@ import 'package:app_front_mobile/widgets/user_lookup_modal.dart';
 import 'package:app_front_mobile/widgets/app_scaffold.dart';
 
 class ProfessionalFormPage extends StatefulWidget {
+  final String currentUserRole;
+
   final String? professionalId;
 
-  const ProfessionalFormPage({super.key, this.professionalId});
+  const ProfessionalFormPage({
+    super.key,
+    required this.currentUserRole,
+    this.professionalId,
+  });
 
   bool get isEditing {
     return professionalId != null && professionalId!.isNotEmpty;
+  }
+
+  bool get isMasterAdmin {
+    return currentUserRole.toUpperCase() == 'MASTER_ADMIN';
   }
 
   @override
@@ -42,8 +54,13 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     baseUrl: '${ApiConfig.baseUrl}/users',
   );
 
+  final _companyLookupService = CompanyLookupService(
+    baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
+  );
+
   final _tokenStorage = TokenStorage();
 
+  final _companyCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   final _cpfCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -66,6 +83,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
   StateOption? _selectedState;
   CityOption? _selectedCity;
   UserLookupOption? _selectedUser;
+  CompanyLookupOption? _selectedCompany;
 
   List<StateOption> _states = [];
 
@@ -84,6 +102,7 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
 
   @override
   void dispose() {
+    _companyCtrl.dispose();
     _nameCtrl.dispose();
     _cpfCtrl.dispose();
     _phoneCtrl.dispose();
@@ -291,6 +310,9 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
         city: _selectedCity?.name ?? '',
         state: _selectedState?.abbreviation ?? '',
         userId: _selectedUser?.id,
+        companyId: widget.isMasterAdmin && !widget.isEditing
+            ? _selectedCompany?.id
+            : null,
       );
 
       if (widget.isEditing) {
@@ -505,6 +527,40 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
     });
   }
 
+  Future<void> _openCompanyZoom() async {
+    final token = await _tokenStorage.getAccessToken();
+
+    if (!mounted) return;
+
+    final company = await CompanyLookupModal.show(
+      context: context,
+      token: token,
+      service: _companyLookupService,
+    );
+
+    if (company == null) return;
+
+    setState(() {
+      _selectedCompany = company;
+      _companyCtrl.text = company.displayName;
+    });
+  }
+
+  Widget _buildCompanyField() {
+    return _buildTextField(
+      controller: _companyCtrl,
+      label: 'Empresa',
+      hint: 'Selecione a empresa',
+      readOnly: true,
+      requiredField: true,
+      onTap: _openCompanyZoom,
+      suffixIcon: IconButton(
+        onPressed: _openCompanyZoom,
+        icon: const Icon(Icons.search),
+      ),
+    );
+  }
+
   Future<void> _openUserZoom() async {
     final token = await _tokenStorage.getAccessToken();
 
@@ -538,7 +594,10 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
       onTap: _openUserZoom,
       suffixIcon: _selectedUser != null
           ? IconButton(onPressed: _clearUserLink, icon: const Icon(Icons.close))
-          : IconButton(onPressed: _openUserZoom, icon: const Icon(Icons.search)),
+          : IconButton(
+              onPressed: _openUserZoom,
+              icon: const Icon(Icons.search),
+            ),
     );
   }
 
@@ -750,6 +809,8 @@ class _ProfessionalFormPageState extends State<ProfessionalFormPage> {
             title: 'Dados pessoais',
             children: [
               _buildResponsiveFields([
+                if (widget.isMasterAdmin && !widget.isEditing)
+                  _buildCompanyField(),
                 _buildTextField(
                   controller: _nameCtrl,
                   label: 'Nome',
@@ -943,4 +1004,3 @@ class _CpfInputFormatter extends TextInputFormatter {
     return buffer.toString();
   }
 }
-
