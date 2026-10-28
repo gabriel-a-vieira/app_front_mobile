@@ -175,7 +175,10 @@ class _AvailabilityManagementPageState
 
   Future<void> _openCreatePage() async {
     final created = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const AvailabilityFormPage()),
+      MaterialPageRoute(
+        builder: (_) =>
+            AvailabilityFormPage(currentUserRole: widget.currentUserRole),
+      ),
     );
 
     if (!mounted) return;
@@ -201,8 +204,10 @@ class _AvailabilityManagementPageState
 
     final updated = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) =>
-            AvailabilityFormPage(availabilityId: _selectedIds.first),
+        builder: (_) => AvailabilityFormPage(
+          currentUserRole: widget.currentUserRole,
+          availabilityId: _selectedIds.first,
+        ),
       ),
     );
 
