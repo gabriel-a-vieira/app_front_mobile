@@ -100,7 +100,9 @@ void main() {
     ) async {
       await useDesktopTestSurface(tester);
 
-      await tester.pumpWidget(testApp(const AvailabilityFormPage()));
+      await tester.pumpWidget(
+        testApp(const AvailabilityFormPage(currentUserRole: 'COMPANY_ADMIN')),
+      );
 
       // The page's own heading and the submit button share the same label in
       // create mode, so target the button by type instead of by text.
@@ -111,5 +113,53 @@ void main() {
       expect(find.text('Horario inicial e obrigatorio'), findsOneWidget);
       expect(find.text('Horario final e obrigatorio'), findsOneWidget);
     });
+  });
+
+  group('AvailabilityFormPage company zoom', () {
+    testWidgets('is hidden for roles that already belong to a company', (
+      tester,
+    ) async {
+      await useDesktopTestSurface(tester);
+
+      await tester.pumpWidget(
+        testApp(const AvailabilityFormPage(currentUserRole: 'COMPANY_ADMIN')),
+      );
+
+      expect(find.text('Empresa'), findsNothing);
+    });
+
+    testWidgets('is shown and required for MASTER_ADMIN on create', (
+      tester,
+    ) async {
+      await useDesktopTestSurface(tester);
+
+      await tester.pumpWidget(
+        testApp(const AvailabilityFormPage(currentUserRole: 'MASTER_ADMIN')),
+      );
+
+      expect(find.text('Empresa'), findsOneWidget);
+
+      await tester.tap(find.byType(FilledButton));
+      await tester.pump();
+
+      expect(find.text('Empresa e obrigatoria'), findsOneWidget);
+    });
+
+    testWidgets(
+      'MASTER_ADMIN must pick a company before the professional zoom',
+      (tester) async {
+        await useDesktopTestSurface(tester);
+
+        await tester.pumpWidget(
+          testApp(const AvailabilityFormPage(currentUserRole: 'MASTER_ADMIN')),
+        );
+
+        await tester.tap(find.widgetWithText(TextFormField, 'Profissional'));
+        await tester.pump();
+
+        expect(find.text('Selecione a empresa primeiro'), findsOneWidget);
+        expect(find.text('Selecionar profissional'), findsNothing);
+      },
+    );
   });
 }

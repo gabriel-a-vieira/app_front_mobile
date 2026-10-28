@@ -1,6 +1,8 @@
 import 'package:app_front_mobile/services/availability_service.dart';
+import 'package:app_front_mobile/services/company_lookup_service.dart';
 import 'package:app_front_mobile/services/professional_lookup_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
+import 'package:app_front_mobile/widgets/company_lookup_modal.dart';
 import 'package:app_front_mobile/widgets/professional_lookup_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
@@ -70,12 +72,28 @@ bool isEndAfterStart(TimeOfDay? start, TimeOfDay? end) {
 }
 
 class AvailabilityFormPage extends StatefulWidget {
+  final String currentUserRole;
+
   final String? availabilityId;
 
-  const AvailabilityFormPage({super.key, this.availabilityId});
+  const AvailabilityFormPage({
+    super.key,
+    required this.currentUserRole,
+    this.availabilityId,
+  });
 
   bool get isEditing {
     return availabilityId != null && availabilityId!.isNotEmpty;
+  }
+
+  bool get isMasterAdmin {
+    return currentUserRole.toUpperCase() == 'MASTER_ADMIN';
+  }
+
+  /// MASTER_ADMIN has no company in the token, so on create they pick one
+  /// first; on edit the company comes from the loaded availability.
+  bool get showCompanyField {
+    return isMasterAdmin && !isEditing;
   }
 
   @override
@@ -93,13 +111,21 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
     baseUrl: '${ApiConfig.baseUrl}/professional',
   );
 
+  final _companyLookupService = CompanyLookupService(
+    baseUrl: '${ApiConfig.baseUrl}/company/companies/home-page',
+  );
+
   final _tokenStorage = TokenStorage();
+
+  final _companyCtrl = TextEditingController();
 
   final _professionalCtrl = TextEditingController();
 
   final _startTimeCtrl = TextEditingController();
 
   final _endTimeCtrl = TextEditingController();
+
+  CompanyLookupOption? _selectedCompany;
 
   ProfessionalLookupOption? _selectedProfessional;
 
@@ -132,6 +158,7 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
 
   @override
   void dispose() {
+    _companyCtrl.dispose();
     _professionalCtrl.dispose();
     _startTimeCtrl.dispose();
     _endTimeCtrl.dispose();
@@ -204,7 +231,51 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
     }
   }
 
+  /// Company the availability belongs to: the one picked in the company
+  /// zoom (MASTER_ADMIN creating) or the selected professional's company.
+  String get _companyId {
+    if (widget.showCompanyField) {
+      return _selectedCompany?.id ?? '';
+    }
+
+    return _selectedProfessional?.companyId ?? '';
+  }
+
+  Future<void> _openCompanyLookup() async {
+    final token = await _getToken();
+
+    if (!mounted) return;
+
+    final company = await CompanyLookupModal.show(
+      context: context,
+      token: token,
+      service: _companyLookupService,
+    );
+
+    if (company == null) {
+      return;
+    }
+
+    setState(() {
+      // A professional from the previous company is no longer valid.
+      if (_selectedCompany?.id != company.id) {
+        _selectedProfessional = null;
+
+        _professionalCtrl.clear();
+      }
+
+      _selectedCompany = company;
+
+      _companyCtrl.text = company.displayName;
+    });
+  }
+
   Future<void> _openProfessionalLookup() async {
+    if (widget.showCompanyField && _selectedCompany == null) {
+      AppMessage.info(context, 'Selecione a empresa primeiro');
+      return;
+    }
+
     final token = await _getToken();
 
     if (!mounted) return;
@@ -213,6 +284,7 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
       context: context,
       token: token,
       service: _professionalLookupService,
+      companyId: _companyId,
     );
 
     if (professional == null) {
@@ -299,7 +371,7 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
 
         endTime: timeToApi(_endTime!),
 
-        companyId: _selectedProfessional!.companyId,
+        companyId: _companyId,
       );
 
       if (widget.isEditing) {
@@ -371,6 +443,29 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide(color: colorScheme.error),
       ),
+    );
+  }
+
+  Widget _buildCompanyField() {
+    return TextFormField(
+      controller: _companyCtrl,
+      readOnly: true,
+      onTap: _openCompanyLookup,
+      decoration: _inputDecoration(
+        label: 'Empresa',
+        hint: 'Selecione a empresa',
+        suffixIcon: IconButton(
+          onPressed: _openCompanyLookup,
+          icon: const Icon(Icons.search),
+        ),
+      ),
+      validator: (_) {
+        if (_selectedCompany == null) {
+          return 'Empresa e obrigatoria';
+        }
+
+        return null;
+      },
     );
   }
 
@@ -491,6 +586,8 @@ class _AvailabilityFormPageState extends State<AvailabilityFormPage> {
                   spacing: 14,
                   runSpacing: 14,
                   children: [
+                    if (widget.showCompanyField)
+                      SizedBox(width: width, child: _buildCompanyField()),
                     SizedBox(width: width, child: _buildProfessionalField()),
                     SizedBox(width: width, child: _buildDayDropdown()),
                     SizedBox(
