@@ -152,8 +152,18 @@ class _AppHeaderState extends State<AppHeader> {
     ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
   }
 
+  /// Ends the session and sends the user back to the home page (the first
+  /// route), discarding every page stacked on top of it - otherwise a page
+  /// opened while logged in (admin modules, profile, my appointments) would
+  /// stay on screen with its already-loaded data after logout.
   Future<void> _logout() async {
+    final navigator = Navigator.of(context);
+
     await AuthSession.invalidate();
+    navigator.popUntil((route) => route.isFirst);
+
+    // Google sign-out goes last: it's best-effort and talks to a platform
+    // plugin, so it must never delay (or block) leaving the logged-in page.
     await GoogleAuthService.instance.signOut();
   }
 
