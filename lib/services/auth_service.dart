@@ -79,6 +79,29 @@ class AuthService {
     }
   }
 
+  /// Asks the backend to e-mail a 6-digit reset code. The backend answers
+  /// 204 whether or not the e-mail is registered, so this never tells the
+  /// caller if an account exists.
+  Future<void> requestPasswordReset({required String email}) async {
+    await _dio.post(
+      '$baseUrl/auth/password-reset/request',
+      data: {'email': email},
+      options: Options(headers: {'Content-Type': 'application/json'}),
+    );
+  }
+
+  Future<void> confirmPasswordReset({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    await _dio.post(
+      '$baseUrl/auth/password-reset/confirm',
+      data: {'email': email, 'code': code, 'newPassword': newPassword},
+      options: Options(headers: {'Content-Type': 'application/json'}),
+    );
+  }
+
   AuthLoginResult _parseLoginResult(dynamic data, {String fallbackEmail = ''}) {
     if (data is! Map || data['token'] is! String) {
       throw Exception('Invalid login response');

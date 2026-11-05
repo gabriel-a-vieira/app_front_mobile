@@ -385,6 +385,108 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Empresas proximas'**
   String get nearbyBusinesses;
+
+  /// No description provided for @forgotPasswordEmailStep.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe o e-mail da sua conta. Vamos enviar um código de 6 dígitos para você criar uma nova senha.'**
+  String get forgotPasswordEmailStep;
+
+  /// No description provided for @forgotPasswordSendCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar código'**
+  String get forgotPasswordSendCode;
+
+  /// No description provided for @forgotPasswordCodeStep.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se existir uma conta com {email}, enviamos um código para esse e-mail. Ele vale por 15 minutos.'**
+  String forgotPasswordCodeStep(String email);
+
+  /// No description provided for @forgotPasswordCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Código'**
+  String get forgotPasswordCode;
+
+  /// No description provided for @forgotPasswordInvalidCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'O código deve ter 6 dígitos'**
+  String get forgotPasswordInvalidCode;
+
+  /// No description provided for @forgotPasswordNewPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nova senha'**
+  String get forgotPasswordNewPassword;
+
+  /// No description provided for @forgotPasswordConfirmPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar nova senha'**
+  String get forgotPasswordConfirmPassword;
+
+  /// No description provided for @forgotPasswordPasswordTooShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'A senha deve ter pelo menos 6 caracteres'**
+  String get forgotPasswordPasswordTooShort;
+
+  /// No description provided for @forgotPasswordPasswordMismatch.
+  ///
+  /// In pt, this message translates to:
+  /// **'As senhas não conferem'**
+  String get forgotPasswordPasswordMismatch;
+
+  /// No description provided for @forgotPasswordSubmit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Redefinir senha'**
+  String get forgotPasswordSubmit;
+
+  /// No description provided for @forgotPasswordResend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reenviar código'**
+  String get forgotPasswordResend;
+
+  /// No description provided for @forgotPasswordResendIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reenviar código em {seconds}s'**
+  String forgotPasswordResendIn(int seconds);
+
+  /// No description provided for @forgotPasswordChangeEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar outro e-mail'**
+  String get forgotPasswordChangeEmail;
+
+  /// No description provided for @forgotPasswordCodeSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Código enviado. Confira sua caixa de entrada e o spam.'**
+  String get forgotPasswordCodeSent;
+
+  /// No description provided for @forgotPasswordSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Senha alterada! Entre com a nova senha.'**
+  String get forgotPasswordSuccess;
+
+  /// No description provided for @forgotPasswordRequestError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar o código. Tente novamente.'**
+  String get forgotPasswordRequestError;
+
+  /// No description provided for @forgotPasswordConfirmError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível redefinir a senha. Tente novamente.'**
+  String get forgotPasswordConfirmError;
 }
 
 class _AppLocalizationsDelegate

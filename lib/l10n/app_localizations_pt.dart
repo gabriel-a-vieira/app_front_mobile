@@ -153,4 +153,64 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get nearbyBusinesses => 'Empresas proximas';
+
+  @override
+  String get forgotPasswordEmailStep =>
+      'Informe o e-mail da sua conta. Vamos enviar um código de 6 dígitos para você criar uma nova senha.';
+
+  @override
+  String get forgotPasswordSendCode => 'Enviar código';
+
+  @override
+  String forgotPasswordCodeStep(String email) {
+    return 'Se existir uma conta com $email, enviamos um código para esse e-mail. Ele vale por 15 minutos.';
+  }
+
+  @override
+  String get forgotPasswordCode => 'Código';
+
+  @override
+  String get forgotPasswordInvalidCode => 'O código deve ter 6 dígitos';
+
+  @override
+  String get forgotPasswordNewPassword => 'Nova senha';
+
+  @override
+  String get forgotPasswordConfirmPassword => 'Confirmar nova senha';
+
+  @override
+  String get forgotPasswordPasswordTooShort =>
+      'A senha deve ter pelo menos 6 caracteres';
+
+  @override
+  String get forgotPasswordPasswordMismatch => 'As senhas não conferem';
+
+  @override
+  String get forgotPasswordSubmit => 'Redefinir senha';
+
+  @override
+  String get forgotPasswordResend => 'Reenviar código';
+
+  @override
+  String forgotPasswordResendIn(int seconds) {
+    return 'Reenviar código em ${seconds}s';
+  }
+
+  @override
+  String get forgotPasswordChangeEmail => 'Usar outro e-mail';
+
+  @override
+  String get forgotPasswordCodeSent =>
+      'Código enviado. Confira sua caixa de entrada e o spam.';
+
+  @override
+  String get forgotPasswordSuccess => 'Senha alterada! Entre com a nova senha.';
+
+  @override
+  String get forgotPasswordRequestError =>
+      'Não foi possível enviar o código. Tente novamente.';
+
+  @override
+  String get forgotPasswordConfirmError =>
+      'Não foi possível redefinir a senha. Tente novamente.';
 }
