@@ -5,7 +5,6 @@
   "selectLanguage": "Selecionar idioma",
   "signIn": "Entrar",
   "favoritesLabel": "Favoritos",
-
   "accessAccount": "Acessar conta",
   "continueWith": "Continuar com",
   "or": "ou",
@@ -21,25 +20,21 @@
   "signUp": "Cadastre-se",
   "termsPrefix": "Acessando você concorda com o",
   "termsOfUse": "termo de uso",
-
   "registerTitle": "Cadastro",
   "fullName": "Nome completo",
   "fullNameHint": "Informe seu nome e sobrenome",
   "registerButton": "Cadastrar",
   "alreadyHaveAccount": "Já tem uma conta?",
   "goToLogin": "Acesse",
-
   "requiredEmail": "Email é obrigatório",
   "invalidEmail": "Email inválido",
   "requiredPassword": "Senha é obrigatória",
   "requiredFullName": "Nome completo é obrigatório",
   "invalidFullName": "Informe um nome válido",
   "minimumPassword": "A senha precisa ter no mínimo 4 caracteres",
-
   "loginError": "Erro durante o login",
   "registerError": "Erro durante o cadastro",
   "registerSuccess": "Usuário cadastrado com sucesso.",
-
   "logout": "Sair",
   "loginRequiredForAppointments": "Voce precisa estar logado para visualizar seus agendamentos.",
   "findABusinessHint": "Encontre um estabelecimento",
@@ -52,5 +47,36 @@
   "navSearch": "Buscar",
   "navMyAppointments": "Meus Agendamentos",
   "welcomeMessage": "Seja bem vindo(a)",
-  "nearbyBusinesses": "Empresas proximas"
+  "nearbyBusinesses": "Empresas proximas",
+  "forgotPasswordEmailStep": "Informe o e-mail da sua conta. Vamos enviar um código de 6 dígitos para você criar uma nova senha.",
+  "forgotPasswordSendCode": "Enviar código",
+  "forgotPasswordCodeStep": "Se existir uma conta com {email}, enviamos um código para esse e-mail. Ele vale por 15 minutos.",
+  "@forgotPasswordCodeStep": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "forgotPasswordCode": "Código",
+  "forgotPasswordInvalidCode": "O código deve ter 6 dígitos",
+  "forgotPasswordNewPassword": "Nova senha",
+  "forgotPasswordConfirmPassword": "Confirmar nova senha",
+  "forgotPasswordPasswordTooShort": "A senha deve ter pelo menos 6 caracteres",
+  "forgotPasswordPasswordMismatch": "As senhas não conferem",
+  "forgotPasswordSubmit": "Redefinir senha",
+  "forgotPasswordResend": "Reenviar código",
+  "forgotPasswordResendIn": "Reenviar código em {seconds}s",
+  "@forgotPasswordResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "forgotPasswordChangeEmail": "Usar outro e-mail",
+  "forgotPasswordCodeSent": "Código enviado. Confira sua caixa de entrada e o spam.",
+  "forgotPasswordSuccess": "Senha alterada! Entre com a nova senha.",
+  "forgotPasswordRequestError": "Não foi possível enviar o código. Tente novamente.",
+  "forgotPasswordConfirmError": "Não foi possível redefinir a senha. Tente novamente."
 }
