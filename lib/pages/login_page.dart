@@ -11,7 +11,8 @@ import 'package:app_front_mobile/widgets/google_auth_button.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
 import 'package:app_front_mobile/utils/auth_session.dart';
 import 'package:app_front_mobile/config/api_config.dart';
-import 'package:app_front_mobile/theme/app_colors.dart';
+import 'package:app_front_mobile/theme/auth_dialog_colors.dart';
+import 'package:app_front_mobile/widgets/forgot_password_dialog.dart';
 
 class LoginPage extends StatefulWidget {
   final void Function(AuthLoginResult result)? onLoginSuccess;
@@ -36,17 +37,16 @@ class _LoginPageState extends State<LoginPage> {
   StreamSubscription<AuthLoginResult>? _googleSuccessSubscription;
   StreamSubscription<Object>? _googleErrorSubscription;
 
-  static const Color _modalColor = AppColors.darkSurface;
-  static const Color _headerColor = Color(0xFF1A1E26);
-  static const Color _borderColor = Color(0xFF2A2F38);
-  static const Color _inputFillColor = AppColors.darkInputFill;
-  static const Color _socialButtonColor = Color(0xFF090B10);
-  static const Color _primaryBlue = Color(0xFF0089F7);
-  static const Color _whiteText = Color(0xFFF5F7FA);
-  static const Color _mutedText = Color(0xFF9EA6B2);
-  static const Color _hintText = Color(0xFF8D95A3);
-  static const Color _linkBlue = Color(0xFF36A9FF);
-  static const Color _dangerRed = Color(0xFFFF5A5F);
+  static const Color _modalColor = AuthDialogColors.modal;
+  static const Color _headerColor = AuthDialogColors.header;
+  static const Color _borderColor = AuthDialogColors.border;
+  static const Color _inputFillColor = AuthDialogColors.inputFill;
+  static const Color _primaryBlue = AuthDialogColors.primaryBlue;
+  static const Color _whiteText = AuthDialogColors.whiteText;
+  static const Color _mutedText = AuthDialogColors.mutedText;
+  static const Color _hintText = AuthDialogColors.hintText;
+  static const Color _linkBlue = AuthDialogColors.linkBlue;
+  static const Color _dangerRed = AuthDialogColors.dangerRed;
 
   @override
   void initState() {
@@ -118,6 +118,23 @@ class _LoginPageState extends State<LoginPage> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Opens "Recuperar senha" on top of this modal; when the password gets
+  /// changed, comes back with the e-mail prefilled so the user only types
+  /// the new password.
+  Future<void> _openForgotPassword() async {
+    final email = await ForgotPasswordDialog.show(
+      context,
+      initialEmail: _emailCtrl.text,
+    );
+
+    if (email == null || !mounted) return;
+
+    setState(() {
+      _emailCtrl.text = email;
+      _passCtrl.clear();
+    });
   }
 
   void _close() {
@@ -237,9 +254,9 @@ class _LoginPageState extends State<LoginPage> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: const Color(0xFF3A3F4A),
+                color: AuthDialogColors.closeButton,
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF4A505C), width: 1),
+                border: Border.all(color: AuthDialogColors.closeButtonBorder, width: 1),
               ),
               child: const Icon(Icons.close, color: _whiteText, size: 18),
             ),
@@ -389,7 +406,7 @@ class _LoginPageState extends State<LoginPage> {
           Align(
             alignment: Alignment.centerRight,
             child: InkWell(
-              onTap: () {},
+              onTap: _loading ? null : _openForgotPassword,
               child: Text(
                 l10n.forgotPassword,
                 style: const TextStyle(
@@ -410,7 +427,7 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: _loading ? null : _submit,
               style: FilledButton.styleFrom(
                 backgroundColor: _primaryBlue,
-                disabledBackgroundColor: const Color(0xFF4D84B0),
+                disabledBackgroundColor: AuthDialogColors.primaryBlueDisabled,
                 foregroundColor: _whiteText,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),

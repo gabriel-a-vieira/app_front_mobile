@@ -176,4 +176,77 @@ void main() {
       expect(result.firstName, '');
     });
   });
+
+  group('password reset', () {
+    test('requestPasswordReset posts the e-mail to /auth/password-reset/request',
+        () async {
+      stubPost(Response(
+        requestOptions: RequestOptions(path: '/test'),
+        statusCode: 204,
+      ));
+
+      await authService.requestPasswordReset(email: 'ana@email.com');
+
+      verify(
+        () => dio.post(
+          '$baseUrl/auth/password-reset/request',
+          data: {'email': 'ana@email.com'},
+          options: any(named: 'options'),
+        ),
+      ).called(1);
+    });
+
+    test('confirmPasswordReset posts e-mail, code and new password', () async {
+      stubPost(Response(
+        requestOptions: RequestOptions(path: '/test'),
+        statusCode: 204,
+      ));
+
+      await authService.confirmPasswordReset(
+        email: 'ana@email.com',
+        code: '123456',
+        newPassword: 'senha-nova',
+      );
+
+      verify(
+        () => dio.post(
+          '$baseUrl/auth/password-reset/confirm',
+          data: {
+            'email': 'ana@email.com',
+            'code': '123456',
+            'newPassword': 'senha-nova',
+          },
+          options: any(named: 'options'),
+        ),
+      ).called(1);
+    });
+
+    test('confirmPasswordReset propagates the backend error (invalid code)',
+        () async {
+      final requestOptions = RequestOptions(path: '/test');
+      when(
+        () => dio.post(
+          any(),
+          data: any(named: 'data'),
+          options: any(named: 'options'),
+        ),
+      ).thenThrow(DioException(
+        requestOptions: requestOptions,
+        response: Response(
+          requestOptions: requestOptions,
+          statusCode: 400,
+          data: {'message': 'Código inválido ou expirado.'},
+        ),
+      ));
+
+      expect(
+        () => authService.confirmPasswordReset(
+          email: 'ana@email.com',
+          code: '000000',
+          newPassword: 'senha-nova',
+        ),
+        throwsA(isA<DioException>()),
+      );
+    });
+  });
 }

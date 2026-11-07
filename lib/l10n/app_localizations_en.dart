@@ -153,4 +153,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nearbyBusinesses => 'Nearby businesses';
+
+  @override
+  String get forgotPasswordEmailStep =>
+      'Enter your account e-mail. We\'ll send you a 6-digit code to create a new password.';
+
+  @override
+  String get forgotPasswordSendCode => 'Send code';
+
+  @override
+  String forgotPasswordCodeStep(String email) {
+    return 'If an account exists for $email, we sent a code to that e-mail. It is valid for 15 minutes.';
+  }
+
+  @override
+  String get forgotPasswordCode => 'Code';
+
+  @override
+  String get forgotPasswordInvalidCode => 'The code must have 6 digits';
+
+  @override
+  String get forgotPasswordNewPassword => 'New password';
+
+  @override
+  String get forgotPasswordConfirmPassword => 'Confirm new password';
+
+  @override
+  String get forgotPasswordPasswordTooShort =>
+      'Password must have at least 6 characters';
+
+  @override
+  String get forgotPasswordPasswordMismatch => 'Passwords don\'t match';
+
+  @override
+  String get forgotPasswordSubmit => 'Reset password';
+
+  @override
+  String get forgotPasswordResend => 'Resend code';
+
+  @override
+  String forgotPasswordResendIn(int seconds) {
+    return 'Resend code in ${seconds}s';
+  }
+
+  @override
+  String get forgotPasswordChangeEmail => 'Use another e-mail';
+
+  @override
+  String get forgotPasswordCodeSent =>
+      'Code sent. Check your inbox and spam folder.';
+
+  @override
+  String get forgotPasswordSuccess =>
+      'Password changed! Sign in with your new password.';
+
+  @override
+  String get forgotPasswordRequestError =>
+      'Couldn\'t send the code. Please try again.';
+
+  @override
+  String get forgotPasswordConfirmError =>
+      'Couldn\'t reset the password. Please try again.';
 }

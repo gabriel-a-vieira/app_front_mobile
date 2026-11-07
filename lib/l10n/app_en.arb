@@ -5,7 +5,6 @@
   "selectLanguage": "Select language",
   "signIn": "Sign in",
   "favoritesLabel": "Favorites",
-
   "accessAccount": "Access account",
   "continueWith": "Continue with",
   "or": "or",
@@ -21,25 +20,21 @@
   "signUp": "Sign up",
   "termsPrefix": "By accessing, you agree with the",
   "termsOfUse": "terms of use",
-
   "registerTitle": "Register",
   "fullName": "Full name",
   "fullNameHint": "Enter your full name",
   "registerButton": "Register",
   "alreadyHaveAccount": "Already have an account?",
   "goToLogin": "Sign in",
-
   "requiredEmail": "Email is required",
   "invalidEmail": "Invalid email",
   "requiredPassword": "Password is required",
   "requiredFullName": "Full name is required",
   "invalidFullName": "Enter a valid name",
   "minimumPassword": "Password must have at least 4 characters",
-
   "loginError": "Login error",
   "registerError": "Register error",
   "registerSuccess": "User registered successfully.",
-
   "logout": "Logout",
   "loginRequiredForAppointments": "You need to be logged in to view your appointments.",
   "findABusinessHint": "Find a business",
@@ -52,5 +47,22 @@
   "navSearch": "Search",
   "navMyAppointments": "My Appointments",
   "welcomeMessage": "Welcome",
-  "nearbyBusinesses": "Nearby businesses"
+  "nearbyBusinesses": "Nearby businesses",
+  "forgotPasswordEmailStep": "Enter your account e-mail. We'll send you a 6-digit code to create a new password.",
+  "forgotPasswordSendCode": "Send code",
+  "forgotPasswordCodeStep": "If an account exists for {email}, we sent a code to that e-mail. It is valid for 15 minutes.",
+  "forgotPasswordCode": "Code",
+  "forgotPasswordInvalidCode": "The code must have 6 digits",
+  "forgotPasswordNewPassword": "New password",
+  "forgotPasswordConfirmPassword": "Confirm new password",
+  "forgotPasswordPasswordTooShort": "Password must have at least 6 characters",
+  "forgotPasswordPasswordMismatch": "Passwords don't match",
+  "forgotPasswordSubmit": "Reset password",
+  "forgotPasswordResend": "Resend code",
+  "forgotPasswordResendIn": "Resend code in {seconds}s",
+  "forgotPasswordChangeEmail": "Use another e-mail",
+  "forgotPasswordCodeSent": "Code sent. Check your inbox and spam folder.",
+  "forgotPasswordSuccess": "Password changed! Sign in with your new password.",
+  "forgotPasswordRequestError": "Couldn't send the code. Please try again.",
+  "forgotPasswordConfirmError": "Couldn't reset the password. Please try again."
 }
