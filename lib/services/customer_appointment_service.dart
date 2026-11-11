@@ -88,10 +88,48 @@ class CustomerAppointmentService {
     );
   }
 
+  /// Calendar data for one of the client's own appointments: a Google
+  /// Calendar link and an .ics file (Apple Calendar, Outlook, Android...).
+  Future<CustomerAppointmentCalendar> findMineCalendar({
+    required String token,
+    required String id,
+  }) async {
+    final response = await _dio.get(
+      '$baseUrl/mine/$id/calendar',
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+
+    return CustomerAppointmentCalendar.fromJson(
+      Map<String, dynamic>.from(response.data),
+    );
+  }
+
   Future<void> cancel({required String token, required String id}) async {
     await _dio.patch(
       '$baseUrl/mine/$id/cancel',
       options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+  }
+}
+
+class CustomerAppointmentCalendar {
+  final String googleCalendarUrl;
+  final String ics;
+  final String fileName;
+
+  const CustomerAppointmentCalendar({
+    required this.googleCalendarUrl,
+    required this.ics,
+    required this.fileName,
+  });
+
+  factory CustomerAppointmentCalendar.fromJson(Map<String, dynamic> json) {
+    final fileName = json['fileName']?.toString() ?? '';
+
+    return CustomerAppointmentCalendar(
+      googleCalendarUrl: json['googleCalendarUrl']?.toString() ?? '',
+      ics: json['ics']?.toString() ?? '',
+      fileName: fileName.isEmpty ? 'agendamento.ics' : fileName,
     );
   }
 }

@@ -6,25 +6,42 @@ class CustomerAppointmentDetailModal extends StatelessWidget {
 
   final Future<void> Function() onCancel;
 
+  /// Opens Google Calendar with the event pre-filled. Null hides the option.
+  final Future<void> Function()? onAddToGoogleCalendar;
+
+  /// Downloads the .ics invite (iPhone, Outlook, Android...). Null hides it.
+  final Future<void> Function()? onDownloadCalendarFile;
+
   const CustomerAppointmentDetailModal({
     super.key,
     required this.appointment,
     required this.onCancel,
+    this.onAddToGoogleCalendar,
+    this.onDownloadCalendarFile,
   });
 
   static Future<void> show({
     required BuildContext context,
     required CustomerAppointment appointment,
     required Future<void> Function() onCancel,
+    Future<void> Function()? onAddToGoogleCalendar,
+    Future<void> Function()? onDownloadCalendarFile,
   }) {
     return showDialog(
       context: context,
       builder: (_) => CustomerAppointmentDetailModal(
         appointment: appointment,
         onCancel: onCancel,
+        onAddToGoogleCalendar: onAddToGoogleCalendar,
+        onDownloadCalendarFile: onDownloadCalendarFile,
       ),
     );
   }
+
+  /// Only upcoming appointments go to a calendar: a cancelled one has
+  /// nothing to add and a completed one is in the past.
+  bool get _canAddToCalendar =>
+      appointment.status == 'SCHEDULED' || appointment.status == 'CONFIRMED';
 
   String _date(String value) {
     final date = DateTime.tryParse(value);
@@ -154,6 +171,38 @@ class CustomerAppointmentDetailModal extends StatelessWidget {
               ),
 
               const SizedBox(height: 16),
+
+              if (_canAddToCalendar &&
+                  (onAddToGoogleCalendar != null ||
+                      onDownloadCalendarFile != null)) ...[
+                const Text(
+                  'Adicionar ao calendário',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+
+                const SizedBox(height: 8),
+
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (onAddToGoogleCalendar != null)
+                      OutlinedButton.icon(
+                        onPressed: onAddToGoogleCalendar,
+                        icon: const Icon(Icons.event_available_outlined),
+                        label: const Text('Google Agenda'),
+                      ),
+                    if (onDownloadCalendarFile != null)
+                      OutlinedButton.icon(
+                        onPressed: onDownloadCalendarFile,
+                        icon: const Icon(Icons.download_outlined),
+                        label: const Text('Outro calendário (.ics)'),
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+              ],
 
               if (appointment.status != 'CANCELLED')
                 SizedBox(
