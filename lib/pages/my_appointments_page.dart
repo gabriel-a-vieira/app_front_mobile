@@ -1,11 +1,13 @@
 import 'package:app_front_mobile/services/customer_appointment_service.dart';
 import 'package:app_front_mobile/storage/token_storage.dart';
 import 'package:app_front_mobile/utils/app_message.dart';
+import 'package:app_front_mobile/utils/file_download.dart';
 import 'package:app_front_mobile/widgets/customer_appointment_detail_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:app_front_mobile/config/api_config.dart';
 import 'package:app_front_mobile/widgets/app_header.dart';
 import 'package:app_front_mobile/widgets/app_scaffold.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MyAppointmentsPage extends StatefulWidget {
   const MyAppointmentsPage({super.key});
@@ -74,10 +76,93 @@ class _MyAppointmentsPageState extends State<MyAppointmentsPage> {
     }
   }
 
+  /// Awaits the calendar data prefetched when the detail opened, showing the
+  /// error (if any) only now that the user actually asked for it.
+  Future<CustomerAppointmentCalendar?> _awaitCalendar(
+    Future<CustomerAppointmentCalendar> calendarFuture,
+  ) async {
+    try {
+      return await calendarFuture;
+    } catch (e) {
+      if (mounted) {
+        AppMessage.apiError(
+          context,
+          e,
+          fallback: 'Erro ao gerar o convite de calendário.',
+        );
+      }
+
+      return null;
+    }
+  }
+
+  Future<void> _addToGoogleCalendar(
+    Future<CustomerAppointmentCalendar> calendarFuture,
+  ) async {
+    final calendar = await _awaitCalendar(calendarFuture);
+
+    if (calendar == null || !mounted) return;
+
+    final uri = Uri.tryParse(calendar.googleCalendarUrl);
+
+    final opened =
+        uri != null &&
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    if (!opened && mounted) {
+      AppMessage.error(context, 'Não foi possível abrir o Google Agenda.');
+    }
+  }
+
+  Future<void> _downloadCalendarFile(
+    Future<CustomerAppointmentCalendar> calendarFuture,
+  ) async {
+    final calendar = await _awaitCalendar(calendarFuture);
+
+    if (calendar == null || !mounted) return;
+
+    final saved = await downloadTextFile(
+      fileName: calendar.fileName,
+      content: calendar.ics,
+      mimeType: 'text/calendar;charset=utf-8',
+    );
+
+    if (!mounted) return;
+
+    AppMessage.info(
+      context,
+      saved
+          ? 'Convite baixado. Abra o arquivo para adicionar ao seu calendário.'
+          : 'Download do convite disponível apenas na versão web por enquanto.',
+    );
+  }
+
   Future<void> _details(CustomerAppointment appointment) async {
+    final canAddToCalendar =
+        appointment.status == 'SCHEDULED' || appointment.status == 'CONFIRMED';
+
+    // Prefetched as soon as the detail opens: browsers (Safari especially)
+    // block a new tab opened long after the click, so by the time the user
+    // taps "Google Agenda" the link should already be in hand.
+    Future<CustomerAppointmentCalendar>? calendarFuture;
+
+    if (canAddToCalendar) {
+      calendarFuture = _token().then(
+        (token) => _service.findMineCalendar(token: token, id: appointment.id),
+      );
+      // avoids an "unhandled error" if the user never clicks a calendar button
+      calendarFuture.ignore();
+    }
+
     await CustomerAppointmentDetailModal.show(
       context: context,
       appointment: appointment,
+      onAddToGoogleCalendar: calendarFuture == null
+          ? null
+          : () => _addToGoogleCalendar(calendarFuture!),
+      onDownloadCalendarFile: calendarFuture == null
+          ? null
+          : () => _downloadCalendarFile(calendarFuture!),
       onCancel: () async {
         try {
           final token = await _token();
